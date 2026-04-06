@@ -141,8 +141,8 @@ create policy "favorites_owner_all" on public.favorites for all
 6. **Authentication**:
    - Auth > Providers > Email > Disable "Confirm email" (for instant access)
    - Auth > URL Configuration:
-     - Site URL: `http://localhost:3000`
-     - Redirect URLs: Add `http://localhost:3000/api/auth/callback`
+     - Site URL: `http://localhost:3005`
+     - Redirect URLs: Add `http://localhost:3005/api/auth/callback`
 
 7. **Realtime** (optional, pentru messaging real-time):
    - Database > Realtime > Messages table > Enable
@@ -175,7 +175,7 @@ npm install
 npm run dev
 ```
 
-Accesează: **http://localhost:3000**
+Accesează: **http://localhost:3005**
 
 ---
 
