@@ -23,7 +23,7 @@ export default function FavoriteButton({
   async function handleToggle() {
     if (!userId) {
       // Redirect to login
-      window.location.href = `/(auth)/login?next=/anunt/${listingId}`
+      window.location.href = `/login?next=/anunt/${listingId}`
       return
     }
 

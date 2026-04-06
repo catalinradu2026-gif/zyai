@@ -73,8 +73,8 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-600 mt-8">
             Prima dată aici?{' '}
-            <Link href="/cont/profil" className="text-blue-600 hover:underline">
-              Completează profilul
+            <Link href="/login" className="text-blue-600 hover:underline">
+              Completează-ți profilul după conectare
             </Link>
           </p>
         </div>

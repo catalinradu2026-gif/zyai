@@ -10,7 +10,7 @@ export default async function AccountLayout({
   const user = await getUser()
 
   if (!user) {
-    redirect('/(auth)/login?next=/cont/anunturi')
+    redirect('/login?next=/cont/anunturi')
   }
 
   return (

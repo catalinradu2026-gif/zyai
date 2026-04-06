@@ -10,7 +10,7 @@ export default async function PostListingPage() {
   const user = await getUser()
 
   if (!user) {
-    redirect('/(auth)/login?next=/anunt/nou')
+    redirect('/login?next=/anunt/nou')
   }
 
   return (

@@ -54,7 +54,7 @@ export default function Home() {
             Conectează-te și postează-ți anunțul în doar câteva minute.
           </p>
           <Link
-            href="/(auth)/login"
+            href="/login"
             className="inline-block px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-lg"
           >
             Postează Acum →
