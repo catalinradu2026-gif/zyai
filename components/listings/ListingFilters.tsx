@@ -122,18 +122,29 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
                 <label style={{color: '#000000', fontWeight: 600, fontSize: '13px', display: 'block', marginBottom: '6px'}}>
                   📋 Model
                 </label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  disabled={!brand || availableModels.length === 0}
-                  style={{color: '#000000', backgroundColor: '#ffffff', width: '100%'}}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                  <option value="">Toate modelele</option>
-                  {availableModels.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
+                {availableModels.length > 0 ? (
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    style={{color: '#000000', backgroundColor: '#ffffff', width: '100%'}}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Toate modelele</option>
+                    {availableModels.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder={brand ? 'Scrie modelul...' : 'Alege mai întâi marca'}
+                    disabled={!brand}
+                    style={{color: '#000000', backgroundColor: '#ffffff', width: '100%'}}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  />
+                )}
               </div>
 
               {/* Combustibil */}
