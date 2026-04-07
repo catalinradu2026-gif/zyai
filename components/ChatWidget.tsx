@@ -95,21 +95,8 @@ export default function ChatWidget() {
     scrollToBottom()
   }, [messages])
 
-  // Auto-open after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsOpen(true)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault()
-    if (!input.trim() || loading) return
-
-    const userQuery = input.trim()
-
-    // Add user message
+  // Extracted send logic
+  const sendMessage = async (userQuery: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       text: userQuery,
@@ -117,23 +104,16 @@ export default function ChatWidget() {
       timestamp: new Date(),
     }
     setMessages((prev) => [...prev, userMessage])
-    setInput('')
     setLoading(true)
 
-    // Add to history
-    const newHistory: HistoryMessage[] = [...history, { role: 'user', content: userQuery }]
-
     try {
-      // Call AI chat API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userQuery, history }),
       })
 
-      if (!response.ok) {
-        throw new Error('Chat failed')
-      }
+      if (!response.ok) throw new Error('Chat failed')
 
       const data: { type: 'search' | 'chat'; message: string; listings?: ChatListing[] } =
         await response.json()
@@ -148,22 +128,52 @@ export default function ChatWidget() {
       }
 
       setMessages((prev) => [...prev, botMessage])
-
-      // Update history
-      setHistory([...newHistory, { role: 'assistant', content: data.message }])
+      setHistory((prev) => [...prev, { role: 'user', content: userQuery }, { role: 'assistant', content: data.message }])
     } catch (error) {
       console.error('Error:', error)
-
-      const errorMessage: Message = {
+      setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         text: 'Scuze, am o problemă temporară. Încearcă din nou.',
         sender: 'bot',
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      }])
     } finally {
       setLoading(false)
     }
+  }
+
+  // Auto-open after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsOpen(true)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Listen for hero search query
+  useEffect(() => {
+    function handleOpenChat(e: Event) {
+      const customEvent = e as CustomEvent<string>
+      const query = customEvent.detail
+      setIsOpen(true)
+
+      // Send message directly
+      setTimeout(() => {
+        sendMessage(query)
+      }, 300)
+    }
+
+    window.addEventListener('openChatWithQuery', handleOpenChat)
+    return () => window.removeEventListener('openChatWithQuery', handleOpenChat)
+  }, [sendMessage])
+
+  function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    if (!input.trim() || loading) return
+
+    const userQuery = input.trim()
+    setInput('')
+    sendMessage(userQuery)
   }
 
   return (
