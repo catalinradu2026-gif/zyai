@@ -133,7 +133,7 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col h-[600px] z-40 animate-in fade-in slide-in-from-bottom-4 border border-gray-100">
+        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-2xl shadow-2xl flex flex-col h-96 z-40 animate-in fade-in slide-in-from-bottom-4 border border-gray-100">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 rounded-t-2xl">
             <div className="flex items-center gap-3 mb-1">
