@@ -83,9 +83,10 @@ export default function ChatWidget() {
     e.preventDefault()
     if (!input.trim() || loading) return
 
+    const userQuery = input
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: input,
+      text: userQuery,
       sender: 'user',
       timestamp: new Date(),
     }
@@ -95,29 +96,44 @@ export default function ChatWidget() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      // Use AI search endpoint to find listings
+      const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ query: userQuery }),
       })
 
-      if (!response.ok) throw new Error('Failed to get response')
+      if (!response.ok) throw new Error('Failed to search')
 
-      const data = await response.json()
+      const { results, parsed } = await response.json()
+
+      // Build response message
+      let botText = ''
+      if (results && results.length > 0) {
+        botText = `Am găsit ${results.length} anunț${results.length !== 1 ? 'uri' : ''} pentru "${parsed.product}":\n\n`
+        results.slice(0, 3).forEach((listing: any, idx: number) => {
+          const price = listing.price ? `${listing.price} ${listing.currency}` : 'Gratuit'
+          botText += `${idx + 1}. ${listing.title}\n📍 ${listing.city} | ${price}\n`
+        })
+        botText += '\n👉 Deschide app pentru detalii complete'
+      } else {
+        botText = `Nu am găsit anunțuri pentru "${parsed.product}". Încearcă cu alți termeni sau alege o categorie din app!`
+      }
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.message,
+        text: botText,
         sender: 'bot',
         timestamp: new Date(),
       }
 
       setMessages((prev) => [...prev, botMessage])
-      speakMessage(data.message)
+      speakMessage(`Am găsit ${results?.length || 0} anunțuri. Vezi în chat detaliile.`)
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error('Search error:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Scuze, am o problemă. Încearcă din nou.',
+        text: 'Scuze, am o problemă cu căutarea. Încearcă din nou!',
         sender: 'bot',
         timestamp: new Date(),
       }
