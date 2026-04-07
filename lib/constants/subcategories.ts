@@ -52,9 +52,10 @@ export const AUTO_BRANDS = [
   'Nissan', 'Opel', 'Peugeot', 'Porsche', 'Renault', 'Seat', 'Skoda', 'Smart',
   'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo',
   // Electrice chinezești
-  'BYD', 'NIO', 'Xpeng', 'Li Auto', 'AION', 'Zeekr', 'Lynk & Co',
-  'MG', 'Great Wall', 'Chery', 'SAIC', 'Geely', 'Dongfeng', 'BAIC',
-  'JAC', 'Leapmotor', 'Neta', 'Ora', 'Wuling', 'Avatr', 'HiPhi',
+  'BYD', 'Denza', 'Fang Cheng Bao', 'NIO', 'Xpeng', 'Li Auto', 'AION', 'Zeekr', 'Lynk & Co',
+  'MG', 'Great Wall', 'Ora', 'Chery', 'Omoda', 'SAIC', 'Geely', 'Dongfeng', 'Voyah', 'BAIC',
+  'JAC', 'Leapmotor', 'Neta', 'Wuling', 'Avatr', 'HiPhi', 'Aito', 'Seres', 'Deepal',
+  'Polestar', 'Lucid', 'Rivian', 'Fisker',
 ]
 
 export const AUTO_MODELS: Record<string, string[]> = {
@@ -95,7 +96,7 @@ export const AUTO_MODELS: Record<string, string[]> = {
   'Volkswagen': ['up!', 'Polo', 'Golf', 'Golf Plus', 'Jetta', 'Passat', 'Arteon', 'T-Cross', 'T-Roc', 'Tiguan', 'Touareg', 'Touran', 'Sharan', 'Transporter', 'Caddy', 'ID.3', 'ID.4', 'ID.5', 'ID.7'],
   'Volvo': ['V40', 'V60', 'V90', 'S60', 'S90', 'XC40', 'XC60', 'XC90', 'C40 Recharge', 'XC40 Recharge', 'EX30', 'EX40', 'EX90', 'EC40'],
   // Electrice chinezești
-  'BYD': ['Atto 2', 'Atto 3', 'Han', 'Tang', 'Seal', 'Seal U', 'Dolphin', 'Dolphin Mini', 'Seagull', 'Song Plus', 'Song L', 'Yuan Plus', 'Yangwang U8', 'Yangwang U9'],
+  'BYD': ['Atto 2', 'Atto 3', 'Han', 'Han EV', 'Han DM', 'Tang', 'Tang EV', 'Tang DM', 'Seal', 'Seal U', 'Seal U DM', 'Sealion 6', 'Sealion 7', 'Dolphin', 'Dolphin Mini', 'Seagull', 'Song Plus EV', 'Song Plus DM', 'Song L', 'Yuan Plus', 'Shark', 'Frigate 07', 'Yangwang U8', 'Yangwang U9'],
   'NIO': ['ES6', 'ES7', 'ES8', 'ET5', 'ET5 Touring', 'ET7', 'EC6', 'EC7', 'EL6', 'EL7'],
   'Xpeng': ['G3', 'G6', 'G9', 'P5', 'P7', 'P7i', 'X9', 'Mona M03'],
   'Li Auto': ['L6', 'L7', 'L8', 'L9', 'MEGA'],
@@ -116,6 +117,17 @@ export const AUTO_MODELS: Record<string, string[]> = {
   'Wuling': ['Mini EV', 'Air EV', 'Bingo', 'Starlight'],
   'Avatr': ['11', '12'],
   'HiPhi': ['X', 'Z', 'Y'],
+  'Denza': ['N7', 'N8', 'D9', 'Z9 GT'],
+  'Fang Cheng Bao': ['Leopard 5', 'Leopard 6', 'Bao 8'],
+  'Omoda': ['5', 'E5', 'C5', '7'],
+  'Voyah': ['Free', 'Dream', 'Passion'],
+  'Aito': ['M5', 'M5 EV', 'M7', 'M9'],
+  'Seres': ['SF5', 'Aito M5', 'Aito M7'],
+  'Deepal': ['SL03', 'S7', 'L07'],
+  'Polestar': ['1', '2', '3', '4'],
+  'Lucid': ['Air', 'Gravity'],
+  'Rivian': ['R1T', 'R1S', 'R2'],
+  'Fisker': ['Ocean', 'Pear', 'Alaska'],
 }
 
 export const CAROSERIE_TYPES = [
