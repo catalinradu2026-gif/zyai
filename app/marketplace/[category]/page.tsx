@@ -138,13 +138,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       )}
 
       {/* GRID: Filters + Listings */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '24px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-        <div>
+        <div className="lg:col-span-1">
           <ListingFilters category={category} />
         </div>
 
-        <div>
+        <div className="lg:col-span-3">
           {error ? (
             <div style={{ background: '#fefce8', border: '2px solid #fde047', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
               <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>⚠️</span>
