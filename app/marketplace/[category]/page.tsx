@@ -2,9 +2,44 @@ import { getListings } from '@/lib/queries/listings'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
 import { getCategoryBySlug } from '@/lib/constants/categories'
-import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+
+const SUBS: Record<string, { slug: string; name: string; icon: string }[]> = {
+  auto: [
+    { slug: 'autoturisme', name: 'Autoturisme', icon: '🚗' },
+    { slug: 'autoutilitare', name: 'Autoutilitare', icon: '🚐' },
+    { slug: 'piese', name: 'Piese auto', icon: '🔩' },
+    { slug: 'agricole', name: 'Agricole', icon: '🚜' },
+    { slug: 'remorci', name: 'Remorci', icon: '🔗' },
+    { slug: 'camioane', name: 'Camioane', icon: '🚛' },
+    { slug: 'constructii', name: 'Constructii', icon: '🏗️' },
+    { slug: 'motociclete', name: 'Motociclete', icon: '🏍️' },
+  ],
+  imobiliare: [
+    { slug: 'apartamente', name: 'Apartamente', icon: '🏢' },
+    { slug: 'case', name: 'Case', icon: '🏠' },
+    { slug: 'terenuri', name: 'Terenuri', icon: '🌿' },
+    { slug: 'spatii-comerciale', name: 'Spatii comerciale', icon: '🏪' },
+    { slug: 'garaje', name: 'Garaje', icon: '🅿️' },
+  ],
+  joburi: [
+    { slug: 'it', name: 'IT & Tech', icon: '💻' },
+    { slug: 'vanzari', name: 'Vânzări', icon: '📊' },
+    { slug: 'horeca', name: 'HoReCa', icon: '🍽️' },
+    { slug: 'constructii', name: 'Construcții', icon: '🔨' },
+    { slug: 'transport', name: 'Transport', icon: '🚚' },
+    { slug: 'medical', name: 'Medical', icon: '🏥' },
+  ],
+  servicii: [
+    { slug: 'reparatii', name: 'Reparații', icon: '🔧' },
+    { slug: 'curatenie', name: 'Curățenie', icon: '🧹' },
+    { slug: 'transport', name: 'Transport', icon: '🚚' },
+    { slug: 'it', name: 'IT & Web', icon: '💻' },
+    { slug: 'constructii', name: 'Construcții', icon: '🏗️' },
+    { slug: 'frumusete', name: 'Frumusețe', icon: '💅' },
+  ],
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +82,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     error = err
   }
 
-  const subs = SUBCATEGORIES[category] || []
+  const subs = SUBS[category] || []
 
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 16px' }}>
