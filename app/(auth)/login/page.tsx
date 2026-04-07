@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   const searchParams = useSearchParams()
   const nextUrl = searchParams?.get('next') || '/'
