@@ -268,10 +268,10 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Toggle button - fixed top-left */}
+      {/* Toggle button - fixed bottom-right */}
       <button
         onClick={() => { setOpen(o => !o); setBubble(false) }}
-        className="fixed top-4 left-4 z-50 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        className="fixed bottom-8 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
         title="zyAI Chat"
       >
         {open ? (
@@ -288,7 +288,7 @@ export default function ChatWidget() {
       {/* Bubble notification */}
       {bubble && !open && (
         <div
-          className="fixed bottom-20 right-4 z-50 bg-white rounded-2xl rounded-br-none shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
+          className="fixed bottom-28 right-4 z-50 bg-white rounded-2xl rounded-br-none shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
           onClick={() => { setOpen(true); setBubble(false) }}
         >
           <button
@@ -301,7 +301,7 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {open && (
-        <div className="fixed top-20 left-3 right-3 md:top-20 md:left-6 md:right-auto z-50 md:w-[340px] bg-white rounded-2xl shadow-2xl flex flex-col h-[480px] max-h-[70dvh] border border-gray-100">
+        <div className="fixed bottom-24 right-4 left-4 md:left-auto z-50 md:w-[340px] bg-white rounded-2xl shadow-2xl flex flex-col h-[480px] max-h-[70dvh] border border-gray-100">
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 rounded-t-2xl border-b border-gray-100 flex items-center gap-3 shrink-0">
             <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm shrink-0">💬</div>
