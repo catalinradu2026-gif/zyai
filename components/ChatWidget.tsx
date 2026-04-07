@@ -49,7 +49,7 @@ function WidgetListingCard({ listing }: { listing: ChatListing }) {
       href={`/anunt/${listing.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="block bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-blue-400 transition-all duration-200 group"
+      className="block bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-lg overflow-hidden hover:shadow-lg hover:border-blue-400 hover:bg-white/90 transition-all duration-200 group"
     >
       {/* Imagine */}
       {firstImage ? (
@@ -62,7 +62,7 @@ function WidgetListingCard({ listing }: { listing: ChatListing }) {
           />
         </div>
       ) : (
-        <div className="w-full h-20 bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
+        <div className="w-full h-20 bg-gradient-to-br from-blue-50/70 to-gray-100/70 backdrop-blur-sm flex items-center justify-center">
           <span className="text-gray-400 text-xl">📷</span>
         </div>
       )}
@@ -181,7 +181,7 @@ export default function ChatWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-10 left-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 backdrop-blur-md border border-white/20 ${
+        className={`fixed bottom-10 left-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 backdrop-blur-lg border border-white/30 ${
           isOpen ? 'bg-blue-600/80' : 'bg-blue-500/70 hover:scale-110 animate-pulse'
         } text-white text-3xl`}
         title={isOpen ? 'Închide' : 'Deschide chat'}
@@ -191,9 +191,9 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-32 left-6 w-[420px] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col h-[600px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-white/30">
+        <div className="fixed bottom-32 left-6 w-[420px] bg-white/70 backdrop-blur-lg rounded-2xl shadow-2xl flex flex-col h-[600px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-white/40">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-600/90 to-blue-700/90 backdrop-blur-md text-white p-4 rounded-t-2xl border-b border-white/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">
@@ -217,7 +217,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/50 backdrop-blur-sm">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
@@ -226,7 +226,7 @@ export default function ChatWidget() {
                     className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm ${
                       msg.sender === 'user'
                         ? 'bg-blue-600 text-white rounded-br-none'
-                        : 'bg-gray-100 text-gray-900 rounded-bl-none border border-gray-200'
+                        : 'bg-gray-100/70 backdrop-blur-sm text-gray-900 rounded-bl-none border border-gray-200/50'
                     }`}
                   >
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
@@ -256,7 +256,7 @@ export default function ChatWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
+                <div className="bg-gray-100/70 backdrop-blur-sm border border-gray-200/50 px-4 py-3 rounded-2xl rounded-bl-none">
                   <div className="flex gap-2">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
                     <div
@@ -276,7 +276,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSend} className="p-4 border-t border-white/10 bg-white/50 backdrop-blur-md rounded-b-2xl">
+          <form onSubmit={handleSend} className="p-4 border-t border-white/20 bg-white/40 backdrop-blur-lg rounded-b-2xl">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -284,7 +284,7 @@ export default function ChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ce cauți?"
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border border-white/30 bg-white/80 rounded-full focus:outline-none focus:border-blue-400 focus:bg-white text-sm disabled:opacity-50 placeholder-gray-500"
+                className="flex-1 px-4 py-2.5 border border-white/40 bg-white/60 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/80 text-sm disabled:opacity-50 placeholder-gray-600 transition"
               />
               <button
                 type="submit"
