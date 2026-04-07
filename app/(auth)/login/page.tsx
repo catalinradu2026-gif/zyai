@@ -46,7 +46,7 @@ export default function LoginPage() {
         // Salvează user în localStorage
         localStorage.setItem('user_id', data.userId)
         localStorage.setItem('user_phone', phone)
-        localStorage.setItem('user_name', name)
+        localStorage.setItem('user_name', fullName)
         window.location.href = '/'
       }
     } catch (err) {
