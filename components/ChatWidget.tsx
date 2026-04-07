@@ -33,6 +33,18 @@ export default function ChatWidget() {
     scrollToBottom()
   }, [messages])
 
+  // Auto-open after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsOpen(true)
+      // Speak greeting
+      setTimeout(() => {
+        speakMessage('Salut! Sunt zyAI! Cum te pot ajuta cu anunțurile?')
+      }, 500)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [])
+
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
