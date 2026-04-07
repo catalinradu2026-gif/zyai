@@ -1,7 +1,10 @@
 import { getUser } from '@/lib/actions/auth'
 import { getUserListings } from '@/lib/queries/listings'
+import { deleteListing } from '@/lib/actions/listings'
 import Link from 'next/link'
 import Image from 'next/image'
+import Button from '@/components/ui/Button'
+import DeleteListingButton from '@/components/listings/DeleteListingButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -17,103 +20,134 @@ export default async function MyListingsPage() {
   const { data: listings } = await getUserListings(user.id)
 
   return (
-    <div>
-      <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header Card */}
+      <div className="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-600">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold mb-2">📝 Anunțurile mele</h2>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">📝 Anunțurile mele</h1>
             <p className="text-gray-600">
-              {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''}
+              {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
             </p>
           </div>
-          <Link
-            href="/anunt/nou"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            ➕ Nou anunț
+          <Link href="/anunt/nou" className="flex-shrink-0">
+            <Button variant="primary" size="lg">
+              ➕ Nou anunț
+            </Button>
           </Link>
         </div>
       </div>
 
+      {/* Listings List */}
       {listings && listings.length > 0 ? (
         <div className="space-y-4">
-          {listings.map((listing: any) => (
-            <div
-              key={listing.id}
-              className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition flex gap-4"
-            >
-              {/* Image */}
-              {listing.images && listing.images.length > 0 ? (
-                <div className="relative w-24 h-24 flex-shrink-0">
-                  <Image
-                    src={listing.images[0]}
-                    alt={listing.title}
-                    fill
-                    className="object-cover rounded"
-                  />
-                </div>
-              ) : (
-                <div className="w-24 h-24 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                  <span className="text-gray-400 text-2xl">📷</span>
-                </div>
-              )}
+          {listings.map((listing: any) => {
+            const formattedPrice =
+              listing.price && listing.price_type !== 'gratuit'
+                ? `${listing.price.toLocaleString('ro-RO')} ${listing.currency}`
+                : listing.price_type === 'negociabil'
+                  ? 'Negociabil'
+                  : 'Gratuit'
 
-              {/* Content */}
-              <div className="flex-1">
-                <Link
-                  href={`/anunt/${listing.id}`}
-                  className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition"
-                >
-                  {listing.title}
-                </Link>
-                <p className="text-green-600 font-bold mb-2">
-                  {listing.price ? `${listing.price} ${listing.currency}` : 'Gratuit'}
-                </p>
-                <div className="flex gap-4 text-sm text-gray-600">
-                  <span>📍 {listing.city}</span>
-                  <span>👁️ {listing.views} vizualizări</span>
-                  <span
-                    className={`
-                      px-2 py-1 rounded text-xs font-medium
-                      ${
-                        listing.status === 'activ'
-                          ? 'bg-green-100 text-green-700'
-                          : listing.status === 'vandut'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                      }
-                    `}
+            const statusColors: Record<string, string> = {
+              activ: 'bg-green-100 text-green-700',
+              vandut: 'bg-gray-100 text-gray-700',
+              inactiv: 'bg-yellow-100 text-yellow-700',
+            }
+
+            const statusEmojis: Record<string, string> = {
+              activ: '✓',
+              vandut: '✓',
+              inactiv: '⚠️',
+            }
+
+            return (
+              <div
+                key={listing.id}
+                className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition flex gap-4 border border-gray-100"
+              >
+                {/* Thumbnail Image */}
+                <div className="flex-shrink-0">
+                  {listing.images && listing.images.length > 0 ? (
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden">
+                      <Image
+                        src={listing.images[0]}
+                        alt={listing.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400 text-3xl">📷</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/anunt/${listing.id}`}
+                    className="text-xl font-bold text-gray-900 hover:text-blue-600 transition line-clamp-2 block mb-2"
                   >
-                    {listing.status === 'activ'
-                      ? '✓ Activ'
-                      : listing.status === 'vandut'
-                        ? '✓ Vândut'
-                        : 'Inactiv'}
-                  </span>
+                    {listing.title}
+                  </Link>
+
+                  <p className="text-2xl font-bold text-green-600 mb-3">{formattedPrice}</p>
+
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
+                    <span className="flex items-center gap-1">📍 {listing.city}</span>
+                    <span className="flex items-center gap-1">👁️ {listing.views} vizualizări</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        statusColors[listing.status] || statusColors.inactiv
+                      }`}
+                    >
+                      {statusEmojis[listing.status]}{' '}
+                      {listing.status === 'activ'
+                        ? 'Activ'
+                        : listing.status === 'vandut'
+                          ? 'Vândut'
+                          : 'Inactiv'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Creat: {new Date(listing.created_at).toLocaleDateString('ro-RO')}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  <Link href={`/anunt/${listing.id}`} className="w-full">
+                    <Button variant="secondary" size="md" fullWidth>
+                      👁️ Vezi
+                    </Button>
+                  </Link>
+
+                  <Link href={`/anunt/${listing.id}/edit`} className="w-full">
+                    <Button variant="secondary" size="md" fullWidth>
+                      ✏️ Editează
+                    </Button>
+                  </Link>
+
+                  <DeleteListingButton listingId={listing.id} listingTitle={listing.title} />
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex flex-col gap-2">
-                <Link
-                  href={`/anunt/${listing.id}`}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition text-center"
-                >
-                  Detalii
-                </Link>
-                {/* Edit si Delete buttons - TODO */}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
-        <div className="bg-white rounded-lg p-12 shadow-sm text-center">
-          <p className="text-gray-600 text-lg mb-4">Nu ai postat niciun anunț încă</p>
-          <Link
-            href="/anunt/nou"
-            className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            Postează-ți primul anunț →
+        <div className="bg-white rounded-lg p-16 shadow-md text-center border border-gray-100">
+          <span className="text-6xl mb-4 block">📋</span>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Nu ai postat niciun anunț</h2>
+          <p className="text-gray-600 mb-6">
+            Postează-ți primul anunț și ajunge la mii de potențiali cumpărători
+          </p>
+          <Link href="/anunt/nou">
+            <Button variant="primary" size="lg">
+              Postează-ți primul anunț →
+            </Button>
           </Link>
         </div>
       )}
