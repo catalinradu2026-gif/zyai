@@ -13,11 +13,11 @@ export const SUBCATEGORIES: CategorySubs = {
     { slug: 'autoturisme', name: 'Autoturisme', icon: '🚗' },
     { slug: 'autoutilitare', name: 'Autoutilitare', icon: '🚐' },
     { slug: 'piese', name: 'Piese auto', icon: '🔩' },
-    { slug: 'motociclete', name: 'Motociclete', icon: '🏍️' },
-    { slug: 'camioane', name: 'Camioane', icon: '🚛' },
     { slug: 'agricole', name: 'Agricole', icon: '🚜' },
     { slug: 'remorci', name: 'Remorci', icon: '🔗' },
+    { slug: 'camioane', name: 'Camioane', icon: '🚛' },
     { slug: 'constructii', name: 'Constructii', icon: '🏗️' },
+    { slug: 'motociclete', name: 'Motociclete', icon: '🏍️' },
   ],
   imobiliare: [
     { slug: 'apartamente', name: 'Apartamente', icon: '🏢' },
@@ -132,6 +132,54 @@ export const AUTO_MODELS: Record<string, string[]> = {
 
 export const CAROSERIE_TYPES = [
   'Berlina', 'SUV', 'Hatchback', 'Break/Combi', 'Coupe', 'Cabrio', 'Monovolum', 'Pickup', 'Van'
+]
+
+export const TRUCK_BRANDS = [
+  'DAF', 'Iveco', 'MAN', 'Mercedes-Benz', 'Renault Trucks', 'Scania', 'Volvo Trucks',
+  'Ford', 'Fiat', 'Volkswagen', 'Toyota', 'Mitsubishi Fuso', 'Isuzu', 'Hino',
+]
+
+export const TRUCK_BODY_TYPES = [
+  'Autotractor', 'Basculantă', 'Platformă', 'Frigorifică', 'Izoterma',
+  'Cisternă', 'Betonieră', 'Container', 'Forestier', 'Altele',
+]
+
+export const UTILITY_BRANDS = [
+  'Citroën', 'Fiat', 'Ford', 'Mercedes-Benz', 'Opel', 'Peugeot',
+  'Renault', 'Toyota', 'Volkswagen', 'Nissan', 'Iveco', 'DAF', 'MAN',
+]
+
+export const PIESE_CATEGORIES = [
+  'Motor și accesorii', 'Transmisie', 'Suspensie și direcție', 'Frâne',
+  'Caroserie și elemente vizuale', 'Interior', 'Electricitate și electronice',
+  'Evacuare', 'Răcire', 'Climatizare', 'Anvelope și jante', 'Altele',
+]
+
+export const AGRICOLE_TYPES = [
+  'Tractor', 'Combină', 'Plug', 'Cultivator', 'Semănătoare', 'Presă baloți',
+  'Remorcă agricolă', 'Pulverizator', 'Încărcător frontal', 'Disc', 'Grapă', 'Altele',
+]
+
+export const AGRICOLE_BRANDS = [
+  'Case IH', 'Claas', 'Deutz-Fahr', 'Fendt', 'John Deere', 'Kubota',
+  'Massey Ferguson', 'New Holland', 'Same', 'Zetor', 'Farmtrac', 'MTZ Belarus', 'Altele',
+]
+
+export const REMORCI_TYPES = [
+  'Remorcă auto', 'Remorcă cargo/platformă', 'Remorcă basculantă',
+  'Remorcă barcă', 'Rulotă', 'Semiremorcă', 'Remorcă frigorifică',
+  'Remorcă cisternă', 'Remorcă lemne', 'Altele',
+]
+
+export const CONSTRUCTII_TYPES = [
+  'Excavator', 'Buldozer', 'Încărcător frontal', 'Macara', 'Compactor',
+  'Autobetonieră', 'Pompă beton', 'Nacela', 'Schela', 'Generator',
+  'Compresor', 'Mini-excavator', 'Graifer', 'Altele',
+]
+
+export const CONSTRUCTII_BRANDS = [
+  'Caterpillar', 'Komatsu', 'Volvo CE', 'Liebherr', 'Terex', 'JCB',
+  'Bobcat', 'Hyundai', 'Doosan', 'Hitachi', 'Manitou', 'Altele',
 ]
 
 const currentYear = new Date().getFullYear()
