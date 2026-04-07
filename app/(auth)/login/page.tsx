@@ -28,6 +28,7 @@ export default function LoginPage() {
     try {
       const response = await fetch('/api/auth/phone', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone,
