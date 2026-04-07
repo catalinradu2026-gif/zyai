@@ -288,11 +288,11 @@ export default function ChatWidget() {
       {/* Bubble notification */}
       {bubble && !open && (
         <div
-          className="fixed top-20 left-20 z-50 bg-white rounded-2xl rounded-bl-sm shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
+          className="fixed bottom-20 right-4 z-50 bg-white rounded-2xl rounded-br-none shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
           onClick={() => { setOpen(true); setBubble(false) }}
         >
           <button
-            className="absolute -top-2 -right-2 bg-gray-200 rounded-full w-5 h-5 text-xs flex items-center justify-center text-gray-500 hover:bg-gray-300"
+            className="absolute -top-2 -left-2 bg-gray-200 rounded-full w-5 h-5 text-xs flex items-center justify-center text-gray-500 hover:bg-gray-300"
             onClick={e => { e.stopPropagation(); setBubble(false) }}
           >×</button>
           <p className="text-sm text-gray-800">Salut! Sunt zyAI. Te ajut să găsești anunțuri. Scrie ce cauți!</p>
