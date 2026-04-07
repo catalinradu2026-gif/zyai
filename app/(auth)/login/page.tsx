@@ -56,7 +56,11 @@ export default function LoginPage() {
       })
 
       if (signInError) {
-        setError('Email sau parolă greșite!')
+        if (signInError.message.toLowerCase().includes('email not confirmed')) {
+          setError('Emailul nu a fost confirmat. Verifică inbox-ul și dă click pe link-ul de confirmare.')
+        } else {
+          setError(signInError.message || 'Email sau parolă greșite!')
+        }
         setLoading(false)
         return
       }
