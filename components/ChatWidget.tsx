@@ -288,7 +288,7 @@ export default function ChatWidget() {
       {/* Bubble notification */}
       {bubble && !open && (
         <div
-          className="fixed bottom-28 right-4 z-50 bg-white rounded-2xl rounded-br-none shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
+          className="fixed bottom-8 left-4 z-50 bg-white rounded-2xl rounded-bl-none shadow-xl border border-gray-100 px-4 py-3 max-w-[220px] cursor-pointer"
           onClick={() => { setOpen(true); setBubble(false) }}
         >
           <button
