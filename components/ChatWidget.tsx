@@ -14,16 +14,14 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Salut! 👋 Sunt zyAI, asistentul tău pe platforma zyAI. Cum te pot ajuta?',
+      text: 'Salut! 👋\n\nSpune-mi ce cauți și eu îți găsesc pe zyAI.\n\nExemplu: "apartament 2 camere cluj", "job IT bucuresti", "masina dacia"',
       sender: 'bot',
       timestamp: new Date(),
     },
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isListening, setIsListening] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<any>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -37,87 +35,62 @@ export default function ChatWidget() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsOpen(true)
-      // Speak greeting
-      setTimeout(() => {
-        speakMessage('Salut! Sunt zyAI! Cum te pot ajuta cu anunțurile?')
-      }, 500)
     }, 5000)
     return () => clearTimeout(timer)
   }, [])
-
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition()
-        recognitionRef.current.lang = 'ro-RO'
-        recognitionRef.current.onstart = () => setIsListening(true)
-        recognitionRef.current.onend = () => setIsListening(false)
-        recognitionRef.current.onresult = (event: any) => {
-          const transcript = Array.from(event.results)
-            .map((result: any) => result[0].transcript)
-            .join('')
-          setInput(transcript)
-        }
-      }
-    }
-  }, [])
-
-  // Text to speech
-  function speakMessage(text: string) {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'ro-RO'
-      window.speechSynthesis.speak(utterance)
-    }
-  }
-
-  function startListening() {
-    if (recognitionRef.current) {
-      recognitionRef.current.start()
-    }
-  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     if (!input.trim() || loading) return
 
-    const userQuery = input
+    const userQuery = input.trim()
+
+    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: userQuery,
       sender: 'user',
       timestamp: new Date(),
     }
-
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setLoading(true)
 
     try {
-      // Use AI search endpoint to find listings
+      // Call AI search API
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userQuery }),
       })
 
-      if (!response.ok) throw new Error('Failed to search')
+      if (!response.ok) {
+        throw new Error('Search failed')
+      }
 
       const { results, parsed } = await response.json()
 
-      // Build response message
+      // Build response
       let botText = ''
+
       if (results && results.length > 0) {
-        botText = `Am găsit ${results.length} anunț${results.length !== 1 ? 'uri' : ''} pentru "${parsed.product}":\n\n`
-        results.slice(0, 3).forEach((listing: any, idx: number) => {
-          const price = listing.price ? `${listing.price} ${listing.currency}` : 'Gratuit'
-          botText += `${idx + 1}. ${listing.title}\n📍 ${listing.city} | ${price}\n`
+        botText = `Excellent! Am găsit ${results.length} anunț${results.length !== 1 ? 'uri' : ''} potrivite:\n\n`
+
+        results.forEach((listing: any, idx: number) => {
+          const price =
+            listing.price && listing.price_type !== 'gratuit'
+              ? `${listing.price} ${listing.currency}`
+              : listing.price_type === 'gratuit'
+                ? 'Gratuit'
+                : 'Negociabil'
+
+          botText += `${idx + 1}. ${listing.title}\n`
+          botText += `   📍 ${listing.city} | 💰 ${price}\n\n`
         })
-        botText += '\n👉 Deschide app pentru detalii complete'
+
+        botText += '👉 Deschide aplicația pentru detalii complete și pentru a contacta vânzătorul!'
       } else {
-        botText = `Nu am găsit anunțuri pentru "${parsed.product}". Încearcă cu alți termeni sau alege o categorie din app!`
+        botText = `Din păcate, nu am găsit anunțuri pentru "${parsed.product || userQuery}".\n\nIncearcă cu:\n• Alte cuvinte cheie\n• O locație diferită\n• O plajă de preț mai mare`
       }
 
       const botMessage: Message = {
@@ -128,12 +101,12 @@ export default function ChatWidget() {
       }
 
       setMessages((prev) => [...prev, botMessage])
-      speakMessage(`Am găsit ${results?.length || 0} anunțuri. Vezi în chat detaliile.`)
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('Error:', error)
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Scuze, am o problemă cu căutarea. Încearcă din nou!',
+        text: 'Scuze, am o problemă. Încearcă din nou sau descrie mai bine ce cauți.',
         sender: 'bot',
         timestamp: new Date(),
       }
@@ -150,32 +123,27 @@ export default function ChatWidget() {
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-40 ${
           isOpen
-            ? 'bg-gradient-to-br from-blue-600 to-blue-700 scale-100'
+            ? 'bg-gradient-to-br from-blue-600 to-blue-700'
             : 'bg-gradient-to-br from-blue-500 to-blue-600 hover:scale-110 animate-pulse'
         } text-white text-2xl`}
-        title={isOpen ? 'Închide chat' : 'Vorbește cu zyAI'}
+        title={isOpen ? 'Închide' : 'Deschide chat'}
       >
         {isOpen ? '✕' : '💬'}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col h-[600px] z-40 animate-in fade-in slide-in-from-bottom-4 border border-gray-100 overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col h-[600px] z-40 animate-in fade-in slide-in-from-bottom-4 border border-gray-100">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 rounded-t-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🤖</span>
-                <div>
-                  <h3 className="font-bold text-lg">zyAI Assistant</h3>
-                  <p className="text-xs text-blue-100">🟢 Online</p>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 mb-1">
+              <span className="text-2xl">🔍</span>
+              <h3 className="font-bold text-lg">zyAI Search</h3>
             </div>
-            <p className="text-xs text-blue-100">Răspund în timp real. Spune-mi cu ce pot ajuta!</p>
+            <p className="text-xs text-blue-100">Găseste ce vrei instant</p>
           </div>
 
-          {/* Messages Container */}
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
             {messages.map((msg) => (
               <div
@@ -183,13 +151,13 @@ export default function ChatWidget() {
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs px-4 py-3 rounded-2xl text-sm font-medium ${
+                  className={`max-w-xs px-4 py-3 rounded-2xl text-sm ${
                     msg.sender === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-none shadow-md'
-                      : 'bg-gray-100 text-gray-900 rounded-bl-none shadow-sm border border-gray-200'
+                      ? 'bg-blue-600 text-white rounded-br-none'
+                      : 'bg-gray-100 text-gray-900 rounded-bl-none border border-gray-200'
                   }`}
                 >
-                  <p className="leading-relaxed">{msg.text}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                   <p
                     className={`text-xs mt-1.5 ${
                       msg.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
@@ -209,8 +177,14 @@ export default function ChatWidget() {
                 <div className="bg-gray-100 border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
                   <div className="flex gap-2">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                    <div
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.4s' }}
+                    />
                   </div>
                 </div>
               </div>
@@ -219,55 +193,30 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Section */}
+          {/* Input */}
           <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
-            <div className="space-y-3">
-              {/* Button Row */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Scrie mesaj..."
-                  disabled={loading}
-                  className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-sm disabled:opacity-50 disabled:bg-gray-50"
-                />
-
-                <button
-                  type="button"
-                  onClick={startListening}
-                  disabled={loading || isListening}
-                  className={`px-4 py-2.5 rounded-full transition font-medium text-sm flex items-center gap-1 ${
-                    isListening
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                  } disabled:opacity-50`}
-                  title="Apasă pentru a vorbi"
-                >
-                  {isListening ? '🎤' : '🎤'}
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={loading || !input.trim()}
-                  className="px-4 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:bg-gray-400 font-medium text-sm flex items-center gap-1"
-                >
-                  ➤
-                </button>
-              </div>
-
-              {/* Voice Input Hint */}
-              {isListening && (
-                <div className="text-xs text-blue-600 text-center animate-pulse">
-                  🎙️ Ascultând...
-                </div>
-              )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ce cauți?"
+                disabled={loading}
+                className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="px-4 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition disabled:opacity-50 font-medium"
+              >
+                🔍
+              </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* CSS Animations */}
+      {/* Animations */}
       <style>{`
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
@@ -275,6 +224,16 @@ export default function ChatWidget() {
         }
         .animate-bounce {
           animation: bounce 1.4s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .animate-in {
+          animation: slideInUp 0.3s ease-out;
         }
         @keyframes slideInUp {
           from {
@@ -286,35 +245,15 @@ export default function ChatWidget() {
             transform: translateY(0);
           }
         }
-        .animate-in {
-          animation: slideInUp 0.3s ease-out;
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes slide-in-from-bottom-4 {
-          from {
-            transform: translateY(16px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        .slide-in-from-bottom-4 {
-          animation: slide-in-from-bottom-4 0.3s ease-out;
-        }
         .fade-in {
           animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        .slide-in-from-bottom-4 {
+          animation: slideInUp 0.3s ease-out;
         }
       `}</style>
     </>
