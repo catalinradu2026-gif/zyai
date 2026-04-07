@@ -46,8 +46,9 @@ export async function getListings(filters: ListingFilters = {}) {
   }
 
   if (filters.category) {
-    // Ignore category filter for now - categories table doesn't exist yet
-    // TODO: Add categories table and foreign key
+    const { getCategoryIdBySlug } = await import('@/lib/constants/categories')
+    const categoryId = getCategoryIdBySlug(filters.category)
+    q = q.eq('category_id', categoryId)
   }
 
   const { data, error, count } = await q

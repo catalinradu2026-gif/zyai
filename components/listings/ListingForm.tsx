@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createListing } from '@/lib/actions/listings'
-import { CATEGORIES } from '@/lib/constants/categories'
+import { CATEGORIES, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { getFormFieldsForCategory } from '@/lib/constants/form-fields'
 import ImageUploader from './ImageUploader'
 import Button from '@/components/ui/Button'
@@ -63,7 +63,7 @@ export default function ListingForm() {
       await createListing({
         title: formData.title,
         description: formData.description,
-        categoryId: 1, // TODO: Map category slug to DB ID
+        categoryId: getCategoryIdBySlug(formData.categorySlug),
         city: formData.city,
         county: formData.county,
         price: formData.price ? Number(formData.price) : undefined,

@@ -37,6 +37,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // Try to fetch listings from database
   try {
     const result = await getListings({
+      category: category,
       city: sp.city,
       minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
       maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,

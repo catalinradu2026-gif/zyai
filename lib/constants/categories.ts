@@ -68,3 +68,13 @@ export function getAllCategories() {
     icon: cat.icon,
   }))
 }
+
+export function getCategoryIdBySlug(slug: string): number {
+  const categoryMap: Record<string, number> = {
+    joburi: 1,
+    imobiliare: 2,
+    auto: 3,
+    servicii: 4,
+  }
+  return categoryMap[slug] || 1
+}
