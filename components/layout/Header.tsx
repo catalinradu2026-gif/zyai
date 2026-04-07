@@ -20,12 +20,30 @@ export default async function Header() {
           <HeaderSearchBar />
         </div>
 
-        {/* Right Side - User + Menu */}
-        <div className="flex items-center gap-4">
-          {/* User Icon / Login */}
+        {/* Right Side */}
+        <div className="flex items-center gap-2">
+          {user && (
+            <>
+              <Link href="/cont/favorite" className="p-2 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-lg transition" title="Favorite">
+                ❤️
+              </Link>
+              <Link href="/cont/mesaje" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition" title="Mesaje">
+                💬
+              </Link>
+            </>
+          )}
+
+          <Link
+            href="/anunt/nou"
+            className="hidden sm:flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
+          >
+            + Postează
+          </Link>
+
+          {/* Cont dropdown */}
           <HeaderClient />
 
-          {/* Menu Button (•••) */}
+          {/* Categorii ••• */}
           <div className="relative">
             <HeaderMenu />
           </div>
