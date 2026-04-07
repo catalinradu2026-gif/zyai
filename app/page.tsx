@@ -1,153 +1,158 @@
 import Link from 'next/link'
-import { getAllCategories } from '@/lib/constants/categories'
 import Button from '@/components/ui/Button'
 
 export default function Home() {
-  const categories = getAllCategories()
-
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
-            Cu zyAI găsești ce vrei.
+      {/* Hero Section - Startup Style */}
+      <section className="pt-40 pb-24 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          {/* Main Headline */}
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            Găsești exact ce vrei.{' '}
+            <span className="text-blue-600">Fără să mai cauți.</span>
           </h1>
-          <p className="text-3xl md:text-4xl font-bold text-blue-600 mb-8">
-            Fără să mai cauți.
-          </p>
-          <p className="text-lg text-gray-600 mb-8">
-            Platformă de anunțuri pentru joburi, imobiliare, auto și servicii
-          </p>
 
-          {/* Hero Search Bar */}
-          <form className="mb-8" action="/marketplace/joburi" method="GET">
-            <div className="flex gap-2 max-w-2xl mx-auto">
-              <input
-                type="text"
-                name="q"
-                placeholder="Caută anunțuri (ex: apartament Cluj, job IT, masină)"
-                className="flex-1 px-6 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
-              />
-              <button type="submit" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition text-lg">
-                🔍 Caută
-              </button>
-            </div>
-          </form>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/anunt/nou">
-              <Button variant="primary" size="lg">
-                ➕ Postează anunț gratuit
-              </Button>
-            </Link>
-            <Link href="/marketplace/joburi">
-              <Button variant="secondary" size="lg">
-                Răsfoiește anunțuri
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Categories */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">Categorii populare</h2>
-          <p className="text-center text-gray-600 mb-12">
-            Alege categoria și găsește exact ce cauți
+          {/* Subheadline */}
+          <p className="text-xl md:text-2xl text-gray-600 mb-12 font-light">
+            Scrii ce vrei, iar AI-ul găsește cele mai bune anunțuri pentru tine.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/marketplace/${category.slug}`}
-                className="group"
-              >
-                <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-lg transition text-center border border-gray-100 hover:border-blue-300">
-                  <div className="text-5xl mb-4 group-hover:scale-110 transition">{category.icon}</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h3>
-                  <p className="text-sm text-gray-500">Explore listing</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Cum funcționează</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: 1,
-                title: 'Caută',
-                description: 'Descoperă anunțuri din categoria care te interesează',
-                icon: '🔍',
-              },
-              {
-                step: 2,
-                title: 'Contactează',
-                description: 'Comunică direct cu vânzătorul prin mesaj sau WhatsApp',
-                icon: '💬',
-              },
-              {
-                step: 3,
-                title: 'Încheia Deal',
-                description: 'Finalizează tranzacția în siguranță și ușor',
-                icon: '✓',
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl">{item.icon}</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600">{item.description}</p>
+          {/* AI Search Bar - Main Feature */}
+          <div className="mb-12">
+            <form className="flex gap-3 max-w-2xl mx-auto" action="/api/chat" method="POST">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Ex: iPhone 13 sub 2000 lei în Craiova"
+                  className="w-full px-6 py-4 text-lg bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition placeholder-gray-400"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <button
+                type="submit"
+                className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-2xl hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
+              >
+                Caută cu AI
+              </button>
+            </form>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-blue-600">
-        <div className="max-w-3xl mx-auto text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">Gata să postezi?</h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Postează-ți anunțul gratuit și ajung la mii de potențiali cumpărători
-          </p>
+            {/* Examples */}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <span className="text-gray-500 text-sm">Exemple:</span>
+              {[
+                'iPhone 13 ieftin Craiova',
+                'garsonieră de închiriat',
+                'BMW sub 10.000€',
+              ].map((example) => (
+                <button
+                  key={example}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition border border-gray-200"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
           <Link href="/anunt/nou">
-            <Button variant="secondary" size="lg">
-              Postează acum →
-            </Button>
+            <button className="px-8 py-3 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition inline-block">
+              Postează anunț gratuit →
+            </button>
           </Link>
         </div>
       </section>
 
-      {/* Safety Tips */}
-      <section className="py-16 px-4 bg-yellow-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">🛡️ Protejează-te</h2>
+      {/* Divider */}
+      <div className="h-px bg-gray-200 max-w-3xl mx-auto mb-24" />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* How It Works - 3 Steps */}
+      <section className="py-24 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-16 text-center">
+            Cum funcționează
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              '💰 Plătește după primire și verificare',
-              '📍 Intâlnește-te în locuri publice și sigure',
-              '🔍 Verifică bunul înainte de plată',
-            ].map((tip, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-lg border-l-4 border-yellow-400">
-                <p className="text-gray-900 font-medium">{tip}</p>
+              { step: '01', title: 'Scrii ce vrei', description: 'Descrie ce cauți în orice detaliu' },
+              { step: '02', title: 'AI caută pentru tine', description: 'Algoritm inteligent găsește cele mai relevante anunțuri' },
+              { step: '03', title: 'Primești rezultatele', description: 'Descoperă exact ce-ai căutat, rapid și ușor' },
+            ].map((item, idx) => (
+              <div key={idx} className="space-y-4">
+                <div className="text-4xl font-bold text-gray-200">{item.step}</div>
+                <h3 className="text-xl font-semibold text-gray-900">{item.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Divider */}
+      <div className="h-px bg-gray-200 max-w-3xl mx-auto mb-24" />
+
+      {/* Features Section */}
+      <section className="py-24 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-16 text-center">
+            De ce zyAI?
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: '⚡',
+                title: 'Căutare inteligentă',
+                description: 'Powered by AI - înțelege cu exactitate ce cauți',
+              },
+              {
+                icon: '🎯',
+                title: 'Rezultate relevante',
+                description: 'Doar anunțuri care se potrivesc exact cu cerințele tale',
+              },
+              {
+                icon: '✨',
+                title: 'Fără complicații',
+                description: 'Nicio filtru greu - AI face tot pentru tine',
+              },
+            ].map((feature, idx) => (
+              <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-blue-200 transition space-y-4">
+                <div className="text-4xl">{feature.icon}</div>
+                <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="h-px bg-gray-200 max-w-3xl mx-auto mb-24" />
+
+      {/* CTA Section - Final */}
+      <section className="py-24 px-4 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            Gata să postezi?
+          </h2>
+          <p className="text-lg text-gray-600 mb-12">
+            Postează anunțul tău gratuit și ajunge la mii de potențiali cumpărători în câteva secunde.
+          </p>
+
+          <Link href="/anunt/nou">
+            <button className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg hover:shadow-xl inline-block">
+              Postează acum gratuit →
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer - Minimal */}
+      <div className="h-px bg-gray-200 max-w-3xl mx-auto mt-24 mb-16" />
+      <footer className="py-12 px-4 text-center text-gray-500 text-sm">
+        <p>© 2026 zyAI. Built with AI for humans who value their time.</p>
+      </footer>
     </main>
   )
 }
