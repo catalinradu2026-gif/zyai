@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createSupabaseBrowserClient } from '@/lib/supabase'
+const supabase = createSupabaseBrowserClient()
 import Image from 'next/image'
 
 interface ImageUploaderProps {

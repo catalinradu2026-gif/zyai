@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { updateUserPhone } from '@/lib/actions/auth'
+import { updateProfile } from '@/lib/actions/auth'
 import { useRouter } from 'next/navigation'
 
 export default function SetupProfilePage() {
@@ -15,7 +15,7 @@ export default function SetupProfilePage() {
     setLoading(true)
     setError('')
 
-    const result = await updateUserPhone(phone)
+    const result = await updateProfile({ phone })
 
     if (result.error) {
       setError(result.error)

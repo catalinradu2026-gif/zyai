@@ -1,170 +1,54 @@
 'use server'
 
 import { createSupabaseServerClient } from '@/lib/supabase-server'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { v4 as uuidv4 } from 'uuid'
-import bcrypt from 'bcryptjs'
-
-export async function signUpWithPhone(phone: string, password: string) {
-  const supabase = await createSupabaseServerClient()
-
-  // Verifică dacă telefonul există deja
-  const { data: existing } = await supabase
-    .from('users_auth')
-    .select('id')
-    .eq('phone', phone)
-    .single()
-
-  if (existing) {
-    return { error: 'Acest număr de telefon este deja înregistrat' }
-  }
-
-  try {
-    const passwordHash = await bcrypt.hash(password, 10)
-    const userId = uuidv4()
-
-    // Creează user în auth
-    const { error: authError } = await supabase
-      .from('users_auth')
-      .insert({
-        id: userId,
-        phone,
-        password_hash: passwordHash,
-      })
-
-    if (authError) {
-      return { error: 'Eroare la înregistrare. Încercați din nou.' }
-    }
-
-    // Creează profil
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        phone,
-        full_name: phone,
-      })
-
-    if (profileError) {
-      await supabase.from('users_auth').delete().eq('id', userId)
-      return { error: 'Eroare la înregistrare. Încercați din nou.' }
-    }
-
-    // Setează cookie
-    const cookieStore = await cookies()
-    cookieStore.set('user_id', userId, {
-      httpOnly: false,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-    })
-
-    return { success: true, userId }
-  } catch (err) {
-    return { error: String(err) }
-  }
-}
-
-export async function signInWithPhone(phone: string, password: string) {
-  const supabase = await createSupabaseServerClient()
-
-  try {
-    const { data: user, error } = await supabase
-      .from('users_auth')
-      .select('id, password_hash')
-      .eq('phone', phone)
-      .single()
-
-    if (error || !user) {
-      return { error: 'Telefon sau parolă greșite' }
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password_hash || '')
-
-    if (!passwordMatch) {
-      return { error: 'Telefon sau parolă greșite' }
-    }
-
-    // Setează cookie
-    const cookieStore = await cookies()
-    cookieStore.set('user_id', user.id, {
-      httpOnly: false,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-    })
-
-    console.log('Login reușit! User ID:', user.id)
-    return { success: true, userId: user.id }
-  } catch (err) {
-    return { error: String(err) }
-  }
-}
 
 export async function signOut() {
-  const cookieStore = await cookies()
-  cookieStore.delete('user_id')
+  const supabase = await createSupabaseServerClient()
+  await supabase.auth.signOut()
   redirect('/')
 }
 
 export async function getUser() {
-  const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
-
-  if (!userId) {
-    return null
-  }
-
-  // Try Supabase first
   try {
     const supabase = await createSupabaseServerClient()
-    const { data } = await supabase
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return null
+
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('*')
-      .eq('id', userId)
+      .select('id, full_name, phone, city')
+      .eq('id', user.id)
       .single()
 
-    if (data) {
-      return {
-        id: data.id,
-        phone: data.phone,
-        full_name: data.full_name,
-      }
+    return {
+      id: user.id,
+      email: user.email || '',
+      full_name: profile?.full_name || user.user_metadata?.full_name || '',
+      phone: profile?.phone || '',
+      city: profile?.city || '',
     }
-  } catch (err) {
-    // Supabase not configured, return basic user
-  }
-
-  // Fallback: return basic user object with just ID
-  return {
-    id: userId,
-    phone: '',
-    full_name: 'User',
+  } catch {
+    return null
   }
 }
 
-export async function updateUserPhone(phone: string) {
+export async function updateProfile(data: {
+  full_name?: string
+  phone?: string
+  city?: string
+}) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
-
-    if (!userId) {
-      return { error: 'Nu ești autentificat' }
-    }
-
     const supabase = await createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { error: 'Nu ești autentificat' }
+
     const { error } = await supabase
       .from('profiles')
-      .update({ phone })
-      .eq('id', userId)
+      .update(data)
+      .eq('id', user.id)
 
-    if (error) {
-      return { error: 'Eroare la actualizare. Încercați din nou.' }
-    }
-
+    if (error) return { error: 'Eroare la salvare. Încearcă din nou.' }
     return { success: true }
   } catch (err) {
     return { error: String(err) }

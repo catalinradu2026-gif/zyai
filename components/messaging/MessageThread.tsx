@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { sendMessage } from '@/lib/actions/messages'
-import { supabase } from '@/lib/supabase'
+import { createSupabaseBrowserClient } from '@/lib/supabase'
+const supabase = createSupabaseBrowserClient()
 import Image from 'next/image'
 
 interface Message {

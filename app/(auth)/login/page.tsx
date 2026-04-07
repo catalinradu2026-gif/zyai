@@ -1,59 +1,67 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { createSupabaseBrowserClient } from '@/lib/supabase'
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [phone, setPhone] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  async function handlePhoneAuth() {
-    if (!phone || !password) {
-      setError('Completează telefon și parolă!')
+  async function handleSubmit() {
+    if (!email || !password) {
+      setError('Completează email și parola!')
       return
     }
-
     if (mode === 'register' && !fullName) {
       setError('Completează numele complet!')
+      return
+    }
+    if (password.length < 6) {
+      setError('Parola trebuie să aibă cel puțin 6 caractere!')
       return
     }
 
     setLoading(true)
     setError('')
+    setSuccess('')
 
-    try {
-      const response = await fetch('/api/auth/phone', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone,
-          fullName: mode === 'register' ? fullName : phone,
-          password,
-          mode,
-        }),
+    const supabase = createSupabaseBrowserClient()
+
+    if (mode === 'register') {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+        },
       })
 
-      const data = await response.json()
-
-      if (!response.ok || data.error) {
-        setError(data.error || 'Eroare la autentificare')
-      } else {
-        // Salvează în localStorage
-        localStorage.setItem('user_id', data.userId)
-        localStorage.setItem('user_phone', phone)
-        localStorage.setItem('user_name', data.fullName)
-        // Redirect to home
-        window.location.href = '/'
+      if (signUpError) {
+        setError(signUpError.message)
+        setLoading(false)
+        return
       }
-    } catch (err) {
-      setError('Eroare la conectare. Încercați din nou.')
-    } finally {
+
+      setSuccess('Cont creat! Verifică emailul pentru confirmare, sau conectează-te direct dacă confirmarea este dezactivată.')
       setLoading(false)
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        setError('Email sau parolă greșite!')
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/'
     }
   }
 
@@ -63,12 +71,12 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-4xl font-bold text-center mb-2">zyAI</h1>
           <p className="text-center text-gray-600 mb-2">Platformă de anunțuri</p>
-          <p className="text-center text-sm text-gray-500 mb-6">Autentificare cu telefon</p>
+          <p className="text-center text-sm text-gray-500 mb-6">Autentificare cu email</p>
 
           {/* Tabs */}
           <div className="flex gap-2 mb-8">
             <button
-              onClick={() => setMode('login')}
+              onClick={() => { setMode('login'); setError(''); setSuccess('') }}
               className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
                 mode === 'login'
                   ? 'bg-blue-600 text-white'
@@ -78,7 +86,7 @@ export default function LoginPage() {
               🔓 Conectare
             </button>
             <button
-              onClick={() => setMode('register')}
+              onClick={() => { setMode('register'); setError(''); setSuccess('') }}
               className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
                 mode === 'register'
                   ? 'bg-blue-600 text-white'
@@ -106,12 +114,12 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Număr de telefon</label>
+              <label className="block text-sm font-medium mb-2">Email</label>
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+40 723 123 456"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@exemplu.com"
                 disabled={loading}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
@@ -125,7 +133,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={loading}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
             </div>
@@ -136,17 +143,27 @@ export default function LoginPage() {
               </div>
             )}
 
+            {success && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800 text-sm">{success}</p>
+              </div>
+            )}
+
             <button
-              onClick={handlePhoneAuth}
+              onClick={handleSubmit}
               disabled={loading}
               className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
             >
-              {loading ? 'Se procesează...' : mode === 'login' ? '✓ Conectare' : '✓ Înregistrare'}
+              {loading
+                ? 'Se procesează...'
+                : mode === 'login'
+                ? '✓ Conectare'
+                : '✓ Creare cont'}
             </button>
           </div>
 
           <p className="text-center text-xs text-gray-500 mt-8">
-            Prin conectare, accepți <Link href="#" className="text-blue-600 hover:underline">termenii și condițiile</Link>
+            Prin conectare accepți termenii și condițiile platformei.
           </p>
         </div>
       </div>

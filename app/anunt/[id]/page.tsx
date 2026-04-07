@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import ImageGallery from '@/components/listings/ImageGallery'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
+import ShareButtons from '@/components/listings/ShareButtons'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -235,28 +236,7 @@ export default async function ListingDetailPage({ params }: Props) {
               {/* Share Card */}
               <div className="bg-white rounded-lg p-6 shadow-md">
                 <p className="text-xs text-gray-600 uppercase font-semibold mb-3">Distribuie</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://zyai.app'}/anunt/${id}`
-                      navigator.clipboard.writeText(url)
-                      alert('Link copiat!')
-                    }}
-                    className="flex-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition font-medium text-sm"
-                  >
-                    🔗 Copiere link
-                  </button>
-                  <a
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://zyai.app'}/anunt/${id}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition font-medium text-sm text-center"
-                  >
-                    f Facebook
-                  </a>
-                </div>
+                <ShareButtons listingId={id} listingTitle={listing.title} />
               </div>
 
               {/* Report Card */}
