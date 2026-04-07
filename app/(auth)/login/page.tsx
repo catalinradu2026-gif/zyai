@@ -4,27 +4,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleGoogleSignIn() {
-    setLoading(true)
-    setError('')
-    try {
-      // Will redirect to Google OAuth
-      window.location.href = '/api/auth/google'
-    } catch (err) {
-      setError('Eroare la conectare cu Google')
-      setLoading(false)
+  async function handlePhoneAuth() {
+    if (!phone || !password) {
+      setError('Completează telefon și parolă!')
+      return
     }
-  }
 
-  async function handlePhoneSignIn() {
-    if (!phone || !fullName || !password) {
-      setError('Completează toate câmpurile!')
+    if (mode === 'register' && !fullName) {
+      setError('Completează numele complet!')
       return
     }
 
@@ -35,23 +29,27 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, fullName, password }),
+        body: JSON.stringify({
+          phone,
+          fullName: mode === 'register' ? fullName : phone,
+          password,
+        }),
       })
 
       const data = await response.json()
 
-      if (data.error) {
-        setError(data.error)
+      if (!response.ok || data.error) {
+        setError(data.error || 'Eroare la autentificare')
       } else {
-        // Salvează user în localStorage
+        // Salvează în localStorage
         localStorage.setItem('user_id', data.userId)
         localStorage.setItem('user_phone', phone)
-        localStorage.setItem('user_name', fullName)
+        localStorage.setItem('user_name', data.fullName)
         // Redirect to home
         window.location.href = '/'
       }
     } catch (err) {
-      setError('Eroare la conectare')
+      setError('Eroare la conectare. Încercați din nou.')
     } finally {
       setLoading(false)
     }
@@ -63,41 +61,47 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-4xl font-bold text-center mb-2">zyAI</h1>
           <p className="text-center text-gray-600 mb-2">Platformă de anunțuri</p>
-          <p className="text-center text-sm text-gray-500 mb-8">One-click login, fără verificări</p>
+          <p className="text-center text-sm text-gray-500 mb-6">Autentificare cu telefon</p>
 
-          {/* Google Button */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full py-3 px-4 bg-white border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-800 font-medium rounded-lg transition flex items-center justify-center gap-3 disabled:opacity-50 mb-4"
-          >
-            <span className="text-2xl">🔵</span>
-            {loading ? 'Se conectează...' : 'Conectează cu Google'}
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">sau</span>
-            </div>
+          {/* Tabs */}
+          <div className="flex gap-2 mb-8">
+            <button
+              onClick={() => setMode('login')}
+              className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
+                mode === 'login'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              🔓 Conectare
+            </button>
+            <button
+              onClick={() => setMode('register')}
+              className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
+                mode === 'register'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              ✏️ Înregistrare
+            </button>
           </div>
 
-          {/* Phone Quick Registration */}
+          {/* Form */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Nume complet</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Catalin Radu"
-                disabled={loading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              />
-            </div>
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Nume complet</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Catalin Radu"
+                  disabled={loading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2">Număr de telefon</label>
@@ -131,11 +135,11 @@ export default function LoginPage() {
             )}
 
             <button
-              onClick={handlePhoneSignIn}
+              onClick={handlePhoneAuth}
               disabled={loading}
               className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
             >
-              {loading ? 'Se conectează...' : '✓ Conectare'}
+              {loading ? 'Se procesează...' : mode === 'login' ? '✓ Conectare' : '✓ Înregistrare'}
             </button>
           </div>
 

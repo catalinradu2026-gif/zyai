@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,18 +19,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate simple user ID
-    const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    // Generează user ID stabil bazat pe phone
+    // Hash-ul asigură că același number dă același ID
+    const hash = crypto.createHash('sha256')
+    hash.update(phone + ':' + (new Date().getFullYear() * 12 + new Date().getMonth()))
+    const userId = 'user_' + hash.digest('hex').substring(0, 16)
 
-    // Set httpOnly cookie with user ID
     const response = NextResponse.json({
       userId,
       phone,
       fullName,
     })
 
+    // Setează cookie non-httpOnly (accesibil din JS)
     response.cookies.set('user_id', userId, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -39,6 +43,9 @@ export async function POST(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Auth error:', error)
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Authentication failed' },
+      { status: 500 }
+    )
   }
 }
