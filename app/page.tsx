@@ -21,18 +21,19 @@ export default function Home() {
           </p>
 
           {/* Hero Search Bar */}
-          <div className="mb-8">
+          <form className="mb-8" action="/marketplace/joburi" method="GET">
             <div className="flex gap-2 max-w-2xl mx-auto">
               <input
                 type="text"
+                name="q"
                 placeholder="Caută anunțuri (ex: apartament Cluj, job IT, masină)"
                 className="flex-1 px-6 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
               />
-              <button className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition text-lg">
+              <button type="submit" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition text-lg">
                 🔍 Caută
               </button>
             </div>
-          </div>
+          </form>
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-4">
