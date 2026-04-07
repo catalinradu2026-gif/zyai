@@ -7,13 +7,24 @@ import { redirect } from 'next/navigation'
 export async function signUpUser(email: string, password: string, fullName: string) {
   try {
     const admin = createSupabaseAdmin()
-    const { error } = await admin.auth.admin.createUser({
+    const { data, error } = await admin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { full_name: fullName },
     })
     if (error) return { error: error.message }
+
+    // Creează profilul imediat
+    if (data.user) {
+      await admin.from('profiles').upsert({
+        id: data.user.id,
+        full_name: fullName,
+        phone: '',
+        city: '',
+      })
+    }
+
     return { success: true }
   } catch (err) {
     return { error: String(err) }
