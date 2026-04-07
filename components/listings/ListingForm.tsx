@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { createListing } from '@/lib/actions/listings'
 import { CATEGORIES } from '@/lib/constants/categories'
 import { getFormFieldsForCategory } from '@/lib/constants/form-fields'
+import { AUTO_BRANDS, AUTO_MODELS, CAROSERIE_TYPES, YEARS } from '@/lib/constants/subcategories'
+import { ROMANIAN_CITIES } from '@/lib/constants/cities'
 import ImageUploader from './ImageUploader'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -17,7 +19,6 @@ export default function ListingForm() {
   const [images, setImages] = useState<string[]>([])
 
   const [formData, setFormData] = useState<Record<string, string>>({
-    // Basic fields
     title: '',
     description: '',
     categoryId: '',
@@ -26,21 +27,20 @@ export default function ListingForm() {
     county: '',
     price: '',
     priceType: 'fix',
-    currency: 'RON',
+    currency: 'EUR',
+    // Auto fields
+    brand: '',
+    model: '',
+    fuelType: '',
+    year: '',
+    mileage: '',
+    bodyType: '',
+    sellerType: '',
   })
+  const [leasing, setLeasing] = useState(false)
 
-  // Get categories as flat list
-  const categories = Object.entries(CATEGORIES).flatMap(([slug, cat]) => [
-    { slug, id: slug, name: cat.name, isParent: true },
-    ...Object.entries(cat.subcategories).map(([subSlug, sub]) => ({
-      slug: subSlug,
-      id: `${slug}-${subSlug}`,
-      name: `  ${sub.name}`,
-      isParent: false,
-      parentSlug: slug,
-    })),
-  ])
-
+  const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto-')
+  const availableModels = formData.brand && AUTO_MODELS[formData.brand] ? AUTO_MODELS[formData.brand] : []
   const categorySpecificFields = getFormFieldsForCategory(formData.categorySlug)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -72,6 +72,14 @@ export default function ListingForm() {
         priceType: formData.priceType,
         currency: formData.currency,
         images,
+        brand: formData.brand || undefined,
+        model: formData.model || undefined,
+        fuelType: formData.fuelType || undefined,
+        year: formData.year || undefined,
+        mileage: formData.mileage || undefined,
+        bodyType: formData.bodyType || undefined,
+        sellerType: formData.sellerType || undefined,
+        leasing,
       })
       if (result?.error) {
         setError(result.error)
@@ -295,6 +303,146 @@ export default function ListingForm() {
                   </div>
                 )}
 
+                {/* AUTO FIELDS */}
+                {isAuto && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4">
+                    <h3 className="font-bold text-blue-900 text-lg">🚗 Detalii auto</h3>
+
+                    {/* Marca */}
+                    <div>
+                      <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'6px'}}>Marcă *</label>
+                      <select
+                        value={formData.brand}
+                        onChange={(e) => setFormData({...formData, brand: e.target.value, model: ''})}
+                        style={{color:'#000',backgroundColor:'#fff',width:'100%'}}
+                        className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Alege marca</option>
+                        {AUTO_BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Model */}
+                    <div>
+                      <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'6px'}}>Model *</label>
+                      {availableModels.length > 0 ? (
+                        <select
+                          value={formData.model}
+                          onChange={(e) => setFormData({...formData, model: e.target.value})}
+                          style={{color:'#000',backgroundColor:'#fff',width:'100%'}}
+                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Alege modelul</option>
+                          {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={formData.model}
+                          onChange={(e) => setFormData({...formData, model: e.target.value})}
+                          placeholder={formData.brand ? 'Scrie modelul...' : 'Alege mai întâi marca'}
+                          disabled={!formData.brand}
+                          style={{color:'#000',backgroundColor:'#fff',width:'100%'}}
+                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                        />
+                      )}
+                    </div>
+
+                    {/* Combustibil */}
+                    <div>
+                      <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'8px'}}>Combustibil</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          {val:'benzina', label:'⛽ Benzină'},
+                          {val:'diesel', label:'🛢️ Diesel'},
+                          {val:'hybrid', label:'🔋 Hybrid'},
+                          {val:'electric', label:'⚡ Electrică'},
+                          {val:'gpl', label:'🟢 GPL'},
+                          {val:'plug-in-hybrid', label:'🔌 Plug-in Hybrid'},
+                        ].map(f => (
+                          <button key={f.val} type="button"
+                            onClick={() => setFormData({...formData, fuelType: formData.fuelType === f.val ? '' : f.val})}
+                            className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                              formData.fuelType === f.val ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'
+                            }`}
+                          >{f.label}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* An + KM */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'6px'}}>📅 An fabricație</label>
+                        <select
+                          value={formData.year}
+                          onChange={(e) => setFormData({...formData, year: e.target.value})}
+                          style={{color:'#000',backgroundColor:'#fff',width:'100%'}}
+                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">An</option>
+                          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'6px'}}>🛣️ Kilometri</label>
+                        <input
+                          type="number"
+                          value={formData.mileage}
+                          onChange={(e) => setFormData({...formData, mileage: e.target.value})}
+                          placeholder="ex: 85000"
+                          style={{color:'#000',backgroundColor:'#fff',width:'100%'}}
+                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tip caroserie */}
+                    <div>
+                      <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'8px'}}>🚙 Tip caroserie</label>
+                      <div className="flex flex-wrap gap-2">
+                        {CAROSERIE_TYPES.map(c => (
+                          <button key={c} type="button"
+                            onClick={() => setFormData({...formData, bodyType: formData.bodyType === c ? '' : c})}
+                            className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                              formData.bodyType === c ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'
+                            }`}
+                          >{c}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Detalii vanzator */}
+                    <div>
+                      <label style={{color:'#000',fontWeight:600,fontSize:'13px',display:'block',marginBottom:'8px'}}>👤 Tip vânzător</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          {val:'privat', label:'👤 Privat'},
+                          {val:'firma', label:'🏢 Firmă'},
+                          {val:'dealer', label:'🤝 Dealer'},
+                        ].map(s => (
+                          <button key={s.val} type="button"
+                            onClick={() => setFormData({...formData, sellerType: formData.sellerType === s.val ? '' : s.val})}
+                            className={`px-4 py-2 rounded-lg border-2 text-sm font-semibold transition ${
+                              formData.sellerType === s.val ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'
+                            }`}
+                          >{s.label}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Leasing */}
+                    <div>
+                      <button type="button"
+                        onClick={() => setLeasing(!leasing)}
+                        className={`px-4 py-2 rounded-lg border-2 text-sm font-semibold transition ${
+                          leasing ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700'
+                        }`}
+                      >💳 {leasing ? '✓ ' : ''}Predare leasing</button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Location */}
                 <div>
                   <h3 className="text-lg font-bold mb-4">Locație</h3>
@@ -375,27 +523,19 @@ export default function ListingForm() {
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-lg font-bold mb-4">Previzualizare anunț</h3>
 
-                  <div className="space-y-3 text-sm">
-                    <p>
-                      <span className="font-medium text-gray-900">Titlu:</span> {formData.title}
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-900">Categorie:</span>{' '}
-                      {(CATEGORIES as Record<string, any>)[formData.categorySlug]?.name}
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-900">Locație:</span> {formData.city}{' '}
-                      {formData.county && `(${formData.county})`}
-                    </p>
-                    {formData.price && (
-                      <p>
-                        <span className="font-medium text-gray-900">Preț:</span> {formData.price}{' '}
-                        {formData.currency}
-                      </p>
-                    )}
-                    <p>
-                      <span className="font-medium text-gray-900">Imagini:</span> {images.length}/8
-                    </p>
+                  <div className="space-y-2 text-sm" style={{color:'#000'}}>
+                    <p><span className="font-semibold">Titlu:</span> {formData.title}</p>
+                    <p><span className="font-semibold">Categorie:</span> {(CATEGORIES as Record<string, any>)[formData.categorySlug]?.name || formData.categorySlug}</p>
+                    {isAuto && formData.brand && <p><span className="font-semibold">Marcă:</span> {formData.brand} {formData.model}</p>}
+                    {isAuto && formData.fuelType && <p><span className="font-semibold">Combustibil:</span> {formData.fuelType}</p>}
+                    {isAuto && formData.year && <p><span className="font-semibold">An:</span> {formData.year}</p>}
+                    {isAuto && formData.mileage && <p><span className="font-semibold">KM:</span> {Number(formData.mileage).toLocaleString()} km</p>}
+                    {isAuto && formData.bodyType && <p><span className="font-semibold">Caroserie:</span> {formData.bodyType}</p>}
+                    {isAuto && formData.sellerType && <p><span className="font-semibold">Vânzător:</span> {formData.sellerType}</p>}
+                    {isAuto && leasing && <p><span className="font-semibold">💳 Predare leasing</span></p>}
+                    <p><span className="font-semibold">Locație:</span> {formData.city} {formData.county && `(${formData.county})`}</p>
+                    {formData.price && <p><span className="font-semibold">Preț:</span> {formData.price} {formData.currency}</p>}
+                    <p><span className="font-semibold">Imagini:</span> {images.length}/8</p>
                   </div>
                 </div>
               </div>

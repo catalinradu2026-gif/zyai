@@ -25,29 +25,67 @@ export async function createListing(formData: {
   priceType: string
   currency: string
   images: string[]
+  // Auto-specific
+  brand?: string
+  model?: string
+  fuelType?: string
+  year?: string
+  mileage?: string
+  bodyType?: string
+  sellerType?: string
+  leasing?: boolean
 }) {
   const user = await getUser()
   if (!user?.id) return { error: 'Trebuie să fii autentificat' }
 
   const admin = createSupabaseAdmin()
 
-  const { data, error } = await admin
+  const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto-')
+
+  const metadata = isAuto ? {
+    brand: formData.brand || null,
+    model: formData.model || null,
+    fuelType: formData.fuelType || null,
+    year: formData.year || null,
+    mileage: formData.mileage || null,
+    bodyType: formData.bodyType || null,
+    sellerType: formData.sellerType || null,
+    leasing: formData.leasing || false,
+  } : null
+
+  // Try with metadata first
+  const insertData: any = {
+    user_id: user.id,
+    title: formData.title,
+    description: formData.description,
+    category_id: getCatId(formData.categorySlug),
+    city: formData.city,
+    county: formData.county || formData.city,
+    price: formData.price || null,
+    price_type: formData.priceType,
+    currency: formData.currency,
+    images: formData.images,
+    status: 'activ',
+  }
+
+  if (metadata) insertData.metadata = metadata
+
+  let { data, error } = await admin
     .from('listings')
-    .insert({
-      user_id: user.id,
-      title: formData.title,
-      description: formData.description,
-      category_id: getCatId(formData.categorySlug),
-      city: formData.city,
-      county: formData.county || formData.city,
-      price: formData.price || null,
-      price_type: formData.priceType,
-      currency: formData.currency,
-      images: formData.images,
-      status: 'activ',
-    })
+    .insert(insertData)
     .select('id')
     .single()
+
+  // If metadata column doesn't exist, retry without it
+  if (error && error.message.includes('metadata')) {
+    const { data: d2, error: e2 } = await admin
+      .from('listings')
+      .insert({ ...insertData, metadata: undefined })
+      .select('id')
+      .single()
+    data = d2
+    error = e2
+  }
 
   if (error) {
     console.error('createListing error:', error)
@@ -55,7 +93,7 @@ export async function createListing(formData: {
   }
 
   revalidatePath('/marketplace')
-  redirect(`/anunt/${data.id}`)
+  redirect(`/anunt/${data!.id}`)
 }
 
 export async function updateListing(
