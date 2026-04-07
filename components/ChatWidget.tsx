@@ -178,22 +178,20 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Bubble - Micro, Transparent, Glassmorphic */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-10 left-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 backdrop-blur-lg border border-white/30 ${
-          isOpen ? 'bg-blue-600/80' : 'bg-blue-500/70 hover:scale-110 animate-pulse'
-        } text-white text-3xl`}
-        title={isOpen ? 'Închide' : 'Deschide chat'}
+        className="fixed bottom-8 left-8 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 z-50 bg-white/20 backdrop-blur-xl border border-white/40 hover:bg-white/30 hover:scale-110 text-2xl text-gray-800"
+        title="zyAI Chat"
       >
-        {isOpen ? '✕' : '💬'}
+        💬
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-32 left-6 w-[420px] bg-white/70 backdrop-blur-lg rounded-2xl shadow-2xl flex flex-col h-[600px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-white/40">
+        <div className="fixed bottom-24 left-8 w-96 bg-white rounded-2xl shadow-2xl flex flex-col h-[500px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-gray-100">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600/90 to-blue-700/90 backdrop-blur-md text-white p-4 rounded-t-2xl border-b border-white/20">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-2xl border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">
@@ -217,7 +215,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/50 backdrop-blur-sm">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
@@ -226,7 +224,7 @@ export default function ChatWidget() {
                     className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm ${
                       msg.sender === 'user'
                         ? 'bg-blue-600 text-white rounded-br-none'
-                        : 'bg-gray-100/70 backdrop-blur-sm text-gray-900 rounded-bl-none border border-gray-200/50'
+                        : 'bg-gray-100 text-gray-900 rounded-bl-none border border-gray-200'
                     }`}
                   >
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
@@ -256,7 +254,7 @@ export default function ChatWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100/70 backdrop-blur-sm border border-gray-200/50 px-4 py-3 rounded-2xl rounded-bl-none">
+                <div className="bg-gray-100 border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
                   <div className="flex gap-2">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
                     <div
@@ -276,7 +274,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSend} className="p-4 border-t border-white/20 bg-white/40 backdrop-blur-lg rounded-b-2xl">
+          <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -284,7 +282,7 @@ export default function ChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ce cauți?"
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border border-white/40 bg-white/60 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/80 text-sm disabled:opacity-50 placeholder-gray-600 transition"
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
               />
               <button
                 type="submit"
