@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import FavoriteButton from '@/components/favorites/FavoriteButton'
 
 interface ListingCardProps {
   id: string
@@ -11,7 +10,6 @@ interface ListingCardProps {
   city: string
   images: string[]
   createdAt: string
-  userId?: string
 }
 
 export default function ListingCard({
@@ -23,7 +21,6 @@ export default function ListingCard({
   city,
   images,
   createdAt,
-  userId,
 }: ListingCardProps) {
   const firstImage = images?.[0]
   const formattedPrice =
@@ -45,42 +42,36 @@ export default function ListingCard({
         : `${diffDays} zile în urmă`
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-      {/* Image */}
-      <Link href={`/anunt/${id}`} className="relative w-full h-48 bg-gray-100 overflow-hidden flex-1">
+    <Link href={`/anunt/${id}`}>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition h-full">
+        {/* Image */}
         {firstImage ? (
-          <>
+          <div className="relative w-full h-48 bg-gray-100">
             <Image
               src={firstImage}
               alt={title}
               fill
               className="object-cover"
             />
-            {/* Favorite Button */}
-            <div className="absolute top-2 right-2 z-10">
-              <FavoriteButton listingId={id} userId={userId} />
-            </div>
-          </>
+          </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+          <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
             <span className="text-gray-400 text-4xl">📷</span>
           </div>
         )}
-      </Link>
 
-      {/* Content */}
-      <Link href={`/anunt/${id}`} className="p-4 flex-1 flex flex-col justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
-          {title}
-        </h3>
-        <div>
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
+            {title}
+          </h3>
           <p className="text-2xl font-bold text-green-600 mb-2">{formattedPrice}</p>
           <div className="flex justify-between text-sm text-gray-600">
             <span>📍 {city}</span>
             <span>{timeLabel}</span>
           </div>
         </div>
-      </Link>
-    </div>
+      </div>
+    </Link>
   )
 }
