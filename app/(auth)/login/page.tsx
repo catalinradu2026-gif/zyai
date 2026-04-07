@@ -33,6 +33,7 @@ export default function LoginPage() {
           phone,
           fullName: mode === 'register' ? fullName : phone,
           password,
+          mode,
         }),
       })
 
