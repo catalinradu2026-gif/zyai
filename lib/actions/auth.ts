@@ -50,6 +50,28 @@ export async function getUser() {
   }
 }
 
+export async function getEmailByPhone(phone: string) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('phone', phone)
+      .single()
+
+    if (!profile) return { error: 'Numărul de telefon nu a fost găsit' }
+
+    const admin = createSupabaseAdmin()
+    const { data: { user }, error } = await admin.auth.admin.getUserById(profile.id)
+
+    if (error || !user?.email) return { error: 'Cont negăsit pentru acest număr' }
+
+    return { email: user.email }
+  } catch (err) {
+    return { error: 'Eroare la căutare' }
+  }
+}
+
 export async function updateProfile(data: {
   full_name?: string
   phone?: string

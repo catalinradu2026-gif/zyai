@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase'
-import { signUpUser, updateProfile } from '@/lib/actions/auth'
+import { signUpUser, updateProfile, getEmailByPhone } from '@/lib/actions/auth'
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('') // email sau telefon
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -18,8 +18,8 @@ export default function LoginPage() {
     setError('')
     setSuccess('')
 
-    if (!email || !password) {
-      setError('Completează email și parola!')
+    if (!identifier || !password) {
+      setError('Completează email/telefon și parola!')
       return
     }
     if (mode === 'register' && !fullName) {
@@ -37,7 +37,13 @@ export default function LoginPage() {
       const supabase = createSupabaseBrowserClient()
 
       if (mode === 'register') {
-        const result = await signUpUser(email, password, fullName)
+        // La register, identifier trebuie să fie email
+        if (!identifier.includes('@')) {
+          setError('La înregistrare folosește adresa de email!')
+          setLoading(false)
+          return
+        }
+        const result = await signUpUser(identifier, password, fullName)
         if (result.error) {
           setError(result.error)
           setLoading(false)
@@ -45,7 +51,7 @@ export default function LoginPage() {
         }
 
         // Auto-login
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: identifier, password })
         if (signInError) {
           setSuccess('Cont creat! Conectează-te acum.')
           setLoading(false)
@@ -59,7 +65,19 @@ export default function LoginPage() {
 
         window.location.href = '/'
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        // Detectează dacă e email sau telefon
+        let loginEmail = identifier
+        if (!identifier.includes('@')) {
+          const result = await getEmailByPhone(identifier)
+          if (result.error) {
+            setError(result.error)
+            setLoading(false)
+            return
+          }
+          loginEmail = result.email!
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password })
 
         if (signInError) {
           if (signInError.message.toLowerCase().includes('email not confirmed')) {
@@ -124,12 +142,14 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email *</label>
+              <label className="block text-sm font-medium mb-2">
+                {mode === 'register' ? 'Email *' : 'Email sau telefon *'}
+              </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@exemplu.com"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder={mode === 'register' ? 'email@exemplu.com' : 'email@exemplu.com sau +40723...'}
                 disabled={loading}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
