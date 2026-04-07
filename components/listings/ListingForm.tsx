@@ -60,19 +60,21 @@ export default function ListingForm() {
     setError('')
 
     try {
-      await createListing({
+      const result = await createListing({
         title: formData.title,
         description: formData.description,
         categoryId: getCategoryIdBySlug(formData.categorySlug),
         city: formData.city,
-        county: formData.county,
+        county: formData.county || formData.city,
         price: formData.price ? Number(formData.price) : undefined,
         priceType: formData.priceType,
         currency: formData.currency,
         images,
-        // Pass additional category-specific data in description for now
-        // In production, this should be stored in a separate JSON column
       })
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+      }
     } catch (err: any) {
       if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
       setError('Eroare la postare. Încearcă din nou.')
