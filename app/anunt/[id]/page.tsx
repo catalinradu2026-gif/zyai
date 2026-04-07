@@ -64,7 +64,7 @@ export default async function ListingDetailPage({ params }: Props) {
               {/* Thumbnails */}
               {listing.images && listing.images.length > 1 && (
                 <div className="p-4 grid grid-cols-6 gap-2">
-                  {listing.images.slice(0, 6).map((img, i) => (
+                  {listing.images.slice(0, 6).map((img: string, i: number) => (
                     <Image
                       key={i}
                       src={img}

@@ -40,7 +40,7 @@ export default function ImageUploader({
           newUrls.push(url)
         } catch (error) {
           console.error('Upload error:', error)
-          alert('Eroare la upload imagine')
+          // Nu bloca formularul dacă imagini nu se uploadează
         }
       }
 

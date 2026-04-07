@@ -18,9 +18,7 @@ export async function getListings(filters: ListingFilters = {}) {
     .from('listings')
     .select(
       `
-      id, title, price, price_type, currency, city, images, created_at, status,
-      categories!inner(slug, name),
-      profiles!inner(id, full_name, avatar_url)
+      id, title, price, price_type, currency, city, images, created_at, status
     `,
       { count: 'exact' }
     )
@@ -48,7 +46,8 @@ export async function getListings(filters: ListingFilters = {}) {
   }
 
   if (filters.category) {
-    q = q.eq('categories.slug', filters.category)
+    // Ignore category filter for now - categories table doesn't exist yet
+    // TODO: Add categories table and foreign key
   }
 
   const { data, error, count } = await q
@@ -66,13 +65,7 @@ export async function getListing(id: string) {
 
   const { data, error } = await supabase
     .from('listings')
-    .select(
-      `
-      *,
-      categories(slug, name),
-      profiles(id, full_name, phone, avatar_url, city)
-    `
-    )
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -95,7 +88,7 @@ export async function getUserListings(userId: string) {
 
   const { data, error } = await supabase
     .from('listings')
-    .select('*, categories(slug, name)')
+    .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 

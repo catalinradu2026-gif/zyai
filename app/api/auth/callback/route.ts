@@ -25,8 +25,22 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Check if user has phone number
+      if (data.user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('phone')
+          .eq('id', data.user.id)
+          .single()
+
+        // If no phone, redirect to setup profile
+        if (!profile?.phone) {
+          return NextResponse.redirect(new URL('/setup-profile', request.url))
+        }
+      }
+
       return NextResponse.redirect(new URL(next, request.url))
     }
   }

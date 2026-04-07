@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { getUser } from '@/lib/actions/auth'
 import { signOut } from '@/lib/actions/auth'
+import HeaderClient from './HeaderClient'
 
 export default async function Header() {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
@@ -32,7 +32,7 @@ export default async function Header() {
                 ➕ Postează
               </Link>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">{user.email}</span>
+                <span className="text-sm text-gray-600">{user.phone}</span>
                 <Link href="/cont/anunturi" className="text-gray-700 hover:text-gray-900">
                   Cont
                 </Link>
@@ -47,12 +47,7 @@ export default async function Header() {
               </div>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Conectare
-            </Link>
+            <HeaderClient />
           )}
         </div>
       </div>

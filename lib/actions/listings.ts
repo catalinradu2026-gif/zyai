@@ -1,8 +1,16 @@
 'use server'
 
-import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { getUser } from './auth'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
+
+// Admin client - bypasses RLS
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+)
 
 export async function createListing(formData: {
   title: string
@@ -15,14 +23,13 @@ export async function createListing(formData: {
   currency: string
   images: string[]
 }) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
 
   if (!user) {
     return { error: 'Trebuie să fii autentificat' }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('listings')
     .insert({
       user_id: user.id,
@@ -62,12 +69,13 @@ export async function updateListing(
     images: string[]
   }
 ) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
 
   if (!user) {
     return { error: 'Neautorizat' }
   }
+
+  const supabase = await createSupabaseServerClient()
 
   const { error } = await supabase
     .from('listings')
@@ -95,12 +103,13 @@ export async function updateListing(
 }
 
 export async function deleteListing(id: string) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
 
   if (!user) {
     return { error: 'Neautorizat' }
   }
+
+  const supabase = await createSupabaseServerClient()
 
   const { error } = await supabase
     .from('listings')
