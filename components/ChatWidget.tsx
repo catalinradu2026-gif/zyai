@@ -121,11 +121,11 @@ export default function ChatWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-40 ${
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-40 backdrop-blur-md border border-white/20 ${
           isOpen
-            ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-            : 'bg-gradient-to-br from-blue-500 to-blue-600 hover:scale-110 animate-pulse'
-        } text-white text-2xl`}
+            ? 'bg-blue-600/80'
+            : 'bg-blue-500/70 hover:scale-110 animate-pulse'
+        } text-white text-xl`}
         title={isOpen ? 'Închide' : 'Deschide chat'}
       >
         {isOpen ? '✕' : '💬'}
@@ -133,14 +133,14 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-2xl shadow-2xl flex flex-col h-96 z-40 animate-in fade-in slide-in-from-bottom-4 border border-gray-100">
+        <div className="fixed bottom-24 right-6 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col h-96 z-40 animate-in fade-in slide-in-from-bottom-4 border border-white/30">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-600/90 to-blue-700/90 backdrop-blur-md text-white p-5 rounded-t-2xl border-b border-white/10">
             <div className="flex items-center gap-3 mb-1">
               <span className="text-2xl">🔍</span>
               <h3 className="font-bold text-lg">zyAI Search</h3>
             </div>
-            <p className="text-xs text-blue-100">Găseste ce vrei instant</p>
+            <p className="text-xs text-blue-50">Găseste ce vrei instant</p>
           </div>
 
           {/* Messages */}
@@ -194,7 +194,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+          <form onSubmit={handleSend} className="p-4 border-t border-white/10 bg-white/50 backdrop-blur-md rounded-b-2xl">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -202,12 +202,12 @@ export default function ChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ce cauți?"
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-white/30 bg-white/80 rounded-full focus:outline-none focus:border-blue-400 focus:bg-white text-sm disabled:opacity-50 placeholder-gray-500"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="px-4 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition disabled:opacity-50 font-medium"
+                className="px-4 py-2.5 bg-blue-600/90 hover:bg-blue-700/90 text-white rounded-full transition disabled:opacity-50 font-medium backdrop-blur-sm"
               >
                 🔍
               </button>
@@ -254,7 +254,8 @@ export default function ChatWidget() {
         }
         .slide-in-from-bottom-4 {
           animation: slideInUp 0.3s ease-out;
-        }
+404: NOT_FOUND Code: DEPLOYMENT_NOT_FOUND ID: fra1::jvvlr-1775527566947-e9461f720bde
+This deployment cannot be found. For more information and troubleshooting, see our documentation.        }
       `}</style>
     </>
   )
