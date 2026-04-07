@@ -1,7 +1,9 @@
 import { getListings } from '@/lib/queries/listings'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
+import CategorySubsBar from '@/components/listings/CategorySubsBar'
 import { getCategoryBySlug } from '@/lib/constants/categories'
+import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
@@ -51,17 +53,26 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     error = err
   }
 
+  const hasSubs = SUBCATEGORIES[category] && SUBCATEGORIES[category].length > 0
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">
           {categoryData.icon} {categoryData.name}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-sm">
           {count} anunț{count !== 1 ? 'uri' : ''} disponibil{count !== 1 ? 'e' : ''}
         </p>
       </div>
+
+      {/* Subcategories bar */}
+      {hasSubs && (
+        <div className="mb-6">
+          <CategorySubsBar category={category} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters Sidebar */}
