@@ -32,6 +32,10 @@ export default async function ListingDetailPage({ params }: Props) {
     notFound()
   }
 
+  // profiles poate fi array sau obiect în funcție de join
+  const profileRaw = listing.profiles as any
+  const profile = Array.isArray(profileRaw) ? profileRaw[0] : profileRaw
+
   const formattedPrice =
     listing.price && listing.price_type !== 'gratuit'
       ? `${listing.price.toLocaleString('ro-RO')} ${listing.currency}`
@@ -55,7 +59,7 @@ export default async function ListingDetailPage({ params }: Props) {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href={listing.categories?.slug ? `/marketplace/${listing.categories.slug}` : '/'} className="text-blue-600 hover:text-blue-700 font-medium">
+          <Link href="/" className="text-blue-600 hover:text-blue-700 font-medium">
             ← Înapoi
           </Link>
           <span className="text-gray-400">|</span>
@@ -84,7 +88,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Categorie</p>
-                  <p className="text-lg font-semibold text-gray-900">{listing.categories?.name || 'Nespecificată'}</p>
+                  <p className="text-lg font-semibold text-gray-900">{'Nespecificată'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Vizualizări</p>
@@ -162,22 +166,22 @@ export default async function ListingDetailPage({ params }: Props) {
                 <div className="pb-4 border-b border-gray-200">
                   <p className="text-xs text-gray-600 uppercase font-semibold mb-3">Vânzător</p>
                   <div className="flex items-center gap-3">
-                    {listing.profiles?.avatar_url ? (
+                    {profile?.avatar_url ? (
                       <Image
-                        src={listing.profiles.avatar_url}
-                        alt={listing.profiles.full_name || 'Seller'}
+                        src={profile?.avatar_url}
+                        alt={profile?.full_name || 'Seller'}
                         width={48}
                         height={48}
                         className="rounded-full"
                       />
                     ) : (
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                        {(listing.profiles?.full_name || 'U')[0].toUpperCase()}
+                        {(profile?.full_name || 'U')[0].toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{listing.profiles?.full_name || 'Utilizator'}</p>
-                      <p className="text-sm text-gray-600">📍 {listing.profiles?.city || listing.city}</p>
+                      <p className="font-semibold text-gray-900">{profile?.full_name || 'Utilizator'}</p>
+                      <p className="text-sm text-gray-600">📍 {profile?.city || listing.city}</p>
                     </div>
                   </div>
                 </div>
@@ -205,9 +209,9 @@ export default async function ListingDetailPage({ params }: Props) {
                         Trimite mesaj
                       </Button>
                     </Link>
-                    {listing.profiles?.phone && (
+                    {profile?.phone && (
                       <a
-                        href={`https://wa.me/${listing.profiles.phone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
+                        href={`https://wa.me/${profile?.phone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full block"

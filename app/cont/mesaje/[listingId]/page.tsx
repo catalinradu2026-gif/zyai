@@ -66,8 +66,8 @@ export default async function ConversationPage({ params, searchParams }: Props) 
           listingId={listingId}
           currentUserId={user.id}
           otherUserId={otherUserId}
-          otherUserName={listing.profiles?.full_name || 'Utilizator'}
-          otherUserAvatar={listing.profiles?.avatar_url}
+          otherUserName={(listing.profiles as any)?.full_name || (Array.isArray(listing.profiles) ? (listing.profiles as any[])[0]?.full_name : null) || 'Utilizator'}
+          otherUserAvatar={(listing.profiles as any)?.avatar_url || (Array.isArray(listing.profiles) ? (listing.profiles as any[])[0]?.avatar_url : null)}
           initialMessages={messages || []}
         />
       </div>

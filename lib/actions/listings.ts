@@ -6,6 +6,14 @@ import { getUser } from './auth'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 
+const CATEGORY_IDS: Record<string, number> = {
+  joburi: 1, imobiliare: 2, auto: 3, servicii: 4,
+}
+
+function getCatId(slug: string) {
+  return CATEGORY_IDS[slug] || CATEGORY_IDS[Object.keys(CATEGORY_IDS).find(k => slug.startsWith(k)) || ''] || 1
+}
+
 export async function createListing(formData: {
   title: string
   description: string
@@ -29,8 +37,7 @@ export async function createListing(formData: {
       user_id: user.id,
       title: formData.title,
       description: formData.description,
-      category_slug: formData.categorySlug,
-      category_name: formData.categoryName,
+      category_id: getCatId(formData.categorySlug),
       city: formData.city,
       county: formData.county || formData.city,
       price: formData.price || null,
