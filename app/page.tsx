@@ -10,10 +10,13 @@ export default function Home() {
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
-            Găsește ceea ce cauți
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
+            Cu zyAI găsești ce vrei.
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-3xl md:text-4xl font-bold text-blue-600 mb-8">
+            Fără să mai cauți.
+          </p>
+          <p className="text-lg text-gray-600 mb-8">
             Platformă de anunțuri pentru joburi, imobiliare, auto și servicii
           </p>
 
