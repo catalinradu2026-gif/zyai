@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createListing } from '@/lib/actions/listings'
-import { isRedirectError } from 'next/dist/client/components/redirect'
 import { CATEGORIES, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { getFormFieldsForCategory } from '@/lib/constants/form-fields'
 import ImageUploader from './ImageUploader'
@@ -74,8 +73,8 @@ export default function ListingForm() {
         // Pass additional category-specific data in description for now
         // In production, this should be stored in a separate JSON column
       })
-    } catch (err) {
-      if (isRedirectError(err)) throw err
+    } catch (err: any) {
+      if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
       setError('Eroare la postare. Încearcă din nou.')
       setLoading(false)
     }
