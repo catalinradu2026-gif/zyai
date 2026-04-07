@@ -1,13 +1,11 @@
 import { getListings } from '@/lib/queries/listings'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
-import CategorySubsBar from '@/components/listings/CategorySubsBar'
 import { getCategoryBySlug } from '@/lib/constants/categories'
 import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
 type Props = {
@@ -18,25 +16,21 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { category } = await params
   const cat = getCategoryBySlug(category)
-  return {
-    title: cat ? `${cat.name} - zyAI` : 'zyAI',
-  }
+  return { title: cat ? `${cat.name} - zyAI` : 'zyAI' }
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { category } = await params
   const sp = await searchParams
+  const activeSub = sp.sub || ''
 
   const categoryData = getCategoryBySlug(category)
-  if (!categoryData) {
-    notFound()
-  }
+  if (!categoryData) notFound()
 
   let listings: any[] = []
-  let count: number = 0
+  let count = 0
   let error: any = null
 
-  // Try to fetch listings from database
   try {
     const result = await getListings({
       city: sp.city,
@@ -49,81 +43,100 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     count = result.count || 0
     error = result.error
   } catch (err) {
-    console.error('Error fetching listings:', err)
     error = err
   }
 
-  const hasSubs = SUBCATEGORIES[category] && SUBCATEGORIES[category].length > 0
+  const subs = SUBCATEGORIES[category] || []
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8">
+    <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 16px' }}>
+
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">
-          {categoryData.icon} {categoryData.name}
+      <div style={{ marginBottom: '16px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#000', marginBottom: '4px' }}>
+          {categoryData!.icon} {categoryData!.name}
         </h1>
-        <p className="text-gray-600 text-sm">
+        <p style={{ color: '#555', fontSize: '14px' }}>
           {count} anunț{count !== 1 ? 'uri' : ''} disponibil{count !== 1 ? 'e' : ''}
         </p>
       </div>
 
-      {/* Subcategories bar */}
-      {hasSubs && (
-        <div className="mb-6">
-          <CategorySubsBar category={category} />
+      {/* SUBCATEGORIES BAR */}
+      {subs.length > 0 && (
+        <div style={{ overflowX: 'auto', marginBottom: '24px', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', minWidth: 'max-content' }}>
+            {/* Toate */}
+            <Link
+              href={`/marketplace/${category}`}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                padding: '12px 16px', borderRadius: '12px', textDecoration: 'none',
+                border: `2px solid ${!activeSub ? '#3b82f6' : '#e5e7eb'}`,
+                backgroundColor: !activeSub ? '#eff6ff' : '#fff',
+                color: !activeSub ? '#1d4ed8' : '#374151',
+                whiteSpace: 'nowrap', transition: 'all 0.15s',
+              }}
+            >
+              <span style={{ fontSize: '24px' }}>🔍</span>
+              <span style={{ fontSize: '12px', fontWeight: 700 }}>Toate</span>
+            </Link>
+
+            {subs.map((sub) => (
+              <Link
+                key={sub.slug}
+                href={`/marketplace/${category}?sub=${sub.slug}`}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                  padding: '12px 16px', borderRadius: '12px', textDecoration: 'none',
+                  border: `2px solid ${activeSub === sub.slug ? '#3b82f6' : '#e5e7eb'}`,
+                  backgroundColor: activeSub === sub.slug ? '#eff6ff' : '#fff',
+                  color: activeSub === sub.slug ? '#1d4ed8' : '#374151',
+                  whiteSpace: 'nowrap', transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: '24px' }}>{sub.icon}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>{sub.name}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1">
+      {/* GRID: Filters + Listings */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '24px' }}>
+
+        {/* Filters */}
+        <div>
           <ListingFilters category={category} />
         </div>
 
-        {/* Main Content */}
-        <div className="lg:col-span-3">
+        {/* Listings */}
+        <div>
           {error ? (
-            // Error State
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
-              <span className="text-4xl mb-4 block">⚠️</span>
-              <h2 className="text-2xl font-bold text-yellow-900 mb-2">
-                Database is not connected
-              </h2>
-              <p className="text-yellow-800 mb-6">
-                Use the chat bubble 💬 to search for listings instead!
-              </p>
-              <p className="text-sm text-yellow-700">
-                Or try: <span className="font-mono bg-yellow-100 px-2 py-1 rounded">apartament cluj</span>
-              </p>
+            <div style={{ background: '#fefce8', border: '2px solid #fde047', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
+              <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>⚠️</span>
+              <h2 style={{ color: '#713f12', fontSize: '20px', fontWeight: 700 }}>Baza de date nu e conectată</h2>
+              <p style={{ color: '#92400e', marginTop: '8px' }}>Folosește chat-ul 💬 pentru a căuta anunțuri!</p>
             </div>
           ) : listings && listings.length > 0 ? (
-            // Listings Grid
             <ListingGrid listings={listings} />
           ) : (
-            // Empty State
-            <div className="bg-gray-50 rounded-lg p-12 text-center border border-gray-200">
-              <span className="text-5xl mb-4 block">📭</span>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Nu sunt anunțuri</h2>
-              <p className="text-gray-600 mb-6">
-                Nu am găsit anunțuri în categoria "{categoryData.name}" cu filtrele tale.
+            <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '48px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+              <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📭</span>
+              <h2 style={{ color: '#111', fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>Nu sunt anunțuri</h2>
+              <p style={{ color: '#555', marginBottom: '24px' }}>
+                Nu am găsit anunțuri în {categoryData!.name}{activeSub ? ` › ${subs.find(s => s.slug === activeSub)?.name}` : ''}.
               </p>
-              <div className="flex gap-4 justify-center flex-wrap">
-                <Link
-                  href={`/marketplace/${category}`}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Link href={`/marketplace/${category}`}
+                  style={{ padding: '8px 24px', background: '#2563eb', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
                   Șterge filtrele
                 </Link>
-                <Link
-                  href="/anunt/nou"
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
+                <Link href="/anunt/nou"
+                  style={{ padding: '8px 24px', background: '#16a34a', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
                   ➕ Postează anunț
                 </Link>
               </div>
-              <p className="text-sm text-gray-500 mt-6">
-                💡 Sau folosește chat-ul pentru a căuta ce vrei
-              </p>
             </div>
           )}
         </div>
