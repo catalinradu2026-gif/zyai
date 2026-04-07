@@ -129,20 +129,20 @@ export default function LoginPage() {
           <div className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium mb-2">Nume complet *</label>
+                <label className="block text-sm font-medium mb-2 text-black">Nume complet *</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Ion Popescu"
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 text-black">
                 {mode === 'register' ? 'Email *' : 'Email sau telefon *'}
               </label>
               <input
@@ -157,21 +157,21 @@ export default function LoginPage() {
 
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium mb-2">Număr de telefon</label>
+                <label className="block text-sm font-medium mb-2 text-black">Număr de telefon</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+40 723 123 456"
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
                 <p className="text-xs text-gray-400 mt-1">Opțional — pentru contact direct</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Parolă *</label>
+              <label className="block text-sm font-medium mb-2 text-black">Parolă *</label>
               <input
                 type="password"
                 value={password}

@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nume complet</label>
+            <label className="block text-sm font-medium mb-2 text-black">Nume complet</label>
             <input
               type="text"
               value={formData.fullName}
@@ -96,29 +96,29 @@ export default function ProfilePage() {
                 setFormData({ ...formData, fullName: e.target.value })
               }
               placeholder="Nume..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Telefon</label>
+            <label className="block text-sm font-medium mb-2 text-black">Telefon</label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="0760..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Oraș</label>
+            <label className="block text-sm font-medium mb-2 text-black">Oraș</label>
             <input
               type="text"
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               placeholder="București..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

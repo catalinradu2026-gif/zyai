@@ -23,9 +23,6 @@ export default async function Header() {
         <div className="flex items-center gap-2">
           {user && (
             <>
-              <Link href="/cont/favorite" className="p-2 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-lg transition" title="Favorite">
-                ❤️
-              </Link>
               <Link href="/cont/mesaje" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition" title="Mesaje">
                 💬
               </Link>

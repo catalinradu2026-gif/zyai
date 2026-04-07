@@ -29,28 +29,28 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
 
   return (
     <div className="bg-white rounded-lg p-4 h-fit sticky top-24 shadow-sm">
-      <h3 className="font-semibold mb-4 text-lg">Filtre</h3>
+      <h3 className="font-semibold mb-4 text-lg text-black">Filtre</h3>
 
       <div className="space-y-4">
         {/* Search */}
         <div>
-          <label className="block text-sm font-medium mb-2">Cauta</label>
+          <label className="block text-sm font-medium mb-2 text-black">Cauta</label>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cauta..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         {/* City */}
         <div>
-          <label className="block text-sm font-medium mb-2">Oras</label>
+          <label className="block text-sm font-medium mb-2 text-black">Oras</label>
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Toate orasele</option>
             {ROMANIAN_CITIES.map((c) => (
@@ -63,21 +63,21 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
 
         {/* Price Range */}
         <div>
-          <label className="block text-sm font-medium mb-2">Pret (RON)</label>
+          <label className="block text-sm font-medium mb-2 text-black">Pret (RON)</label>
           <div className="flex gap-2">
             <input
               type="number"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
               placeholder="Min"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="number"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
               placeholder="Max"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
