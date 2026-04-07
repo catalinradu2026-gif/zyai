@@ -5,6 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import Button from '@/components/ui/Button'
+import DeleteListingButton from '@/components/listings/DeleteListingButton'
+import ImageGallery from '@/components/listings/ImageGallery'
+import FavoriteButton from '@/components/favorites/FavoriteButton'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -51,7 +54,7 @@ export default async function ListingDetailPage({ params }: Props) {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/marketplace/joburi" className="text-blue-600 hover:text-blue-700 font-medium">
+          <Link href={listing.categories?.slug ? `/marketplace/${listing.categories.slug}` : '/'} className="text-blue-600 hover:text-blue-700 font-medium">
             ← Înapoi
           </Link>
           <span className="text-gray-400">|</span>
@@ -64,50 +67,8 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Image Gallery */}
-            <div className="bg-white rounded-lg overflow-hidden shadow-md mb-6">
-              {/* Main Image */}
-              {listing.images && listing.images.length > 0 ? (
-                <div className="relative w-full h-96 bg-gray-100">
-                  <Image
-                    src={listing.images[0]}
-                    alt={listing.title}
-                    fill
-                    priority
-                    className="object-cover"
-                  />
-                  {/* Image Count Badge */}
-                  {listing.images.length > 1 && (
-                    <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      1 / {listing.images.length}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400 text-6xl">📷</span>
-                </div>
-              )}
-
-              {/* Thumbnail Gallery */}
-              {listing.images && listing.images.length > 1 && (
-                <div className="p-4 bg-gray-100">
-                  <div className="grid grid-cols-6 gap-2 max-h-24 overflow-y-auto">
-                    {listing.images.slice(0, 12).map((img: string, i: number) => (
-                      <div
-                        key={i}
-                        className="relative w-full h-20 bg-gray-200 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 transition cursor-pointer"
-                      >
-                        <Image
-                          src={img}
-                          alt={`thumbnail-${i}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="bg-white rounded-lg overflow-hidden shadow-md mb-6 p-6">
+              <ImageGallery images={listing.images || []} title={listing.title} />
             </div>
 
             {/* Listing Info */}
@@ -176,6 +137,11 @@ export default async function ListingDetailPage({ params }: Props) {
           <div>
             {/* Price Card - Sticky */}
             <div className="sticky top-24 space-y-4">
+              {/* Favorite Button */}
+              <div className="flex gap-2">
+                <FavoriteButton listingId={id} userId={user?.id} showLabel />
+              </div>
+
               {/* Price */}
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-lg">
                 <p className="text-sm text-blue-100 mb-2">PREȚ</p>
@@ -228,21 +194,12 @@ export default async function ListingDetailPage({ params }: Props) {
                           ✏️ Editează
                         </Button>
                       </Link>
-                      <button
-                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
-                        onClick={() => {
-                          if (confirm('Sigur vrei să ștergi anunțul?')) {
-                            // TODO: Implement delete
-                          }
-                        }}
-                      >
-                        🗑️ Șterge
-                      </button>
+                      <DeleteListingButton id={id} />
                     </div>
                   </div>
                 ) : canContact ? (
                   <div className="space-y-2 pt-2">
-                    <Link href={`/cont/mesaje/${listing.id}`} className="w-full block">
+                    <Link href={`/cont/mesaje/${listing.id}?user=${listing.user_id}`} className="w-full block">
                       <Button variant="primary" size="lg" fullWidth icon="💬">
                         Trimite mesaj
                       </Button>

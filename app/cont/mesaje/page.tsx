@@ -37,7 +37,7 @@ export default async function MessagesPage() {
             return (
               <Link
                 key={conv.id}
-                href={`/cont/mesaje/${conv.listing_id}`}
+                href={`/cont/mesaje/${conv.listing_id}?user=${otherUser?.id}`}
                 className={`
                   block p-4 rounded-lg border transition
                   ${
@@ -90,7 +90,7 @@ export default async function MessagesPage() {
             Niciun mesaj încă
           </p>
           <Link
-            href="/marketplace/joburi"
+            href="/"
             className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
           >
             Explorează anunțuri →

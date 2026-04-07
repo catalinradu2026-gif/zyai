@@ -131,7 +131,7 @@ export default async function MyListingsPage() {
                     </Button>
                   </Link>
 
-                  <DeleteListingButton listingId={listing.id} listingTitle={listing.title} />
+                  <DeleteListingButton id={listing.id} />
                 </div>
               </div>
             )

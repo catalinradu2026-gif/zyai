@@ -46,7 +46,7 @@ export default async function FavoritesPage() {
             Nu ai salvat încă niciun anunț
           </p>
           <Link
-            href="/marketplace/joburi"
+            href="/"
             className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
           >
             Explorează anunțuri →

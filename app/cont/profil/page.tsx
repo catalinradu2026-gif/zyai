@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase'
+import { signOut } from '@/lib/actions/auth'
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false)
@@ -11,6 +12,39 @@ export default function ProfilePage() {
     city: '',
   })
   const [message, setMessage] = useState('')
+
+  // Load existing profile data on mount
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const supabase = createSupabaseBrowserClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          setMessage('Trebuie să fii autentificat')
+          return
+        }
+
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (data) {
+          setFormData({
+            fullName: data.full_name || '',
+            phone: data.phone || '',
+            city: data.city || '',
+          })
+        }
+      } catch (err) {
+        console.error('Error loading profile:', err)
+      }
+    }
+
+    loadProfile()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -112,9 +146,16 @@ export default function ProfilePage() {
         <div className="mt-8 pt-8 border-t border-gray-200">
           <h3 className="font-semibold mb-4">Securitate</h3>
           <p className="text-sm text-gray-600 mb-4">
-            Ți-ai conectat cu magic link pe email. Poți rămâne logat sau iți poți reseta sesiunea.
+            Poți să te deconectezi din aplicație.
           </p>
-          {/* Logout button in Header */}
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition text-sm font-medium"
+            >
+              🚪 Deconectare
+            </button>
+          </form>
         </div>
       </div>
     </div>

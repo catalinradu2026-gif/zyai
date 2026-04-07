@@ -131,12 +131,13 @@ export default function CategoriesBrowser() {
               </Link>
               <div className="flex flex-wrap gap-1">
                 {cat.subs.map((sub) => (
-                  <span
+                  <Link
                     key={sub}
-                    className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 hover:bg-blue-100 cursor-pointer transition-colors"
+                    href={`/marketplace/${cat.slug}`}
+                    className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 hover:bg-blue-100 hover:text-blue-600 transition-colors"
                   >
                     {sub}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>
