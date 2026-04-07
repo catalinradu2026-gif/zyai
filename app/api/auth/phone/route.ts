@@ -34,11 +34,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifică dacă user există
-    const { data: existing } = await supabase
+    const { data: existing, error: queryError } = await supabase
       .from('users_auth')
       .select('id, password_hash')
       .eq('phone', phone)
       .single()
+
+    if (queryError && queryError.code !== 'PGRST116') {
+      // PGRST116 = no rows found (ok for new users)
+      console.error('Query error:', queryError)
+    }
 
     if (mode === 'register') {
       if (existing) {
