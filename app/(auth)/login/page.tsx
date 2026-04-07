@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSearchParams } from 'react'
 import Link from 'next/link'
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const nextUrl = searchParams?.get('next') || '/'
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
@@ -47,7 +49,8 @@ export default function LoginPage() {
         localStorage.setItem('user_id', data.userId)
         localStorage.setItem('user_phone', phone)
         localStorage.setItem('user_name', fullName)
-        window.location.href = '/'
+        // Redirect to original page or home
+        window.location.href = nextUrl
       }
     } catch (err) {
       setError('Eroare la conectare')
