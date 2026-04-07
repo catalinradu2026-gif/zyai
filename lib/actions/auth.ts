@@ -1,7 +1,24 @@
 'use server'
 
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { redirect } from 'next/navigation'
+
+export async function signUpUser(email: string, password: string, fullName: string) {
+  try {
+    const admin = createSupabaseAdmin()
+    const { error } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    })
+    if (error) return { error: error.message }
+    return { success: true }
+  } catch (err) {
+    return { error: String(err) }
+  }
+}
 
 export async function signOut() {
   const supabase = await createSupabaseServerClient()

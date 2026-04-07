@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase'
+import { signUpUser } from '@/lib/actions/auth'
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -33,22 +34,20 @@ export default function LoginPage() {
     const supabase = createSupabaseBrowserClient()
 
     if (mode === 'register') {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
-      })
-
-      if (signUpError) {
-        setError(signUpError.message)
+      const result = await signUpUser(email, password, fullName)
+      if (result.error) {
+        setError(result.error)
         setLoading(false)
         return
       }
-
-      setSuccess('Cont creat! Verifică emailul pentru confirmare, sau conectează-te direct dacă confirmarea este dezactivată.')
-      setLoading(false)
+      // Auto-login după înregistrare
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setSuccess('Cont creat! Te poți conecta acum.')
+        setLoading(false)
+        return
+      }
+      window.location.href = '/'
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
