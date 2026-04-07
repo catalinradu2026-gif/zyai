@@ -171,7 +171,7 @@ export default function ChatWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-10 right-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 backdrop-blur-md border border-white/20 ${
+        className={`fixed bottom-10 left-6 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 z-50 backdrop-blur-md border border-white/20 ${
           isOpen ? 'bg-blue-600/80' : 'bg-blue-500/70 hover:scale-110 animate-pulse'
         } text-white text-3xl`}
         title={isOpen ? 'Închide' : 'Deschide chat'}
@@ -181,7 +181,7 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-32 right-6 w-[420px] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col h-[600px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-white/30">
+        <div className="fixed bottom-32 left-6 w-[420px] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col h-[600px] z-50 animate-in fade-in slide-in-from-bottom-4 border border-white/30">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-2xl">
             <div className="flex items-center justify-between">
