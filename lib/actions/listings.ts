@@ -1,43 +1,38 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { getUser } from './auth'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
-
-// Admin client - bypasses RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
 
 export async function createListing(formData: {
   title: string
   description: string
-  categoryId: number
+  categorySlug: string
+  categoryName: string
   city: string
-  county: string
+  county?: string
   price?: number
   priceType: string
   currency: string
   images: string[]
 }) {
   const user = await getUser()
+  if (!user?.id) return { error: 'Trebuie să fii autentificat' }
 
-  if (!user || !user.id) {
-    return { error: 'Trebuie să fii autentificat' }
-  }
+  const admin = createSupabaseAdmin()
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await admin
     .from('listings')
     .insert({
       user_id: user.id,
       title: formData.title,
       description: formData.description,
-      category_id: formData.categoryId,
+      category_slug: formData.categorySlug,
+      category_name: formData.categoryName,
       city: formData.city,
-      county: formData.county,
+      county: formData.county || formData.city,
       price: formData.price || null,
       price_type: formData.priceType,
       currency: formData.currency,
@@ -48,7 +43,7 @@ export async function createListing(formData: {
     .single()
 
   if (error) {
-    console.error('Error creating listing:', error)
+    console.error('createListing error:', error)
     return { error: error.message }
   }
 
@@ -62,7 +57,7 @@ export async function updateListing(
     title: string
     description: string
     city: string
-    county: string
+    county?: string
     price?: number
     priceType: string
     currency: string
@@ -70,20 +65,16 @@ export async function updateListing(
   }
 ) {
   const user = await getUser()
-
-  if (!user) {
-    return { error: 'Neautorizat' }
-  }
+  if (!user) return { error: 'Neautorizat' }
 
   const supabase = await createSupabaseServerClient()
-
   const { error } = await supabase
     .from('listings')
     .update({
       title: formData.title,
       description: formData.description,
       city: formData.city,
-      county: formData.county,
+      county: formData.county || formData.city,
       price: formData.price || null,
       price_type: formData.priceType,
       currency: formData.currency,
@@ -92,10 +83,7 @@ export async function updateListing(
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) {
-    console.error('Error updating listing:', error)
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   revalidatePath(`/anunt/${id}`)
   revalidatePath('/cont/anunturi')
@@ -104,23 +92,16 @@ export async function updateListing(
 
 export async function deleteListing(id: string) {
   const user = await getUser()
-
-  if (!user) {
-    return { error: 'Neautorizat' }
-  }
+  if (!user) return { error: 'Neautorizat' }
 
   const supabase = await createSupabaseServerClient()
-
   const { error } = await supabase
     .from('listings')
     .delete()
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) {
-    console.error('Error deleting listing:', error)
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   revalidatePath('/cont/anunturi')
   redirect('/cont/anunturi')

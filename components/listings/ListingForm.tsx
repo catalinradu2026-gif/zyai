@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createListing } from '@/lib/actions/listings'
-import { CATEGORIES, getCategoryIdBySlug } from '@/lib/constants/categories'
+import { CATEGORIES } from '@/lib/constants/categories'
 import { getFormFieldsForCategory } from '@/lib/constants/form-fields'
 import ImageUploader from './ImageUploader'
 import Button from '@/components/ui/Button'
@@ -60,10 +60,12 @@ export default function ListingForm() {
     setError('')
 
     try {
+      const cat = (CATEGORIES as Record<string, any>)[formData.categorySlug]
       const result = await createListing({
         title: formData.title,
         description: formData.description,
-        categoryId: getCategoryIdBySlug(formData.categorySlug),
+        categorySlug: formData.categorySlug,
+        categoryName: cat?.name || formData.categorySlug,
         city: formData.city,
         county: formData.county || formData.city,
         price: formData.price ? Number(formData.price) : undefined,
