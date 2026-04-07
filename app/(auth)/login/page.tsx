@@ -1,54 +1,58 @@
 'use client'
 
 import { useState } from 'react'
-import { signInWithPhone, signUpWithPhone } from '@/lib/actions/auth'
+import Link from 'next/link'
 
 export default function LoginPage() {
-  const [tab, setTab] = useState<'login' | 'signup'>('login')
+  const [method, setMethod] = useState<'google' | 'phone'>('google')
   const [phone, setPhone] = useState('')
-  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleLoginClick() {
-    if (!phone || !password) {
-      setError('Completează toate câmpurile!')
-      return
-    }
-
+  async function handleGoogleSignIn() {
     setLoading(true)
     setError('')
-
-    const result = await signInWithPhone(phone, password)
-
-    if (result.error) {
-      setError(result.error)
+    try {
+      // Will redirect to Google OAuth
+      window.location.href = '/api/auth/google'
+    } catch (err) {
+      setError('Eroare la conectare cu Google')
       setLoading(false)
-    } else {
-      // Salvează user ID în localStorage
-      localStorage.setItem('user_id', result.userId || '')
-      window.location.href = '/'
     }
   }
 
-  async function handleSignUpClick() {
-    if (!phone || !password) {
-      setError('Completează toate câmpurile!')
+  async function handlePhoneSignIn() {
+    if (!phone || !name) {
+      setError('Completează nume și telefon!')
       return
     }
 
     setLoading(true)
     setError('')
 
-    const result = await signUpWithPhone(phone, password)
+    try {
+      const response = await fetch('/api/auth/phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name }),
+      })
 
-    if (result.error) {
-      setError(result.error)
+      const data = await response.json()
+
+      if (data.error) {
+        setError(data.error)
+      } else {
+        // Salvează user în localStorage
+        localStorage.setItem('user_id', data.userId)
+        localStorage.setItem('user_phone', phone)
+        localStorage.setItem('user_name', name)
+        window.location.href = '/'
+      }
+    } catch (err) {
+      setError('Eroare la conectare')
+    } finally {
       setLoading(false)
-    } else {
-      // Salvează user ID în localStorage
-      localStorage.setItem('user_id', result.userId || '')
-      window.location.href = '/'
     }
   }
 
@@ -56,40 +60,44 @@ export default function LoginPage() {
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 pb-20 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-center mb-2">zyAI</h1>
-          <p className="text-center text-gray-600 mb-8">Platformă de anunțuri</p>
+          <h1 className="text-4xl font-bold text-center mb-2">zyAI</h1>
+          <p className="text-center text-gray-600 mb-2">Platformă de anunțuri</p>
+          <p className="text-center text-sm text-gray-500 mb-8">One-click login, fără verificări</p>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => {
-                setTab('login')
-                setError('')
-              }}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition ${
-                tab === 'login'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Conectare
-            </button>
-            <button
-              onClick={() => {
-                setTab('signup')
-                setError('')
-              }}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition ${
-                tab === 'signup'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Înregistrare
-            </button>
+          {/* Google Button */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full py-3 px-4 bg-white border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-800 font-medium rounded-lg transition flex items-center justify-center gap-3 disabled:opacity-50 mb-4"
+          >
+            <span className="text-2xl">🔵</span>
+            {loading ? 'Se conectează...' : 'Conectează cu Google'}
+          </button>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">sau</span>
+            </div>
           </div>
 
+          {/* Phone Quick Registration */}
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Nume</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Catalin"
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-2">Număr de telefon</label>
               <input
@@ -102,47 +110,23 @@ export default function LoginPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Parolă</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={loading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              />
-            </div>
-
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-800 text-sm">{error}</p>
               </div>
             )}
 
-            {tab === 'login' && (
-              <button
-                onClick={handleLoginClick}
-                disabled={loading}
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
-              >
-                {loading ? 'Se conectează...' : '🔓 Conectare'}
-              </button>
-            )}
-
-            {tab === 'signup' && (
-              <button
-                onClick={handleSignUpClick}
-                disabled={loading}
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
-              >
-                {loading ? 'Se înregistrează...' : '✓ Înregistrare'}
-              </button>
-            )}
+            <button
+              onClick={handlePhoneSignIn}
+              disabled={loading}
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
+            >
+              {loading ? 'Se conectează...' : '✓ Conectare'}
+            </button>
           </div>
 
           <p className="text-center text-xs text-gray-500 mt-8">
-            Prin conectare, accepți termenii și condițiile noastre
+            Prin conectare, accepți <Link href="#" className="text-blue-600 hover:underline">termenii și condițiile</Link>
           </p>
         </div>
       </div>

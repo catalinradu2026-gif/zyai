@@ -118,21 +118,31 @@ export async function getUser() {
     return null
   }
 
-  const supabase = await createSupabaseServerClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  // Try Supabase first
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
 
-  if (!data) {
-    return null
+    if (data) {
+      return {
+        id: data.id,
+        phone: data.phone,
+        full_name: data.full_name,
+      }
+    }
+  } catch (err) {
+    // Supabase not configured, return basic user
   }
 
+  // Fallback: return basic user object with just ID
   return {
-    id: data.id,
-    phone: data.phone,
-    full_name: data.full_name,
+    id: userId,
+    phone: '',
+    full_name: 'User',
   }
 }
 

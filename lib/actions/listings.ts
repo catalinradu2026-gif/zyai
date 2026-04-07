@@ -25,7 +25,7 @@ export async function createListing(formData: {
 }) {
   const user = await getUser()
 
-  if (!user) {
+  if (!user || !user.id) {
     return { error: 'Trebuie să fii autentificat' }
   }
 
