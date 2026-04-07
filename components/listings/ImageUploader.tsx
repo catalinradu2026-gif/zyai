@@ -1,54 +1,58 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { createSupabaseBrowserClient } from '@/lib/supabase'
-const supabase = createSupabaseBrowserClient()
 import Image from 'next/image'
+
+const MAX_IMAGES = 8
 
 interface ImageUploaderProps {
   onImagesChange: (urls: string[]) => void
   initialImages?: string[]
 }
 
-export default function ImageUploader({
-  onImagesChange,
-  initialImages = [],
-}: ImageUploaderProps) {
+export default function ImageUploader({ onImagesChange, initialImages = [] }: ImageUploaderProps) {
   const [images, setImages] = useState<string[]>(initialImages)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || [])
-      if (images.length + files.length > 10) {
-        alert('Maxim 10 imagini permise')
+      if (!files.length) return
+
+      if (images.length + files.length > MAX_IMAGES) {
+        setUploadError(`Maxim ${MAX_IMAGES} imagini permise`)
         return
       }
 
       setUploading(true)
+      setUploadError('')
       const newUrls: string[] = []
 
       for (const file of files) {
         try {
-          const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-          const { data, error } = await supabase.storage
-            .from('listings')
-            .upload(`listings/${filename}`, file)
+          const fd = new FormData()
+          fd.append('file', file)
 
-          if (error) throw error
+          const res = await fetch('/api/upload', { method: 'POST', body: fd })
+          const data = await res.json()
 
-          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listings/${data.path}`
-          newUrls.push(url)
-        } catch (error) {
-          console.error('Upload error:', error)
-          // Nu bloca formularul dacă imagini nu se uploadează
+          if (!res.ok || data.error) {
+            setUploadError(`Eroare upload: ${data.error}`)
+          } else {
+            newUrls.push(data.url)
+          }
+        } catch (err) {
+          setUploadError('Eroare de conexiune la upload')
         }
       }
 
-      const updatedImages = [...images, ...newUrls]
-      setImages(updatedImages)
-      onImagesChange(updatedImages)
+      const updated = [...images, ...newUrls]
+      setImages(updated)
+      onImagesChange(updated)
       setUploading(false)
+      // Reset input
+      e.target.value = ''
     },
     [images, onImagesChange]
   )
@@ -63,41 +67,57 @@ export default function ImageUploader({
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-2">
-          Imagini ({images.length}/10)
+          Imagini ({images.length}/{MAX_IMAGES})
         </label>
-        <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-500 transition">
-          <span className="text-gray-600">
-            {uploading ? 'Se încarcă...' : '📸 Click sau drag imagini'}
+        <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition ${
+          images.length >= MAX_IMAGES
+            ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+            : 'border-gray-300 cursor-pointer hover:border-blue-500'
+        }`}>
+          <span className="text-3xl mb-2">📸</span>
+          <span className="text-gray-600 text-sm font-medium">
+            {uploading ? 'Se încarcă...' : images.length >= MAX_IMAGES ? `Limită ${MAX_IMAGES} imagini atinsă` : 'Click pentru a adăuga imagini'}
           </span>
+          {!uploading && images.length < MAX_IMAGES && (
+            <span className="text-gray-400 text-xs mt-1">JPG, PNG, WebP — max {MAX_IMAGES} imagini</span>
+          )}
           <input
             type="file"
             multiple
             accept="image/*"
             onChange={handleFileSelect}
-            disabled={uploading || images.length >= 10}
+            disabled={uploading || images.length >= MAX_IMAGES}
             className="hidden"
           />
         </label>
       </div>
 
-      {/* Image Preview Grid */}
+      {uploadError && (
+        <p className="text-red-600 text-sm">{uploadError}</p>
+      )}
+
       {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {images.map((url) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {images.map((url, i) => (
             <div key={url} className="relative group">
+              {i === 0 && (
+                <span className="absolute top-1 left-1 z-10 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                  Principală
+                </span>
+              )}
               <Image
                 src={url}
-                alt="preview"
+                alt={`imagine ${i + 1}`}
                 width={200}
-                height={200}
-                className="w-full h-32 object-cover rounded-lg"
+                height={150}
+                className="w-full h-28 object-cover rounded-lg"
               />
               <button
                 type="button"
                 onClick={() => removeImage(url)}
-                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg"
+                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg"
               >
-                <span className="text-white text-2xl">🗑️</span>
+                <span className="text-white text-xl">🗑️</span>
               </button>
             </div>
           ))}

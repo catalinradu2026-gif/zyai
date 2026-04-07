@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { getUser } from '@/lib/actions/auth'
 import HeaderClient from './HeaderClient'
-import HeaderMenu from './HeaderMenu'
 import HeaderSearchBar from './HeaderSearchBar'
 
 export default async function Header() {
@@ -43,10 +42,6 @@ export default async function Header() {
           {/* Cont dropdown */}
           <HeaderClient />
 
-          {/* Categorii ••• */}
-          <div className="relative">
-            <HeaderMenu />
-          </div>
         </div>
       </div>
     </header>

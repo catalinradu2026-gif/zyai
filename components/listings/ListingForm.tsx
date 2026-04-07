@@ -363,7 +363,7 @@ export default function ListingForm() {
                 <div>
                   <h3 className="text-lg font-bold mb-4">Adaugă imagini</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Anunțurile cu imagini se vând mai ușor. Minimum 1, maxim 10 imagini.
+                    Anunțurile cu imagini se vând mai ușor. Poți adăuga maxim 8 imagini.
                   </p>
                   <ImageUploader onImagesChange={setImages} initialImages={images} />
                 </div>
@@ -391,7 +391,7 @@ export default function ListingForm() {
                       </p>
                     )}
                     <p>
-                      <span className="font-medium text-gray-900">Imagini:</span> {images.length}/10
+                      <span className="font-medium text-gray-900">Imagini:</span> {images.length}/8
                     </p>
                   </div>
                 </div>
@@ -418,7 +418,7 @@ export default function ListingForm() {
                     !formData.title ||
                     !formData.description ||
                     !formData.categorySlug ||
-                    (step === 2 && (!formData.city || !formData.county))
+                    (step === 2 && !formData.city)
                   }
                 >
                   Continuă →
