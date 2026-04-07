@@ -4,9 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export default function LoginPage() {
-  const [method, setMethod] = useState<'google' | 'phone'>('google')
   const [phone, setPhone] = useState('')
-  const [name, setName] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -23,8 +23,8 @@ export default function LoginPage() {
   }
 
   async function handlePhoneSignIn() {
-    if (!phone || !name) {
-      setError('Completează nume și telefon!')
+    if (!phone || !fullName || !password) {
+      setError('Completează toate câmpurile!')
       return
     }
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name }),
+        body: JSON.stringify({ phone, fullName, password }),
       })
 
       const data = await response.json()
@@ -87,12 +87,12 @@ export default function LoginPage() {
           {/* Phone Quick Registration */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Nume</label>
+              <label className="block text-sm font-medium mb-2">Nume complet</label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Catalin"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Catalin Radu"
                 disabled={loading}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
@@ -106,6 +106,19 @@ export default function LoginPage() {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+40 723 123 456"
                 disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Parolă</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={loading}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
             </div>
