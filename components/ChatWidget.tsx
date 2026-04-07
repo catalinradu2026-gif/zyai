@@ -27,7 +27,7 @@ type HistoryMessage = {
   content: string
 }
 
-const WELCOME = 'Salut! 👋 Sunt zyAI, asistentul tău.\n\nSpune-mi ce cauți și îți găsesc instant anunțuri:\n• "apartament 2 camere Cluj"\n• "job programator"\n• "Dacia Logan sub 5000 lei"'
+const WELCOME = 'Salut! Sunt zyAI 👋 Spune-mi ce cauți și îți găsesc instant cele mai bune anunțuri.'
 
 function prepareForSpeech(text: string): string {
   return text
