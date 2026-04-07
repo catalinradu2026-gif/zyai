@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createListing } from '@/lib/actions/listings'
+import { isRedirectError } from 'next/dist/client/components/redirect'
 import { CATEGORIES, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { getFormFieldsForCategory } from '@/lib/constants/form-fields'
 import ImageUploader from './ImageUploader'
@@ -74,9 +75,8 @@ export default function ListingForm() {
         // In production, this should be stored in a separate JSON column
       })
     } catch (err) {
-      setError('Eroare la postare. Încercați din nou.')
-      console.error('Error:', err)
-    } finally {
+      if (isRedirectError(err)) throw err
+      setError('Eroare la postare. Încearcă din nou.')
       setLoading(false)
     }
   }
