@@ -31,7 +31,7 @@ export default function CategoriesBrowser() {
         /* Grid 4 carduri mari cu hover CSS */
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {MAIN_CATEGORIES.map((cat) => (
-            <Link key={cat.slug} href={`/marketplace/${cat.slug}`}>
+            <Link key={cat.slug} href={`/marketplace/${cat.slug}`} className="block">
               <div
                 className="group flex flex-col items-center justify-center gap-4 p-8 rounded-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer h-full hover:bg-opacity-80 glow-blue"
                 style={{
@@ -53,7 +53,7 @@ export default function CategoriesBrowser() {
         /* Grid expanded cu toate categoriile */
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {ALL_CATEGORIES.map((cat) => (
-            <Link key={cat.slug} href={`/marketplace/${cat.slug}`}>
+            <Link key={cat.slug} href={`/marketplace/${cat.slug}`} className="block">
               <div
                 className="group flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-200 hover:bg-opacity-80 glow-blue"
                 style={{
