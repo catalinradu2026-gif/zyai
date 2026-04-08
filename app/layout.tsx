@@ -15,9 +15,42 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'zyAI - Platformă de Anunțuri',
-  description: 'Găsește și postează anunțuri la joburi, imobiliare, auto, servicii. Powered by AI.',
-  keywords: 'anunțuri, joburi, imobiliare, auto, servicii, România',
+  title: {
+    default: 'zyAI - Platformă Națională de Anunțuri România',
+    template: '%s | zyAI România',
+  },
+  description: 'zyAI este platforma națională de anunțuri din România. Găsește și postează anunțuri gratuite la auto, imobiliare, joburi și servicii. Căutare inteligentă cu AI.',
+  keywords: [
+    'anunțuri gratuite romania', 'anunturi auto romania', 'imobiliare romania',
+    'joburi romania', 'servicii romania', 'platforma anunturi', 'olx romania alternativa',
+    'anunturi online', 'vanzari auto second hand', 'apartamente de vanzare',
+    'locuri de munca romania', 'zyai', 'zyai.ro',
+  ],
+  metadataBase: new URL('https://zyai.ro'),
+  alternates: { canonical: 'https://zyai.ro' },
+  openGraph: {
+    type: 'website',
+    locale: 'ro_RO',
+    url: 'https://zyai.ro',
+    siteName: 'zyAI România',
+    title: 'zyAI - Platforma Națională de Anunțuri România',
+    description: 'Platforma națională de anunțuri din România cu AI integrat. Auto, imobiliare, joburi, servicii. Postează gratuit.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'zyAI - Platforma Națională de Anunțuri România' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'zyAI - Platforma Națională de Anunțuri România',
+    description: 'Postează și caută anunțuri gratuit în România. Auto, imobiliare, joburi, servicii cu AI.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
+  verification: {
+    google: '',  // adaugi codul de la Google Search Console
+  },
 }
 
 export default function RootLayout({
