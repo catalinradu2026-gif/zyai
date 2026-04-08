@@ -57,10 +57,24 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
     [images, onImagesChange]
   )
 
-  function removeImage(url: string) {
-    const updated = images.filter((img) => img !== url)
-    setImages(updated)
-    onImagesChange(updated)
+  async function removeImage(url: string) {
+    try {
+      // Delete from storage if it's a Supabase URL
+      if (url.includes('supabase.co')) {
+        await fetch('/api/delete-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: url }),
+        })
+      }
+
+      const updated = images.filter((img) => img !== url)
+      setImages(updated)
+      onImagesChange(updated)
+    } catch (err) {
+      console.error('Error removing image:', err)
+      setUploadError('Eroare la ștergerea imaginii')
+    }
   }
 
   return (

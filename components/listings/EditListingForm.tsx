@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import ImageUploader from './ImageUploader'
 
 interface EditListingFormProps {
   listing: any
@@ -24,6 +25,7 @@ export default function EditListingForm({ listing }: EditListingFormProps) {
     price: listing.price || '',
     priceType: listing.price_type || 'fix',
     currency: listing.currency || 'RON',
+    images: listing.images || [],
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -41,7 +43,7 @@ export default function EditListingForm({ listing }: EditListingFormProps) {
         price: formData.price ? Number(formData.price) : undefined,
         priceType: formData.priceType,
         currency: formData.currency,
-        images: listing.images || [],
+        images: formData.images,
       })
 
       if (result.error) {
@@ -97,6 +99,14 @@ export default function EditListingForm({ listing }: EditListingFormProps) {
               required
               rows={6}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Images */}
+          <div className="mt-6">
+            <ImageUploader
+              initialImages={formData.images}
+              onImagesChange={(urls) => setFormData({ ...formData, images: urls })}
             />
           </div>
         </div>
