@@ -52,6 +52,62 @@ export const CATEGORIES = {
       'alte-servicii': { slug: 'alte-servicii', name: 'Alte servicii' },
     },
   },
+  electronice: {
+    slug: 'electronice',
+    name: 'Electronice',
+    icon: '📱',
+    subcategories: {
+      telefoane: { slug: 'telefoane', name: 'Telefoane' },
+      laptopuri: { slug: 'laptopuri', name: 'Laptopuri' },
+      tv: { slug: 'tv', name: 'TV & Audio' },
+      gaming: { slug: 'gaming', name: 'Gaming' },
+      'alte-electronice': { slug: 'alte-electronice', name: 'Alte electronice' },
+    },
+  },
+  moda: {
+    slug: 'moda',
+    name: 'Modă',
+    icon: '👗',
+    subcategories: {
+      haine: { slug: 'haine', name: 'Haine' },
+      incaltaminte: { slug: 'incaltaminte', name: 'Încălțăminte' },
+      accesorii: { slug: 'accesorii', name: 'Accesorii' },
+      copii: { slug: 'copii', name: 'Copii' },
+    },
+  },
+  'casa-gradina': {
+    slug: 'casa-gradina',
+    name: 'Casă & Grădină',
+    icon: '🏡',
+    subcategories: {
+      mobila: { slug: 'mobila', name: 'Mobilă' },
+      electrocasnice: { slug: 'electrocasnice', name: 'Electrocasnice' },
+      gradina: { slug: 'gradina', name: 'Grădină' },
+      decorare: { slug: 'decorare', name: 'Decorare' },
+    },
+  },
+  sport: {
+    slug: 'sport',
+    name: 'Sport',
+    icon: '⚽',
+    subcategories: {
+      echipament: { slug: 'echipament', name: 'Echipament' },
+      biciclete: { slug: 'biciclete', name: 'Biciclete' },
+      fitness: { slug: 'fitness', name: 'Fitness' },
+      outdoor: { slug: 'outdoor', name: 'Outdoor' },
+    },
+  },
+  animale: {
+    slug: 'animale',
+    name: 'Animale',
+    icon: '🐾',
+    subcategories: {
+      caini: { slug: 'caini', name: 'Câini' },
+      pisici: { slug: 'pisici', name: 'Pisici' },
+      accesorii: { slug: 'accesorii', name: 'Accesorii' },
+      'alte-animale': { slug: 'alte-animale', name: 'Alte animale' },
+    },
+  },
 } as const
 
 export type CategoryKey = keyof typeof CATEGORIES
