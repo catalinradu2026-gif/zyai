@@ -184,3 +184,51 @@ export const CONSTRUCTII_BRANDS = [
 
 const currentYear = new Date().getFullYear()
 export const YEARS = Array.from({ length: 40 }, (_, i) => String(currentYear - i))
+
+// ─── IMOBILIARE ───────────────────────────────────────────────
+export const IMOB_TIP_TRANZACTIE = ['Vânzare', 'Închiriere', 'Regim hotelier']
+export const IMOB_TIP_APARTAMENT = ['Garsonieră', '2 camere', '3 camere', '4 camere', '5+ camere']
+export const IMOB_COMPARTIMENTARE = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Studio', 'Circular']
+export const IMOB_STARE = ['Nou', 'Renovat recent', 'Bun', 'Necesită renovare', 'Bloc nou']
+export const IMOB_TIP_CASA = ['Vilă', 'Casă', 'Duplex', 'Triplex', 'Casă de vacanță', 'Casă tradițională']
+export const IMOB_TIP_TEREN = ['Intravilan - construcții', 'Intravilan - agricol', 'Extravilan - agricol', 'Pădure', 'Industrial', 'Mixt']
+export const IMOB_TIP_SPATIU = ['Birou', 'Spațiu comercial', 'Depozit', 'Industrial', 'Pensiune/hotel', 'Restaurant/bar', 'Hală']
+export const IMOB_FACILITATI = ['Parcare', 'Balcon/terasă', 'Lift', 'Boxa/magazie', 'Piscină', 'Grădină', 'Garaj', 'Aer condiționat', 'Centrală proprie', 'Interfon/videointerfon']
+export const IMOB_ETAJE = ['Parter', 'Etaj 1', 'Etaj 2', 'Etaj 3', 'Etaj 4', 'Etaj 5', 'Etaj 6', 'Etaj 7', 'Etaj 8', 'Etaj 9', 'Etaj 10+', 'Mansardă', 'Demisol', 'Subsol']
+export const IMOB_AN_CONSTRUCTIE = ['Înainte de 1980', '1980-1990', '1990-2000', '2000-2010', '2010-2015', '2015-2020', '2020-2025', '2025+']
+export const IMOB_DESTINATIE = ['Rezidențial', 'Comercial', 'Mixt', 'Investiție']
+
+// ─── JOBURI ───────────────────────────────────────────────────
+export const JOB_DOMENII = [
+  'IT & Software', 'Inginerie', 'Vânzări & Marketing', 'Contabilitate & Finanțe',
+  'Resurse Umane', 'Juridic', 'Logistică & Transport', 'HoReCa & Turism',
+  'Construcții & Imobiliare', 'Medical & Farmacie', 'Educație', 'Producție',
+  'Agricultură', 'Servicii Clienți', 'Design & Creativ', 'Management',
+  'Administrație', 'Altele',
+]
+export const JOB_TIP_CONTRACT = ['Full-time', 'Part-time', 'Contract proiect', 'Stagiu/Internship', 'Sezonier', 'Freelance', 'Colaborare']
+export const JOB_NIVEL_EXPERIENTA = ['Fără experiență', 'Sub 1 an', '1-2 ani', '3-5 ani', '5-10 ani', 'Peste 10 ani']
+export const JOB_REGIM_MUNCA = ['La birou (On-site)', 'Remote', 'Hibrid', 'Pe teren', 'Tură/schimburi']
+export const JOB_NIVEL_STUDII = ['Fără studii obligatorii', 'Liceu/Bacalaureat', 'Școală profesională', 'Facultate/Licență', 'Master/Postuniversitar', 'Doctorat']
+export const JOB_BENEFICII = ['Tichete de masă', 'Asigurare medicală privată', 'Bonusuri de performanță', 'Mașină de serviciu', 'Laptop & telefon', 'Pensie privată', 'Abonament sală', 'Zile libere extra', 'Formare profesională', 'Decontare transport']
+export const JOB_IT_STACK = ['JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'PHP', 'Go', 'Rust', 'Swift', 'Kotlin', 'React', 'Vue', 'Angular', 'Node.js', 'Next.js', '.NET', 'Spring', 'Django', 'Flutter', 'React Native', 'DevOps', 'AWS', 'Azure', 'GCP']
+
+// ─── SERVICII ─────────────────────────────────────────────────
+export const SERVICII_CATEGORII = [
+  'Construcții & Renovări', 'Instalații sanitare & termice', 'Electricitate',
+  'Curățenie & Menaj', 'Mutări & Transport', 'IT & Calculatoare',
+  'Contabilitate & Juridic', 'Îngrijire & Sănătate', 'Frumusețe & Wellness',
+  'Evenimente & Foto/Video', 'Meditații & Educație', 'Auto & Mecanică',
+  'Grădinărit & Amenajări', 'Animale de companie', 'Design & Grafică', 'Altele',
+]
+export const SERVICII_DISPONIBILITATE = ['Imediat', 'În termen de o săptămână', 'La cerere', 'Program fix', 'Weekend', 'Non-stop']
+export const SERVICII_ZONA = ['La domiciliul clientului', 'La sediul meu', 'Online/Remote', 'Oriunde în oraș', 'Județ', 'Național']
+export const SERVICII_EXPERIENTA = ['Sub 1 an', '1-3 ani', '3-5 ani', '5-10 ani', 'Peste 10 ani']
+
+// ─── MOTO ─────────────────────────────────────────────────────
+export const MOTO_BRANDS = [
+  'BMW', 'Ducati', 'Honda', 'Husqvarna', 'Kawasaki', 'KTM', 'MV Agusta',
+  'Piaggio', 'Royal Enfield', 'Suzuki', 'Triumph', 'Vespa', 'Yamaha', 'Zero', 'Altele',
+]
+export const MOTO_TYPES = ['Sport', 'Naked', 'Touring', 'Adventure', 'Enduro/Cross', 'Scooter', 'Custom/Chopper', 'Trial', 'Moped', 'Electric']
+export const MOTO_CC = ['Sub 125cc', '125-250cc', '250-500cc', '500-750cc', '750-1000cc', 'Peste 1000cc']
