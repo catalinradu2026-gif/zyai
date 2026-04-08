@@ -121,7 +121,7 @@ export default function ChatWidget() {
       id: '1',
       text: WELCOME,
       sender: 'bot',
-      timestamp: new Date(),
+      timestamp: new Date('2026-04-08T20:00:00.000Z'),
     }
   ])
   const [input, setInput] = useState('')
