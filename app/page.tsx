@@ -75,14 +75,9 @@ export default async function Home() {
               Postezi o dată. AI-ul îți găsește cumpărător.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link href="/anunt/nou">
-                <Button variant="primary" size="lg" className="min-w-48">
-                  🚀 Postează anunț
-                </Button>
-              </Link>
-              <SearchButton />
+            {/* Search Box */}
+            <div className="mb-12 max-w-2xl mx-auto">
+              <HeroSearch />
             </div>
 
             {/* Live Stats */}
@@ -103,18 +98,9 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ========== AI SEARCH BOX ========== */}
-        <section className="max-w-3xl mx-auto mb-24">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Caută cu AI</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>Ce cauți? Spune cu vorbe, AI-ul înțelege</p>
-          </div>
-          <HeroSearch />
-        </section>
-
         {/* ========== CATEGORIES ========== */}
         <section className="max-w-6xl mx-auto mb-24">
-          <h2 className="text-3xl font-bold mb-8 text-center">Explore Categories</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">Categorii</h2>
           <CategoriesBrowser />
         </section>
 
