@@ -3,10 +3,15 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing Supabase credentials')
+      return NextResponse.json({ error: 'Configuration error' }, { status: 500 })
+    }
+
+    const admin = createClient(supabaseUrl, serviceRoleKey)
 
     const formData = await req.formData()
     const file = formData.get('file') as File
@@ -15,21 +20,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Niciun fișier primit' }, { status: 400 })
     }
 
-    const ext = file.name.split('.').pop() || 'jpg'
-    const filename = `listings/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Fișier prea mare (max 5MB)' }, { status: 400 })
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ error: 'Format neacceptat (JPEG, PNG, WebP, GIF)' }, { status: 400 })
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 9)
+    const filename = `${timestamp}-${random}.${ext}`
 
     const buffer = await file.arrayBuffer()
     const { data, error } = await admin.storage
       .from('listings')
-      .upload(filename, buffer, { contentType: file.type })
+      .upload(filename, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false
+      })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Upload error:', error)
+      return NextResponse.json({ error: `Upload failed: ${error.message}` }, { status: 500 })
     }
 
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listings/${data.path}`
-    return NextResponse.json({ url })
+    if (!data?.path) {
+      console.error('No path returned from upload')
+      return NextResponse.json({ error: 'Upload successful but no path returned' }, { status: 500 })
+    }
+
+    // Generate public URL correctly
+    const url = `${supabaseUrl}/storage/v1/object/public/listings/${data.path}`
+
+    return NextResponse.json({ url, path: data.path })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('Upload handler error:', err)
+    return NextResponse.json({ error: `Server error: ${String(err)}` }, { status: 500 })
   }
 }
