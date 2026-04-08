@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import CategoriesBrowser from '@/components/CategoriesBrowser'
 import HeroSearch from '@/components/HeroSearch'
+import SearchButton from '@/components/SearchButton'
 import Button from '@/components/ui/Button'
-import { getListings } from '@/lib/queries/listings'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 
@@ -24,8 +24,20 @@ const jsonLd = {
   },
 }
 
+// Mock listings pentru preview
+const MOCK_LISTINGS = [
+  { id: '1', title: 'iPhone 15 Pro Max negru, 256GB', price: 4500, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '2', title: 'Apartament 2 camere, Dorobanți', price: 250000, currency: 'EUR', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '3', title: 'BMW 320d 2015, 180.000 km', price: 12000, currency: 'EUR', city: 'Cluj', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '4', title: 'React Developer - Senior Level', price: 5000, currency: 'RON', city: 'Remote', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '5', title: 'Laptop Gaming ASUS ROG, RTX 4070', price: 6500, currency: 'RON', city: 'Timișoara', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '6', title: 'Apartament de inchiriat, Obor', price: 800, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '7', title: 'Mercedes-Benz E-Class 2020', price: 35000, currency: 'EUR', city: 'Brașov', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '8', title: 'UI/UX Designer freelance', price: 3000, currency: 'RON', city: 'Cluj', images: [], status: 'activ', createdAt: new Date().toISOString() },
+]
+
 export default async function Home() {
-  const { data: listings } = await getListings({ page: 1 })
+  const listings = MOCK_LISTINGS
 
   return (
     <>
@@ -70,12 +82,7 @@ export default async function Home() {
                   🚀 Postează anunț
                 </Button>
               </Link>
-              <Button variant="secondary" size="lg" className="min-w-48" onClick={() => {
-                const searchBox = document.querySelector('input[placeholder*="cauți"]') as HTMLInputElement
-                searchBox?.focus()
-              }}>
-                🔍 Caută cu AI
-              </Button>
+              <SearchButton />
             </div>
 
             {/* Live Stats */}
@@ -120,58 +127,42 @@ export default async function Home() {
             </Link>
           </div>
 
-          {listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {listings.slice(0, 8).map((listing: any) => (
-                <Link key={listing.id} href={`/anunt/${listing.id}`}>
-                  <div
-                    className="group rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 cursor-pointer h-full"
-                    style={{
-                      backgroundColor: 'var(--bg-card)',
-                      border: '1px solid var(--border-subtle)',
-                      boxShadow: 'var(--glow-blue)',
-                    }}
-                  >
-                    {/* Image */}
-                    {listing.images?.[0] && (
-                      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600">
-                        <Image
-                          src={listing.images[0]}
-                          alt={listing.title}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        {listing.status === 'activ' && (
-                          <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
-                            ✨ AI Recomandat
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Content */}
-                    <div className="p-4">
-                      <h3 className="font-bold text-sm mb-2 line-clamp-2 group-hover:text-blue-light transition">
-                        {listing.title}
-                      </h3>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-lg font-bold gradient-main-text">
-                          {listing.price?.toLocaleString('ro-RO')} {listing.currency}
-                        </span>
-                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          {listing.city}
-                        </span>
-                      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {listings.slice(0, 8).map((listing: any) => (
+              <Link key={listing.id} href={`/anunt/${listing.id}`}>
+                <div
+                  className="group rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 cursor-pointer h-full"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  {/* Image Placeholder */}
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center group-hover:shadow-lg transition">
+                    <span className="text-white text-4xl opacity-60">📦</span>
+                    <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
+                      ✨ AI
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p style={{ color: 'var(--text-secondary)' }}>Niciun anunț disponibil acum</p>
-            </div>
-          )}
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-bold text-sm mb-2 line-clamp-2 group-hover:text-blue-light transition">
+                      {listing.title}
+                    </h3>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-lg font-bold gradient-main-text">
+                        {listing.price?.toLocaleString('ro-RO')} {listing.currency}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {listing.city}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
 
         {/* ========== CTA BANNER ========== */}

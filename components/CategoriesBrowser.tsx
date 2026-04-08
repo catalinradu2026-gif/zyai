@@ -28,38 +28,26 @@ export default function CategoriesBrowser() {
   return (
     <div className="w-full">
       {!expanded ? (
-        /* Grid 4 carduri mari cu glow */
+        /* Grid 4 carduri mari cu hover CSS */
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {MAIN_CATEGORIES.map((cat) => {
-            const isGlow = cat.color === 'purple' ? 'var(--glow-purple)' : 'var(--glow-blue)'
-            return (
-              <Link key={cat.slug} href={`/marketplace/${cat.slug}`}>
-                <div
-                  className="group flex flex-col items-center justify-center gap-4 p-8 rounded-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer h-full"
-                  style={{
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-subtle)',
-                    boxShadow: 'initial',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = isGlow
-                    e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'initial'
-                    e.currentTarget.style.backgroundColor = 'var(--bg-card)'
-                  }}
-                >
-                  <span className="text-6xl group-hover:animate-float transition-transform duration-300">
-                    {cat.icon}
-                  </span>
-                  <span className="font-bold text-lg text-center group-hover:gradient-main-text transition-all duration-300">
-                    {cat.name}
-                  </span>
-                </div>
-              </Link>
-            )
-          })}
+          {MAIN_CATEGORIES.map((cat) => (
+            <Link key={cat.slug} href={`/marketplace/${cat.slug}`}>
+              <div
+                className="group flex flex-col items-center justify-center gap-4 p-8 rounded-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer h-full hover:bg-opacity-80 glow-blue"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <span className="text-6xl group-hover:animate-float transition-transform duration-300">
+                  {cat.icon}
+                </span>
+                <span className="font-bold text-lg text-center group-hover:gradient-main-text transition-all duration-300">
+                  {cat.name}
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
       ) : (
         /* Grid expanded cu toate categoriile */
@@ -67,18 +55,10 @@ export default function CategoriesBrowser() {
           {ALL_CATEGORIES.map((cat) => (
             <Link key={cat.slug} href={`/marketplace/${cat.slug}`}>
               <div
-                className="group flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-200"
+                className="group flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-200 hover:bg-opacity-80 glow-blue"
                 style={{
                   backgroundColor: 'var(--bg-card)',
                   border: '1px solid var(--border-subtle)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'
-                  e.currentTarget.style.boxShadow = 'var(--glow-blue)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-card)'
-                  e.currentTarget.style.boxShadow = 'initial'
                 }}
               >
                 <span className="text-3xl group-hover:scale-110 transition-transform">
