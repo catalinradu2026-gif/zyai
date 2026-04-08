@@ -10,23 +10,40 @@ export async function GET() {
 
   const results: Record<string, string> = {}
 
-  // Adaugă category_slug dacă nu există
-  const { error: e1 } = await admin.from('listings').select('category_slug').limit(1)
-  if (e1?.message?.includes('category_slug')) {
-    // Coloana nu există - o adăugăm via upsert cu valoare default
-    // Nu putem ALTER TABLE direct, dar putem testa cu insert
-    results.category_slug = 'missing - add manually in Supabase SQL editor'
-  } else {
-    results.category_slug = 'exists'
+  try {
+    // 1. Check messages table
+    console.log('Checking messages table...')
+    const { data: messages, error: messagesError } = await admin
+      .from('messages')
+      .select('id')
+      .limit(1)
+
+    if (messagesError && messagesError.message.includes('relation')) {
+      results.messages = 'TABLE_MISSING - needs SQL'
+      console.log('Messages table missing')
+    } else {
+      results.messages = 'exists'
+      console.log('Messages table exists')
+    }
+  } catch (err) {
+    results.messages = 'error checking'
   }
 
-  // Adaugă category_name dacă nu există
-  const { error: e2 } = await admin.from('listings').select('category_name').limit(1)
-  results.category_name = e2 ? 'missing' : 'exists'
+  try {
+    // 2. Check/add metadata column
+    const { error: metadataError } = await admin
+      .from('listings')
+      .select('metadata')
+      .limit(1)
 
-  // Test insert fără category_id
-  const { data: testUser } = await admin.from('profiles').select('id').limit(1)
-  results.profiles = testUser ? 'exists' : 'empty'
+    results.metadata_column = metadataError?.message?.includes('metadata') ? 'missing' : 'exists'
+  } catch (err) {
+    results.metadata_column = 'error'
+  }
 
-  return NextResponse.json({ results, message: 'Run SQL in Supabase dashboard if columns missing' })
+  return NextResponse.json({
+    results,
+    message: 'If messages table missing, run SQL from SETUP_MESSAGES_TABLE.sql in Supabase editor',
+    sql_file: 'See /SETUP_MESSAGES_TABLE.sql in project root'
+  })
 }
