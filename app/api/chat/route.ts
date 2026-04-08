@@ -35,53 +35,67 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Invalid message' }, { status: 400 })
     }
 
+    // Fallback simple chat if GROQ_API_KEY is missing
+    if (!process.env.GROQ_API_KEY) {
+      console.warn('GROQ_API_KEY not configured')
+      return Response.json({
+        type: 'chat',
+        message: '🤖 Asistentul AI este în configurare. Încearcă din nou în câteva momente!',
+      } satisfies ChatResponse)
+    }
+
     // PASUL 1: Groq decide intent + extrage filtre (un singur apel)
     const systemPrompt = `Ești "zyAI", asistentul inteligent al platformei de anunțuri zyAI din România.
 
-Platforma are 4 categorii: joburi (id:1), imobiliare (id:2), auto (id:3), servicii (id:4).
+Platforma are 4 categorii: joburi, imobiliare, auto, servicii.
 
-Sarcina ta: analizează mesajul utilizatorului și returnează EXCLUSIV JSON valid, fără text suplimentar.
+Analizează mesajul și returnează JSON valid.
 
-Reguli de clasificare:
-- "search": utilizatorul caută un anunț (apartament, job, mașină, serviciu, etc.)
-- "chat": salut, mulțumire, întrebare despre platformă, altceva
+Reguli:
+- "search": utilizatorul caută un anunț
+- "chat": salut, mulțumire, alte întrebări
 
-Format JSON obligatoriu:
+JSON:
 {
   "intent": "search" | "chat",
-  "message": "răspunsul tău conversațional în română (1-3 propoziții, prietenos)",
+  "message": "răspuns conversațional în română (1-3 propoziții)",
   "filters": {
-    "product": "ce caută (null dacă nu e search)",
-    "city": "orașului menționat sau null",
-    "maxPrice": număr sau null,
-    "minPrice": număr sau null,
-    "category": "joburi" | "imobiliare" | "auto" | "servicii" | null,
-    "keywords": ["cuvinte", "cheie"]
+    "product": null,
+    "city": null,
+    "maxPrice": null,
+    "minPrice": null,
+    "category": null,
+    "keywords": []
   }
-}
-
-Exemple:
-- "apartament 2 camere cluj 500 euro" → intent:"search", category:"imobiliare", city:"Cluj", maxPrice:500
-- "caut job programator" → intent:"search", category:"joburi", product:"job programator"
-- "salut, cum funcționează?" → intent:"chat", message:"Bună! Sunt zyAI..."
-- "dacia logan 2018 sub 5000" → intent:"search", category:"auto", product:"dacia logan 2018", maxPrice:5000`
+}`
 
     // Construieste mesajele cu history (max ultimele 6 pentru context)
     const recentHistory = history.slice(-6)
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...recentHistory,
-        { role: 'user', content: message },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.3,
-      max_tokens: 400,
-    })
+    let rawText = ''
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...recentHistory,
+          { role: 'user', content: message },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.3,
+        max_tokens: 400,
+      })
+
+      rawText = completion.choices[0].message.content || '{}'
+    } catch (groqError) {
+      console.error('Groq error:', groqError)
+      // Fallback - just return simple chat
+      return Response.json({
+        type: 'chat',
+        message: '🤖 Asistentul AI are o problemă temporară. Încearcă din nou în câteva secunde!',
+      } satisfies ChatResponse)
+    }
 
     // Parseaza raspunsul JSON de la Groq
-    const rawText = completion.choices[0].message.content || '{}'
     let parsed: {
       intent: 'search' | 'chat'
       message: string
@@ -102,7 +116,7 @@ Exemple:
       // Fallback: raspuns conversational simplu
       return Response.json({
         type: 'chat',
-        message: rawText || 'Scuze, am o problemă. Încearcă din nou.',
+        message: 'Sunt aici să te ajut! Spune-mi: ce cauți? (apartament, job, mașină, etc.)',
       } satisfies ChatResponse)
     }
 
