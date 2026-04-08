@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
   verification: {
-    google: '',  // adaugi codul de la Google Search Console
+    google: 'nQ4H6yFEmYYfJ1gm4EpB_bvAgQxrvnCvWphXNxx6B20',
   },
 }
 
