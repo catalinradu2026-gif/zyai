@@ -236,12 +236,9 @@ export default function ListingForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (step === 1) {
-      if (!mainCat || !title || !description) { setError('Completează categoria, titlul și descrierea'); return }
+      if (!mainCat) { setError('Alege o categorie'); return }
+      if (!title || !description) { setError('Completează titlul și descrierea'); return }
       setError(''); setStep(2); return
-    }
-    if (step === 2) {
-      if (!city) { setError('Completează orașul'); return }
-      setError(''); setStep(3); return
     }
 
     setLoading(true); setError('')
@@ -596,12 +593,12 @@ export default function ListingForm() {
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-6">
           <h1 style={{ color: '#000', fontSize: '28px', fontWeight: 700 }}>Postează un anunț</h1>
-          <p style={{ color: '#555' }}>Pasul {step} din 3</p>
+          <p style={{ color: '#555' }}>Pasul {step} din 2</p>
         </div>
 
         {/* Progress */}
         <div className="flex gap-2 mb-6">
-          {[1, 2, 3].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div className={`h-full transition-all ${s <= step ? 'bg-blue-600' : ''}`} />
             </div>
@@ -612,9 +609,11 @@ export default function ListingForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg"><p style={{ color: '#991b1b' }}>❌ {error}</p></div>}
 
-            {/* ─── STEP 1 ─── */}
+            {/* ─── STEP 1: Categorie → Câmpuri specifice → Titlu → Descriere ─── */}
             {step === 1 && (
               <div className="space-y-6">
+
+                {/* Categorie principală */}
                 <div>
                   <h2 style={{ color: '#000', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>Ce dorești să postezi?</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -644,84 +643,73 @@ export default function ListingForm() {
                   </div>
                 )}
 
-                {/* Titlu */}
-                <div>
-                  <h3 style={{ color: '#000', fontSize: '18px', fontWeight: 700, marginBottom: '12px' }}>Titlu și descriere</h3>
-                  <div className="space-y-4">
-                    <div>
-                      {lbl('Titlu anunț', true)}
-                      <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-                        placeholder={mainCat === 'auto' ? 'ex: BMW X5 3.0d 2020, full options' : mainCat === 'imobiliare' ? 'ex: Apartament 3 camere, decomandat, Floreasca' : mainCat === 'joburi' ? 'ex: Senior React Developer, remote, full-time' : 'ex: Instalator autorizat, intervenții rapide'}
-                        style={ss} className={ic} required />
-                    </div>
-                    <div>
-                      {lbl('Descriere detaliată', true)}
-                      <textarea value={description} onChange={e => setDescription(e.target.value)}
-                        placeholder="Descrie în detaliu oferta ta..."
-                        rows={5} style={{ ...ss, width: '100%', resize: 'vertical' }}
-                        className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                    </div>
+                {/* Titlu — PRIMUL */}
+                {mainCat && (
+                  <div>
+                    {lbl('Titlu anunț', true)}
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                      placeholder={mainCat === 'auto' ? 'ex: BMW X5 3.0d 2020, full options' : mainCat === 'imobiliare' ? 'ex: Apartament 3 camere, decomandat, Floreasca' : mainCat === 'joburi' ? 'ex: Senior React Developer, remote, full-time' : 'ex: Instalator autorizat, intervenții rapide'}
+                      style={ss} className={ic} required />
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* ─── STEP 2 ─── */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <h2 style={{ color: '#000', fontSize: '20px', fontWeight: 700 }}>Detalii specifice</h2>
-
-                {/* Category-specific fields */}
+                {/* Câmpuri specifice categoriei */}
                 {mainCat && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <h3 style={{ color: '#1e3a8a', fontWeight: 700, marginBottom: '16px' }}>
-                      {MAIN_CATS.find(c => c.slug === mainCat)?.icon} {subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name}
+                    <h3 style={{ color: '#1e3a8a', fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>
+                      {MAIN_CATS.find(c => c.slug === mainCat)?.icon} {subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name} — detalii
                     </h3>
                     {renderStep2Fields()}
                   </div>
                 )}
 
-                {/* Locatie */}
-                <div>
-                  <h3 style={{ color: '#000', fontWeight: 700, fontSize: '16px', marginBottom: '12px' }}>📍 Locație</h3>
-                  <SelField label="Oraș" val={city} set={setCity} options={ROMANIAN_CITIES} required placeholder="Alege orașul" />
-                </div>
-
-                {/* Pret */}
-                <div>
-                  <h3 style={{ color: '#000', fontWeight: 700, fontSize: '16px', marginBottom: '12px' }}>
-                    {mainCat === 'joburi' ? '💰 Salariu' : '💰 Preț'}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-1">
-                      {lbl(mainCat === 'joburi' ? 'Salariu (RON)' : 'Preț')}
-                      <input type="number" value={price} onChange={e => setPrice(e.target.value)}
-                        placeholder="0" style={ss} className={ic} />
-                    </div>
-                    <div>
-                      {lbl('Tip')}
-                      <select value={priceType} onChange={e => setPriceType(e.target.value)} style={ss} className={sc}>
-                        <option value="fix">Fix</option>
-                        <option value="negociabil">Negociabil</option>
-                        {mainCat === 'joburi' && <option value="la-negociere">La negociere</option>}
-                        {mainCat !== 'joburi' && <option value="gratuit">Gratuit</option>}
-                      </select>
-                    </div>
-                    <div>
-                      {lbl('Monedă')}
-                      <select value={currency} onChange={e => setCurrency(e.target.value)} style={ss} className={sc}>
-                        <option value="EUR">EUR</option>
-                        <option value="RON">RON</option>
-                        <option value="USD">USD</option>
-                      </select>
+                {/* Locație + Preț */}
+                {mainCat && (
+                  <div className="space-y-4">
+                    <h3 style={{ color: '#000', fontWeight: 700, fontSize: '16px' }}>📍 Locație și preț</h3>
+                    <SelField label="Oraș" val={city} set={setCity} options={ROMANIAN_CITIES} required placeholder="Alege orașul" />
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                        {lbl(mainCat === 'joburi' ? 'Salariu (RON)' : 'Preț')}
+                        <input type="number" value={price} onChange={e => setPrice(e.target.value)}
+                          placeholder="0" style={ss} className={ic} />
+                      </div>
+                      <div>
+                        {lbl('Tip')}
+                        <select value={priceType} onChange={e => setPriceType(e.target.value)} style={ss} className={sc}>
+                          <option value="fix">Fix</option>
+                          <option value="negociabil">Negociabil</option>
+                          {mainCat === 'joburi' && <option value="la-negociere">La negociere</option>}
+                          {mainCat !== 'joburi' && <option value="gratuit">Gratuit</option>}
+                        </select>
+                      </div>
+                      <div>
+                        {lbl('Monedă')}
+                        <select value={currency} onChange={e => setCurrency(e.target.value)} style={ss} className={sc}>
+                          <option value="EUR">EUR</option>
+                          <option value="RON">RON</option>
+                          <option value="USD">USD</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Descriere — ULTIMA */}
+                {mainCat && (
+                  <div>
+                    {lbl('Descriere detaliată', true)}
+                    <textarea value={description} onChange={e => setDescription(e.target.value)}
+                      placeholder="Descrie în detaliu oferta ta..."
+                      rows={6} style={{ ...ss, width: '100%', resize: 'vertical' }}
+                      className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ─── STEP 3 ─── */}
-            {step === 3 && (
+            {/* ─── STEP 2: Imagini + Publică ─── */}
+            {step === 2 && (
               <div className="space-y-6">
                 <h2 style={{ color: '#000', fontSize: '20px', fontWeight: 700 }}>Imagini și finalizare</h2>
                 <div>
@@ -744,9 +732,9 @@ export default function ListingForm() {
                 </button>
               )}
               <div className="flex-1" />
-              {step < 3 ? (
+              {step < 2 ? (
                 <button type="submit"
-                  disabled={step === 1 && (!mainCat || !title || !description)}
+                  disabled={!mainCat || !title || !description}
                   className="flex-1 md:flex-none md:px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition disabled:opacity-40">
                   Continuă →
                 </button>
