@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Dark theme as default */
+  --bg-primary: #080B14;
+  --bg-card: #0F1629;
+  --bg-card-hover: #141B35;
+  --bg-input: #1A1F38;
+  --purple: #8B5CF6;
+  --purple-light: #A78BFA;
+  --blue-electric: #3B82F6;
+  --blue-light: #60A5FA;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.15);
+  --gradient-main: linear-gradient(135deg, #8B5CF6, #3B82F6);
+  --glow-purple: 0 0 30px rgba(139, 92, 246, 0.4);
+  --glow-blue: 0 0 30px rgba(59, 130, 246, 0.4);
+
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
@@ -12,107 +29,215 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Force input text visibility */
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blue-electric);
+}
+
+/* Headings - light text for dark bg */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+/* Paragraphs and text */
+p {
+  color: var(--text-secondary);
+}
+
+/* Labels */
+label {
+  color: var(--text-primary);
+}
+
+/* Links */
+a {
+  color: var(--blue-light);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--purple-light);
+}
+
+/* Input & Form Elements */
 input,
 textarea,
 select {
-  color: #000000 !important;
-  background-color: #ffffff !important;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
   font-family: inherit;
   font-size: 16px;
   font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #666666 !important;
-  opacity: 1 !important;
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
-/* Safari placeholder */
-input::-webkit-input-placeholder {
-  color: #666666 !important;
+/* Autofill dark mode */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
-textarea::-webkit-input-placeholder {
-  color: #666666 !important;
-}
-
-/* Firefox placeholder */
-input::-moz-placeholder {
-  color: #666666 !important;
-  opacity: 1 !important;
-}
-
-textarea::-moz-placeholder {
-  color: #666666 !important;
-  opacity: 1 !important;
-}
-
-/* Autocomplete - force black text on white bg */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #000000 !important;
-  color: #000000 !important;
+/* Option elements */
+option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
 }
 
 /* Disabled state */
 input:disabled,
 textarea:disabled,
 select:disabled {
-  background-color: #f3f4f6 !important;
-  color: #9ca3af !important;
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.5;
 }
 
-/* Extra safety for all input types */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-input[type="number"],
-input[type="search"],
-input[type="url"] {
-  color: #000000 !important;
-  background-color: #ffffff !important;
+/* === ANIMATIONS === */
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.7), 0 0 60px rgba(59, 130, 246, 0.5);
+  }
 }
 
-/* Option elements in select */
-option {
-  color: #000000;
-  background-color: #ffffff;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
-/* ALL LABELS MUST BE BLACK */
-label {
-  color: #000000 !important;
-  font-weight: 500;
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-h3 {
-  color: #000000 !important;
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Headings */
-h1, h2, h4, h5, h6 {
-  color: #000000 !important;
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Paragraphs and text */
-p {
-  color: #000000 !important;
+/* Utility classes */
+.animate-glow-pulse {
+  animation: glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+.gradient-main {
+  background: var(--gradient-main);
+}
+
+.gradient-main-text {
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-purple {
+  box-shadow: var(--glow-purple);
+}
+
+.glow-blue {
+  box-shadow: var(--glow-blue);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-light);
 }

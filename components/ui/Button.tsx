@@ -22,13 +22,13 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'font-medium transition-all duration-200 flex items-center justify-center gap-2 rounded-lg'
+    'font-medium transition-all duration-200 flex items-center justify-center gap-2 rounded-lg transform hover:scale-105'
 
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-400',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400 disabled:bg-gray-100',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-gray-400',
-    ghost: 'bg-transparent text-blue-600 hover:bg-blue-50 active:bg-blue-100 disabled:text-gray-400',
+    primary: 'gradient-main text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+    secondary: 'glass glass-hover text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100',
+    danger: 'bg-red-600/80 text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+    ghost: 'bg-transparent text-blue-light hover:bg-blue-600/10 active:bg-blue-600/20 disabled:text-text-secondary disabled:cursor-not-allowed disabled:hover:scale-100',
   }
 
   const sizes = {
@@ -45,9 +45,9 @@ export default function Button({
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? 'w-full' : ''}
-        ${disabled || isLoading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
         ${className}
       `}
+      style={variant === 'primary' && !disabled ? { boxShadow: 'var(--glow-purple)' } : undefined}
       {...props}
     >
       {isLoading ? (
