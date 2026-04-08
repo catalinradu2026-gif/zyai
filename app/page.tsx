@@ -26,14 +26,14 @@ const jsonLd = {
 
 // Mock listings pentru preview
 const MOCK_LISTINGS = [
-  { id: '1', title: 'iPhone 15 Pro Max negru, 256GB', price: 4500, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '2', title: 'Apartament 2 camere, Dorobanți', price: 250000, currency: 'EUR', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '3', title: 'BMW 320d 2015, 180.000 km', price: 12000, currency: 'EUR', city: 'Cluj', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '4', title: 'React Developer - Senior Level', price: 5000, currency: 'RON', city: 'Remote', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '5', title: 'Laptop Gaming ASUS ROG, RTX 4070', price: 6500, currency: 'RON', city: 'Timișoara', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '6', title: 'Apartament de inchiriat, Obor', price: 800, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '7', title: 'Mercedes-Benz E-Class 2020', price: 35000, currency: 'EUR', city: 'Brașov', images: [], status: 'activ', createdAt: new Date().toISOString() },
-  { id: '8', title: 'UI/UX Designer freelance', price: 3000, currency: 'RON', city: 'Cluj', images: [], status: 'activ', createdAt: new Date().toISOString() },
+  { id: '1', title: 'iPhone 15 Pro Max negru, 256GB', price: 4500, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '2', title: 'Apartament 2 camere, Dorobanți', price: 250000, currency: 'EUR', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '3', title: 'BMW 320d 2015, 180.000 km', price: 12000, currency: 'EUR', city: 'Cluj', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '4', title: 'React Developer - Senior Level', price: 5000, currency: 'RON', city: 'Remote', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '5', title: 'Laptop Gaming ASUS ROG, RTX 4070', price: 6500, currency: 'RON', city: 'Timișoara', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '6', title: 'Apartament de inchiriat, Obor', price: 800, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '7', title: 'Mercedes-Benz E-Class 2020', price: 35000, currency: 'EUR', city: 'Brașov', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: '8', title: 'UI/UX Designer freelance', price: 3000, currency: 'RON', city: 'Cluj', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
 ]
 
 export default async function Home() {
