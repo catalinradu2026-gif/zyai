@@ -283,6 +283,7 @@ export default function ListingForm() {
           </div>
         </div>
         <ChipsField label="⛽ Combustibil" val={fuel} set={setFuel} options={['Benzină', 'Diesel', 'Electric', 'GPL', 'Hybrid']} />
+        <ChipsField label="⚙️ Cutie de viteze" val={gearbox} set={setGearbox} options={['Manuală', 'Automată', 'Semi-automată']} />
         <div className="grid grid-cols-2 gap-3">
           <SelField label="📅 An" val={year} set={setYear} options={YEARS} />
           <InputField label="🛣️ Kilometri" val={km} set={setKm} type="number" placeholder="ex: 120000" />
@@ -292,6 +293,7 @@ export default function ListingForm() {
           <InputField label="📦 Volum cargo (m³)" val={cargo} set={setCargo} type="number" placeholder="ex: 8" />
         </div>
         <SelField label="💺 Nr. locuri" val={seatsNr} set={setSeatsNr} options={['2', '3', '4', '5', '6', '7', '8', '9+']} />
+        <ChipsField label="✅ Stare" val={condition} set={setCondition} options={['Nou', 'Folosit - stare bună', 'Accidentat', 'Necesită reparații']} />
         <ChipsField label="👤 Tip vânzător" val={sellerType} set={setSellerType} options={['Privat', 'Firmă', 'Dealer']} />
         <Chip active={leasing} onClick={() => setLeasing(!leasing)}>💳 Predare leasing</Chip>
       </div>
@@ -349,6 +351,7 @@ export default function ListingForm() {
           <InputField label="📋 Model" val={truckModel} set={setTruckModel} placeholder="ex: Actros, TGX..." />
         </div>
         <ChipsField label="⛽ Combustibil" val={fuel} set={setFuel} options={['Diesel', 'Electric', 'GPL', 'Hybrid']} />
+        <ChipsField label="⚙️ Cutie de viteze" val={gearbox} set={setGearbox} options={['Manuală', 'Automată', 'Semi-automată']} />
         <div className="grid grid-cols-2 gap-3">
           <SelField label="📅 An" val={year} set={setYear} options={YEARS} />
           <InputField label="🛣️ Kilometri" val={km} set={setKm} type="number" placeholder="ex: 500000" />
@@ -359,6 +362,7 @@ export default function ListingForm() {
           <SelField label="🔢 Nr. osii" val={truckOsii} set={setTruckOsii} options={['2', '3', '4', '5', '6+']} />
         </div>
         <InputField label="⚙️ Euro (normă emisii)" val={engineSize} set={setEngineSize} placeholder="ex: Euro 6" />
+        <ChipsField label="✅ Stare" val={condition} set={setCondition} options={['Nou', 'Folosit - stare bună', 'Accidentat', 'Necesită reparații']} />
         <ChipsField label="👤 Tip vânzător" val={sellerType} set={setSellerType} options={['Privat', 'Firmă', 'Dealer']} />
         <Chip active={leasing} onClick={() => setLeasing(!leasing)}>💳 Predare leasing</Chip>
       </div>
@@ -384,9 +388,14 @@ export default function ListingForm() {
         <InputField label="📋 Model" val={model} set={setModel} placeholder="ex: CBR 600RR, R1250GS..." />
         <ChipsField label="🏷️ Tip" val={motoType} set={setMotoType} options={MOTO_TYPES} />
         <ChipsField label="🔧 Cilindree" val={motoCC} set={setMotoCC} options={MOTO_CC} />
+        <ChipsField label="⛽ Combustibil" val={fuel} set={setFuel} options={['Benzină', 'Electric', 'Hybrid']} />
         <div className="grid grid-cols-2 gap-3">
           <SelField label="📅 An" val={year} set={setYear} options={YEARS} />
           <InputField label="🛣️ Kilometri" val={km} set={setKm} type="number" placeholder="ex: 25000" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <InputField label="⚡ Putere (CP)" val={power} set={setPower} type="number" placeholder="ex: 85" />
+          <InputField label="🔧 Motor (cc)" val={engineSize} set={setEngineSize} type="number" placeholder="ex: 600" />
         </div>
         <ChipsField label="✅ Stare" val={condition} set={setCondition} options={['Nou', 'Folosit - bun', 'Folosit - reparații']} />
         <ChipsField label="👤 Tip vânzător" val={sellerType} set={setSellerType} options={['Privat', 'Firmă', 'Dealer']} />
