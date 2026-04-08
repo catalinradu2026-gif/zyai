@@ -4,6 +4,7 @@ import ListingFilters from '@/components/listings/ListingFilters'
 import { getCategoryBySlug } from '@/lib/constants/categories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 const SUBS: Record<string, { slug: string; name: string; icon: string }[]> = {
   auto: [
@@ -141,7 +142,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
         <div className="lg:col-span-1">
-          <ListingFilters category={category} />
+          <Suspense fallback={<div style={{ height: '200px' }} />}>
+            <ListingFilters category={category} />
+          </Suspense>
         </div>
 
         <div className="lg:col-span-3">
