@@ -25,26 +25,72 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
         return
       }
 
+      // Validare file size (max 5MB pe file)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+      const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE)
+      if (oversizedFiles.length > 0) {
+        setUploadError(`${oversizedFiles.length} fișier(e) prea mare(i). Max 5MB per imagine.`)
+        e.target.value = ''
+        return
+      }
+
+      // Validare file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      const invalidFiles = files.filter(f => !allowedTypes.includes(f.type))
+      if (invalidFiles.length > 0) {
+        setUploadError(`Formate neacceptate. Folosește: JPG, PNG, WebP, GIF`)
+        e.target.value = ''
+        return
+      }
+
       setUploading(true)
       setUploadError('')
       const newUrls: string[] = []
+      let errorCount = 0
 
-      for (const file of files) {
-        try {
-          const fd = new FormData()
-          fd.append('file', file)
+      // Upload secvențial (una câte una) pentru a evita timeouts
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        let retries = 3
 
-          const res = await fetch('/api/upload', { method: 'POST', body: fd })
-          const data = await res.json()
+        while (retries > 0) {
+          try {
+            const fd = new FormData()
+            fd.append('file', file)
 
-          if (!res.ok || data.error) {
-            setUploadError(`Eroare upload: ${data.error}`)
-          } else {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
+            const res = await fetch('/api/upload', {
+              method: 'POST',
+              body: fd,
+              signal: controller.signal,
+            })
+
+            clearTimeout(timeoutId)
+            const data = await res.json()
+
+            if (!res.ok || data.error) {
+              throw new Error(data.error || 'Upload failed')
+            }
+
             newUrls.push(data.url)
+            retries = 0 // Success, exit retry loop
+          } catch (err) {
+            retries--
+            if (retries === 0) {
+              errorCount++
+              console.error(`Failed to upload ${file.name}:`, err)
+            } else {
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, 1000))
+            }
           }
-        } catch (err) {
-          setUploadError('Eroare de conexiune la upload')
         }
+      }
+
+      if (errorCount > 0) {
+        setUploadError(`${errorCount} din ${files.length} imagini nu s-au putut încărca. Încearcă din nou.`)
       }
 
       const updated = [...images, ...newUrls]
