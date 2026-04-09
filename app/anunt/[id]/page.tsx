@@ -56,16 +56,17 @@ export default async function ListingDetailPage({ params }: Props) {
 
   const meta = (listing as any).metadata as Record<string, any> | null | undefined
   const isAuto = (listing as any).category_id === 3
-  const autoDetails = isAuto && meta ? [
-    meta.year     ? { icon: '📅', label: 'An fabricație', value: meta.year } : null,
-    meta.mileage  ? { icon: '🛣️', label: 'Kilometraj', value: `${Number(meta.mileage).toLocaleString('ro-RO')} km` } : null,
-    meta.gearbox  ? { icon: '⚙️', label: 'Cutie viteze', value: meta.gearbox } : null,
-    meta.fuelType ? { icon: '⛽', label: 'Combustibil', value: meta.fuelType } : null,
-    meta.power    ? { icon: '💪', label: 'Putere', value: `${meta.power} CP` } : null,
-    meta.condition? { icon: '✅', label: 'Stare', value: meta.condition } : null,
-    meta.bodyType ? { icon: '🚗', label: 'Caroserie', value: meta.bodyType } : null,
-    meta.brand    ? { icon: '🏷️', label: 'Marcă', value: `${meta.brand}${meta.model ? ' ' + meta.model : ''}` } : null,
-  ].filter(Boolean) : []
+  const N = 'Nespecificat'
+  const autoDetails = isAuto ? [
+    { icon: '📅', label: 'An fabricație', value: meta?.year || N },
+    { icon: '🛣️', label: 'Kilometraj', value: meta?.mileage ? `${Number(meta.mileage).toLocaleString('ro-RO')} km` : N },
+    { icon: '⚙️', label: 'Cutie viteze', value: meta?.gearbox || N },
+    { icon: '⛽', label: 'Combustibil', value: meta?.fuelType || N },
+    { icon: '💪', label: 'Putere', value: meta?.power ? `${meta.power} CP` : N },
+    { icon: '✅', label: 'Stare', value: meta?.condition || N },
+    { icon: '🚗', label: 'Caroserie', value: meta?.bodyType || N },
+    { icon: '🏷️', label: 'Marcă/Model', value: meta?.brand ? `${meta.brand}${meta.model ? ' ' + meta.model : ''}` : N },
+  ] : []
 
   return (
     <main className="pt-24 pb-20 bg-gray-50 min-h-screen">
@@ -114,7 +115,7 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
 
               {/* Auto Details */}
-              {autoDetails.length > 0 && (
+              {isAuto && (
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-3">Caracteristici vehicul</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
