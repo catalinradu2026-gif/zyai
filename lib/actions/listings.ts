@@ -43,7 +43,7 @@ export async function createListing(formData: {
 
   const admin = createSupabaseAdmin()
 
-  const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto-')
+  const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto')
 
   const metadata = isAuto ? {
     brand: formData.brand || null,
