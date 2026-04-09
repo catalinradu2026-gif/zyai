@@ -54,6 +54,19 @@ export default async function ListingDetailPage({ params }: Props) {
   const canContact = user && !isOwner
   const needsLogin = !user && !isOwner
 
+  const meta = (listing as any).metadata as Record<string, any> | null | undefined
+  const isAuto = (listing as any).category_id === 3
+  const autoDetails = isAuto && meta ? [
+    meta.year     ? { icon: '📅', label: 'An fabricație', value: meta.year } : null,
+    meta.mileage  ? { icon: '🛣️', label: 'Kilometraj', value: `${Number(meta.mileage).toLocaleString('ro-RO')} km` } : null,
+    meta.gearbox  ? { icon: '⚙️', label: 'Cutie viteze', value: meta.gearbox } : null,
+    meta.fuelType ? { icon: '⛽', label: 'Combustibil', value: meta.fuelType } : null,
+    meta.power    ? { icon: '💪', label: 'Putere', value: `${meta.power} CP` } : null,
+    meta.condition? { icon: '✅', label: 'Stare', value: meta.condition } : null,
+    meta.bodyType ? { icon: '🚗', label: 'Caroserie', value: meta.bodyType } : null,
+    meta.brand    ? { icon: '🏷️', label: 'Marcă', value: `${meta.brand}${meta.model ? ' ' + meta.model : ''}` } : null,
+  ].filter(Boolean) : []
+
   return (
     <main className="pt-24 pb-20 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -99,6 +112,22 @@ export default async function ListingDetailPage({ params }: Props) {
                   <p className="text-lg font-semibold text-gray-900">{formattedDate}</p>
                 </div>
               </div>
+
+              {/* Auto Details */}
+              {autoDetails.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">Caracteristici vehicul</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {(autoDetails as any[]).map((d) => (
+                      <div key={d.label} className="rounded-xl p-3 text-center" style={{ background: '#f8f9fa', border: '1px solid #e9ecef' }}>
+                        <div className="text-2xl mb-1">{d.icon}</div>
+                        <div className="text-xs text-gray-500 font-medium mb-0.5">{d.label}</div>
+                        <div className="text-sm font-bold text-gray-900">{d.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               <div>
