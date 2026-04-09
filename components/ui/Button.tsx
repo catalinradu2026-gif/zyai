@@ -22,19 +22,19 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'font-medium transition-all duration-200 flex items-center justify-center gap-2 rounded-lg transform hover:scale-105'
+    'font-semibold transition-all duration-200 flex items-center justify-center gap-2 rounded-2xl transform hover:scale-[1.03] active:scale-[0.98]'
 
   const variants = {
-    primary: 'gradient-main text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+    primary: 'gradient-main text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
     secondary: 'glass glass-hover text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100',
-    danger: 'bg-red-600/80 text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
-    ghost: 'bg-transparent text-blue-light hover:bg-blue-600/10 active:bg-blue-600/20 disabled:text-text-secondary disabled:cursor-not-allowed disabled:hover:scale-100',
+    danger: 'bg-red-500/80 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+    ghost: 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100',
   }
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2.5 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 py-1.5 text-sm',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-7 py-3 text-base',
   }
 
   return (
@@ -47,7 +47,7 @@ export default function Button({
         ${fullWidth ? 'w-full' : ''}
         ${className}
       `}
-      style={variant === 'primary' && !disabled ? { boxShadow: 'var(--glow-purple)' } : undefined}
+      style={variant === 'primary' && !disabled ? { boxShadow: '0 0 24px rgba(139,92,246,0.35)' } : undefined}
       {...props}
     >
       {isLoading ? (

@@ -1,7 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export async function getUserFavorites(userId: string) {
-  const supabase = await createSupabaseServerClient()
+  const supabase = createSupabaseAdmin()
 
   const { data, error } = await supabase
     .from('favorites')

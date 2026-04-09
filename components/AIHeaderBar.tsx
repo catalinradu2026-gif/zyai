@@ -184,39 +184,54 @@ export default function AIHeaderBar() {
       {/* ── AI BAR în header ── */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200"
+        className="flex items-center gap-3 transition-all duration-300"
         style={{
-          background: 'rgba(139,92,246,0.08)',
-          border: '1px solid rgba(139,92,246,0.2)',
+          background: 'rgba(15,22,41,0.8)',
+          border: '1px solid rgba(139,92,246,0.25)',
+          borderRadius: '100px',
           flex: '1',
-          maxWidth: '400px',
+          maxWidth: '420px',
           cursor: 'text',
+          padding: '8px 14px',
+          boxShadow: '0 0 0 0 rgba(139,92,246,0)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(139,92,246,0.2)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; e.currentTarget.style.boxShadow = 'none' }}
+        onMouseEnter={e => {
+          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)'
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(139,92,246,0.15), inset 0 0 20px rgba(139,92,246,0.05)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.25)'
+          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139,92,246,0)'
+        }}
       >
         {/* Bare vocale */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
           {BARS.map((h, i) => (
             <span key={i} style={{
-              display: 'block', width: '3px', borderRadius: '2px',
-              background: 'linear-gradient(to top, #8B5CF6, #3B82F6)',
-              height: speaking ? `${Math.round(h * 18)}px` : '6px',
-              animation: speaking ? `vbar 0.65s ease-in-out ${i * 0.08}s infinite alternate` : 'none',
+              display: 'block', width: '2.5px', borderRadius: '99px',
+              background: 'linear-gradient(to top, #8B5CF6, #60a5fa)',
+              height: speaking ? `${Math.round(h * 16)}px` : '5px',
+              animation: speaking ? `vbar 0.65s ease-in-out ${i * 0.08}s infinite alternate` : `vbarIdle 2s ease-in-out ${i * 0.15}s infinite alternate`,
               transition: 'height 0.3s ease',
             }} />
           ))}
         </div>
 
-        {/* Placeholder — ascuns pe mobile */}
-        <span className="hidden sm:block text-sm flex-1 text-left" style={{ color: 'rgba(148,163,184,0.8)' }}>
+        {/* Placeholder */}
+        <span className="hidden sm:block text-sm flex-1 text-left truncate" style={{ color: 'rgba(148,163,184,0.6)' }}>
           {PLACEHOLDERS[placeholderIdx]}
         </span>
 
-        {/* Microfon */}
+        {/* Mic button */}
         <span
-          className="flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 transition-all duration-200"
-          style={{ background: listening ? '#8B5CF6' : 'rgba(139,92,246,0.15)', color: listening ? '#fff' : '#8B5CF6', fontSize: '14px' }}
+          className="flex items-center justify-center flex-shrink-0 transition-all duration-200"
+          style={{
+            width: '28px', height: '28px', borderRadius: '50%',
+            background: listening ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)' : 'rgba(139,92,246,0.15)',
+            color: listening ? '#fff' : '#8B5CF6',
+            fontSize: '13px',
+            boxShadow: listening ? '0 0 12px rgba(139,92,246,0.5)' : 'none',
+          }}
           title="Caută cu vocea"
           onClick={e => { e.stopPropagation(); setOpen(true); setTimeout(() => startListening(), 300) }}
         >
