@@ -18,7 +18,7 @@ export async function getListings(filters: ListingFilters = {}) {
     .from('listings')
     .select(
       `
-      id, title, price, price_type, currency, city, images, created_at, status
+      id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata
     `,
       { count: 'exact' }
     )

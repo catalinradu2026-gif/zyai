@@ -108,6 +108,20 @@ export const CATEGORIES = {
       'alte-animale': { slug: 'alte-animale', name: 'Alte animale' },
     },
   },
+  'mama-copilul': {
+    slug: 'mama-copilul',
+    name: 'Mama & Copilul',
+    icon: '👶',
+    subcategories: {
+      haine: { slug: 'haine', name: 'Haine copii' },
+      jucarii: { slug: 'jucarii', name: 'Jucării' },
+      carucior: { slug: 'carucior', name: 'Cărucioare & Scaune auto' },
+      mobilier: { slug: 'mobilier', name: 'Mobilier copii' },
+      'ingrijire-bebelusi': { slug: 'ingrijire-bebelusi', name: 'Îngrijire bebeluși' },
+      'carti-jocuri': { slug: 'carti-jocuri', name: 'Cărți & Jocuri educative' },
+      'alte-mama-copilul': { slug: 'alte-mama-copilul', name: 'Altele' },
+    },
+  },
 } as const
 
 export type CategoryKey = keyof typeof CATEGORIES

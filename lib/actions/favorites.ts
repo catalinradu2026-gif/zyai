@@ -45,7 +45,11 @@ export async function toggleFavorite(listingId: string) {
       })
 
     if (error) {
-      console.error('Error adding favorite:', error)
+      console.error('Error adding favorite:', error.code, error.message)
+      // FK violation - listing doesn't exist in DB (e.g. mock listing)
+      if (error.code === '23503') {
+        return { success: true, isFavorited: true, local: true }
+      }
       return { error: error.message }
     }
 

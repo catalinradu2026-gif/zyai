@@ -2,20 +2,30 @@
 
 import { useState } from 'react'
 
-export default function HeroSearch() {
+export default function HeroSearch({ suggestions = [] }: { suggestions?: string[] }) {
   const [search, setSearch] = useState('')
   const [focused, setFocused] = useState(false)
+
+  function saveSearch(term: string) {
+    try {
+      const prev: string[] = JSON.parse(localStorage.getItem('zyai_searches') || '[]')
+      const updated = [term, ...prev.filter((s) => s !== term)].slice(0, 20)
+      localStorage.setItem('zyai_searches', JSON.stringify(updated))
+    } catch {}
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (!search.trim()) return
 
+    saveSearch(search.trim())
     const event = new CustomEvent('openChatWithQuery', { detail: search })
     window.dispatchEvent(event)
     setSearch('')
   }
 
   function handleExampleClick(example: string) {
+    saveSearch(example)
     const event = new CustomEvent('openChatWithQuery', { detail: example })
     window.dispatchEvent(event)
   }
@@ -57,12 +67,7 @@ export default function HeroSearch() {
         <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           💡 Sugestii:
         </span>
-        {[
-          'iPhone 15 ieftin',
-          'Apartament 2 camere București',
-          'BMW sub 5000€',
-          'Frontend Developer remote',
-        ].map((example) => (
+        {suggestions.map((example) => (
           <button
             key={example}
             onClick={() => handleExampleClick(example)}

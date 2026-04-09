@@ -34,6 +34,9 @@ export async function createListing(formData: {
   bodyType?: string
   sellerType?: string
   leasing?: boolean
+  gearbox?: string
+  power?: string
+  condition?: string
 }) {
   const user = await getUser()
   if (!user?.id) return { error: 'Trebuie să fii autentificat' }
@@ -51,6 +54,9 @@ export async function createListing(formData: {
     bodyType: formData.bodyType || null,
     sellerType: formData.sellerType || null,
     leasing: formData.leasing || false,
+    gearbox: formData.gearbox || null,
+    power: formData.power || null,
+    condition: formData.condition || null,
   } : null
 
   // Try with metadata first

@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import CategoriesBrowser from '@/components/CategoriesBrowser'
 import HeroSearch from '@/components/HeroSearch'
-import SearchButton from '@/components/SearchButton'
+import LiveStats from '@/components/LiveStats'
+import SwipeableRow from '@/components/listings/SwipeableRow'
+import PersonalizedSection from '@/components/listings/PersonalizedSection'
 import Button from '@/components/ui/Button'
-import Image from 'next/image'
 import type { Metadata } from 'next'
+import { getListings } from '@/lib/queries/listings'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export const metadata: Metadata = {
   title: 'zyAI - Marketplace cu AI | Anunțuri Gratuite România',
@@ -24,20 +27,64 @@ const jsonLd = {
   },
 }
 
-// Mock listings pentru preview
 const MOCK_LISTINGS = [
-  { id: 'a1b2c3d4-0001-0000-0000-000000000001', title: 'iPhone 15 Pro Max negru, 256GB', price: 4500, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000002', title: 'Apartament 2 camere, Dorobanți', price: 250000, currency: 'EUR', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000003', title: 'BMW 320d 2015, 180.000 km', price: 12000, currency: 'EUR', city: 'Cluj', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000004', title: 'React Developer - Senior Level', price: 5000, currency: 'RON', city: 'Remote', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000005', title: 'Laptop Gaming ASUS ROG, RTX 4070', price: 6500, currency: 'RON', city: 'Timișoara', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000006', title: 'Apartament de inchiriat, Obor', price: 800, currency: 'RON', city: 'București', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000007', title: 'Mercedes-Benz E-Class 2020', price: 35000, currency: 'EUR', city: 'Brașov', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
-  { id: 'a1b2c3d4-0001-0000-0000-000000000008', title: 'UI/UX Designer freelance', price: 3000, currency: 'RON', city: 'Cluj', images: [], status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000001', title: 'iPhone 15 Pro Max negru, 256GB', description: 'Stare impecabilă, folosit 3 luni, toate accesoriile originale incluse. Garanție Apple până în 2026.', price: 4500, currency: 'RON', city: 'București', images: ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=300&fit=crop'], category: 'electronice', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000002', title: 'Apartament 2 camere, Dorobanți', description: 'Apartament modern renovat complet în 2023, zonă liniștită, metrou la 5 minute. Etaj 4 din 8.', price: 250000, currency: 'EUR', city: 'București', images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop'], category: 'imobiliare', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000003', title: 'BMW 320d 2015, 180.000 km', description: 'Motor 2.0 diesel 184CP, automat 8 viteze, full options. ITP valabil, fără accidente.', price: 12000, currency: 'EUR', city: 'Cluj', images: ['https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&h=300&fit=crop'], category: 'auto', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z', metadata: { year: '2015', mileage: '180000', fuelType: 'Diesel', gearbox: 'Automată' } },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000004', title: 'React Developer - Senior Level', description: 'Căutăm Senior React Developer pentru echipa noastră de produs. Remote full-time, salariu competitiv.', price: 5000, currency: 'RON', city: 'Remote', images: ['https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop'], category: 'joburi', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000005', title: 'Laptop Gaming ASUS ROG, RTX 4070', description: 'Procesor Intel i9-13900H, 32GB RAM DDR5, SSD 1TB NVMe. Ecran 165Hz QHD. Ca nou, cutie originală.', price: 6500, currency: 'RON', city: 'Timișoara', images: ['https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400&h=300&fit=crop'], category: 'electronice', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000006', title: 'Apartament de închiriat, Obor', description: '2 camere decomandate, mobilat modern, toate utilitățile incluse. Disponibil din 1 mai.', price: 800, currency: 'RON', city: 'București', images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'], category: 'imobiliare', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000007', title: 'Mercedes-Benz E-Class 2020', description: 'E220d AMG Line, 194CP, pachet premium, scaune din piele, head-up display. Prima înmatriculare RO.', price: 35000, currency: 'EUR', city: 'Brașov', images: ['https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&h=300&fit=crop'], category: 'auto', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z', metadata: { year: '2020', mileage: '55000', fuelType: 'Diesel', gearbox: 'Automată' } },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000008', title: 'UI/UX Designer freelance', description: 'Designer cu 6 ani experiență în Figma, disponibil pentru proiecte web și mobile. Portofoliu la cerere.', price: 3000, currency: 'RON', city: 'Cluj', images: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop'], category: 'joburi', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000009', title: 'Samsung Galaxy S24 Ultra, 512GB', description: 'Titanium Black, S Pen inclus, 200MP camera, stare perfectă. Cumpărat în ianuarie 2024.', price: 5200, currency: 'RON', city: 'Iași', images: ['https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&h=300&fit=crop'], category: 'electronice', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000010', title: 'Dacia Duster 2022, 4x4, 45.000 km', description: 'Motor 1.5 dCi 115CP, tracțiune integrală, navigație, senzori parcare. Stare excelentă.', price: 18500, currency: 'EUR', city: 'Timișoara', images: ['https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400&h=300&fit=crop'], category: 'auto', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z', metadata: { year: '2022', mileage: '45000', fuelType: 'Diesel', gearbox: 'Manuală' } },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000011', title: 'Casă cu 4 camere, curte 500mp', description: 'Casă individuală P+1, 4 camere, 2 băi, garaj, grădină amenajată. Zona liniștită, acces rapid la centru.', price: 120000, currency: 'EUR', city: 'Cluj', images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'], category: 'imobiliare', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000012', title: 'Cărucior Bugaboo Fox 5 complet', description: 'Cărucior premium cu scoică, landou și toate accesoriile. Culoare albastru închis, stare foarte bună.', price: 2800, currency: 'RON', city: 'București', images: ['https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=400&h=300&fit=crop'], category: 'mama-copilul', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000013', title: 'Set jucării educative Montessori 3-6 ani', description: 'Set complet de 20 jucării din lemn natural, netoxice, certificate CE. Perfecte pentru dezvoltare cognitivă.', price: 350, currency: 'RON', city: 'Cluj', images: ['https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&h=300&fit=crop'], category: 'mama-copilul', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000014', title: 'Bicicletă MTB Trek Marlin 7, 2023', description: 'Cadru aluminiu, furca SR Suntour 100mm, 12 viteze Shimano. Roți 29", stare impecabilă.', price: 3200, currency: 'RON', city: 'Brașov', images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'], category: 'sport', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000015', title: 'Canapea extensibilă piele naturală', description: 'Canapea 3 locuri, piele naturală maro cognac, mecanism extensibil. Dimensiuni 230x90cm. Folosită 1 an.', price: 4500, currency: 'RON', city: 'București', images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop'], category: 'casa-gradina', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000016', title: 'Golden Retriever pui 2 luni, vaccinați', description: 'Pui superbi din părinți cu pedigree, vaccinați și deparazitați. Se vând cu carnet de sănătate.', price: 1200, currency: 'RON', city: 'Iași', images: ['https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=300&fit=crop'], category: 'animale', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000017', title: 'Nike Air Max 270 mărimea 42, nou', description: 'Sigilați, cutie originală, colorway Triple Black. Cumpărați din Nike Store, nu s-au purtat niciodată.', price: 480, currency: 'RON', city: 'Timișoara', images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop'], category: 'moda', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000018', title: 'Servicii reparații electrocasnice', description: 'Reparăm mașini de spălat, frigidere, congelatoare, aragazuri. Deplasare la domiciliu, garanție 12 luni.', price: 150, currency: 'RON', city: 'București', images: ['https://images.unsplash.com/photo-1581092160607-ee22731c9c86?w=400&h=300&fit=crop'], category: 'servicii', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000019', title: 'Volkswagen Golf 8 2021, 60.000 km', description: 'Motor 2.0 TDI 150CP, DSG 7 viteze, Digital Cockpit Pro, ACC, Lane Assist. Service la dealer VW.', price: 22000, currency: 'EUR', city: 'București', images: ['https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=400&h=300&fit=crop'], category: 'auto', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z', metadata: { year: '2021', mileage: '60000', fuelType: 'Diesel', gearbox: 'Automată' } },
+  { id: 'a1b2c3d4-0001-0000-0000-000000000020', title: 'MacBook Pro M3, 16GB RAM, 512GB', description: 'MacBook Pro 14", chip M3 Pro, Space Black, baterie 90%. Garanție AppleCare până în 2026.', price: 9800, currency: 'RON', city: 'Cluj', images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop'], category: 'electronice', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
 ]
 
 export default async function Home() {
-  const listings = MOCK_LISTINGS
+  // Sugestii reale din anunțurile active
+  let suggestions: string[] = []
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data } = await supabase
+      .from('listings')
+      .select('title')
+      .eq('status', 'activ')
+      .order('created_at', { ascending: false })
+      .limit(6)
+    if (data && data.length > 0) {
+      suggestions = data.map((l: any) => l.title as string)
+    }
+  } catch {}
+
+  const CATEGORY_SLUGS: Record<number, string> = { 3: 'auto', 2: 'imobiliare', 1: 'joburi', 4: 'servicii' }
+  const { data: dbListings } = await getListings({ page: 1 })
+  const dbMapped = (dbListings ?? []).map((l: any) => ({
+    id: l.id,
+    title: l.title,
+    description: l.description ?? undefined,
+    price: l.price,
+    currency: l.currency ?? 'RON',
+    city: l.city,
+    images: l.images ?? [],
+    category: CATEGORY_SLUGS[l.category_id] ?? undefined,
+    metadata: l.metadata ?? null,
+  }))
+  // Filter out mocks that overlap with real DB IDs, then combine
+  const dbIds = new Set(dbMapped.map((l: any) => l.id))
+  const listings = [
+    ...dbMapped,
+    ...MOCK_LISTINGS.filter((m) => !dbIds.has(m.id)),
+  ]
 
   return (
     <>
@@ -45,7 +92,6 @@ export default async function Home() {
       <main className="min-h-screen pt-20 pb-16 px-4">
         {/* ========== HERO SECTION ========== */}
         <section className="relative mb-24">
-          {/* Glow background elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div
               className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-20"
@@ -58,98 +104,44 @@ export default async function Home() {
           </div>
 
           <div className="relative max-w-4xl mx-auto text-center">
-            {/* Badge */}
             <div className="inline-block mb-6 px-4 py-2 rounded-full glass">
               <span className="text-sm font-medium">⚡ AI-Powered Marketplace 2026</span>
             </div>
 
-            {/* Main Title - Gradient animated */}
             <h1 className="text-5xl md:text-7xl font-black mb-4 leading-tight">
               <span className="gradient-main-text">Marketplace cu AI.</span>
               <br />
               <span style={{ color: 'var(--text-primary)' }}>Gratuit.</span>
             </h1>
 
-            {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8" style={{ color: 'var(--text-secondary)' }}>
               Postezi o dată. AI-ul îți găsește cumpărător.
             </p>
 
-            {/* Search Box */}
-            <div className="mb-12 max-w-2xl mx-auto">
-              <HeroSearch />
-            </div>
-
-            {/* Live Stats */}
-            <div className="grid grid-cols-3 gap-4 md:gap-8 justify-center">
-              <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold gradient-main-text">1,200+</div>
-                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>utilizatori azi</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold gradient-main-text">45</div>
-                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>anunțuri noi</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold gradient-main-text">3.2K</div>
-                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>pe platformă</div>
-              </div>
+            <div className="mb-8 max-w-2xl mx-auto">
+              <HeroSearch suggestions={suggestions} />
             </div>
           </div>
         </section>
 
         {/* ========== CATEGORIES ========== */}
-        <section className="max-w-6xl mx-auto mb-24">
+        <section className="max-w-6xl mx-auto mb-12">
           <h2 className="text-3xl font-bold mb-8 text-center">Categorii</h2>
           <CategoriesBrowser />
         </section>
 
-        {/* ========== RECENT LISTINGS ========== */}
-        <section className="max-w-6xl mx-auto mb-24">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Cele mai noi anunțuri</h2>
-            <Link href="/marketplace/auto" className="text-blue-light hover:text-purple-light transition">
-              Vezi toate →
-            </Link>
-          </div>
+        {/* ========== LIVE STATS ========== */}
+        <LiveStats />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {listings.slice(0, 8).map((listing: any) => (
-              <Link key={listing.id} href={`/anunt/${listing.id}`}>
-                <div
-                  className="group rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 cursor-pointer h-full"
-                  style={{
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  {/* Image Placeholder */}
-                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center group-hover:shadow-lg transition">
-                    <span className="text-white text-4xl opacity-60">📦</span>
-                    <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
-                      ✨ AI
-                    </div>
-                  </div>
+        {/* ========== CELE MAI NOI ANUNȚURI (swipeable) ========== */}
+        <SwipeableRow
+          listings={listings}
+          title="Cele mai noi anunțuri"
+          subtitle="Adăugate recent pe platformă"
+        />
 
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-sm mb-2 line-clamp-2 group-hover:text-blue-light transition">
-                      {listing.title}
-                    </h3>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-lg font-bold gradient-main-text">
-                        {listing.price?.toLocaleString('ro-RO')} {listing.currency}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {listing.city}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* ========== OFERTE PENTRU TINE (personalizat) ========== */}
+        <PersonalizedSection allListings={listings} />
 
         {/* ========== CTA BANNER ========== */}
         <section className="max-w-4xl mx-auto mb-16">

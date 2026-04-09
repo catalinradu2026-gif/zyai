@@ -3,12 +3,15 @@ import ListingCard from './ListingCard'
 interface Listing {
   id: string
   title: string
+  description?: string
   price?: number
   price_type: string
   currency: string
   city: string
   images: string[]
   created_at: string
+  category?: string
+  metadata?: Record<string, any> | null
 }
 
 interface ListingGridProps {
@@ -42,12 +45,15 @@ export default function ListingGrid({ listings, loading }: ListingGridProps) {
           key={listing.id}
           id={listing.id}
           title={listing.title}
+          description={listing.description}
           price={listing.price}
           priceType={listing.price_type}
           currency={listing.currency}
           city={listing.city}
           images={listing.images}
           createdAt={listing.created_at}
+          category={listing.category}
+          metadata={listing.metadata}
         />
       ))}
     </div>

@@ -18,7 +18,6 @@ import {
 import { ROMANIAN_CITIES } from '@/lib/constants/cities'
 import ImageUploader from './ImageUploader'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 
 // ─── Subcategorii per categorie ──────────────────────────────────
 const SUBS: Record<string, { slug: string; name: string; icon: string }[]> = {
@@ -55,6 +54,53 @@ const SUBS: Record<string, { slug: string; name: string; icon: string }[]> = {
     { slug: 'constructii-serviciu', name: 'Construcții', icon: '🏗️' },
     { slug: 'frumusete', name: 'Frumusețe', icon: '💅' },
   ],
+  electronice: [
+    { slug: 'telefoane', name: 'Telefoane', icon: '📱' },
+    { slug: 'laptopuri', name: 'Laptopuri', icon: '💻' },
+    { slug: 'tv-audio', name: 'TV & Audio', icon: '📺' },
+    { slug: 'gaming', name: 'Gaming', icon: '🎮' },
+    { slug: 'tablete', name: 'Tablete', icon: '📟' },
+    { slug: 'accesorii-electronice', name: 'Accesorii', icon: '🔌' },
+  ],
+  moda: [
+    { slug: 'haine-barbati', name: 'Haine bărbați', icon: '👔' },
+    { slug: 'haine-femei', name: 'Haine femei', icon: '👗' },
+    { slug: 'incaltaminte', name: 'Încălțăminte', icon: '👟' },
+    { slug: 'genti-accesorii', name: 'Genți & Accesorii', icon: '👜' },
+    { slug: 'bijuterii', name: 'Bijuterii & Ceasuri', icon: '💍' },
+    { slug: 'haine-copii', name: 'Haine copii', icon: '👕' },
+  ],
+  'casa-gradina': [
+    { slug: 'mobila', name: 'Mobilă', icon: '🛋️' },
+    { slug: 'electrocasnice', name: 'Electrocasnice', icon: '🫙' },
+    { slug: 'decoratiuni', name: 'Decorațiuni', icon: '🖼️' },
+    { slug: 'gradina', name: 'Grădină', icon: '🌱' },
+    { slug: 'unelte', name: 'Unelte & Bricolaj', icon: '🔨' },
+  ],
+  sport: [
+    { slug: 'fitness', name: 'Fitness & Gym', icon: '🏋️' },
+    { slug: 'biciclete', name: 'Biciclete', icon: '🚴' },
+    { slug: 'sporturi-echipa', name: 'Sporturi de echipă', icon: '⚽' },
+    { slug: 'sporturi-apa', name: 'Sporturi de apă', icon: '🏊' },
+    { slug: 'sporturi-iarna', name: 'Sporturi de iarnă', icon: '⛷️' },
+    { slug: 'outdoor', name: 'Outdoor & Camping', icon: '🏕️' },
+  ],
+  animale: [
+    { slug: 'caini', name: 'Câini', icon: '🐕' },
+    { slug: 'pisici', name: 'Pisici', icon: '🐈' },
+    { slug: 'pasari', name: 'Păsări', icon: '🦜' },
+    { slug: 'pesti', name: 'Pești & Acvarii', icon: '🐠' },
+    { slug: 'accesorii-animale', name: 'Accesorii animale', icon: '🦴' },
+    { slug: 'alte-animale', name: 'Alte animale', icon: '🐾' },
+  ],
+  'mama-copilul': [
+    { slug: 'carucioare', name: 'Cărucioare & Scaune auto', icon: '🍼' },
+    { slug: 'jucarii', name: 'Jucării', icon: '🧸' },
+    { slug: 'haine-bebe', name: 'Haine bebeluși', icon: '👶' },
+    { slug: 'mobilier-copii', name: 'Mobilier copii', icon: '🛏️' },
+    { slug: 'ingrijire', name: 'Îngrijire & Sănătate', icon: '🩺' },
+    { slug: 'carti-educative', name: 'Cărți & Jocuri educative', icon: '📚' },
+  ],
 }
 
 const MAIN_CATS = [
@@ -62,23 +108,38 @@ const MAIN_CATS = [
   { slug: 'imobiliare', name: 'Imobiliare', icon: '🏠' },
   { slug: 'joburi', name: 'Joburi', icon: '💼' },
   { slug: 'servicii', name: 'Servicii', icon: '🔧' },
+  { slug: 'electronice', name: 'Electronice', icon: '📱' },
+  { slug: 'moda', name: 'Modă', icon: '👗' },
+  { slug: 'casa-gradina', name: 'Casă & Grădină', icon: '🏡' },
+  { slug: 'sport', name: 'Sport', icon: '⚽' },
+  { slug: 'animale', name: 'Animale', icon: '🐾' },
+  { slug: 'mama-copilul', name: 'Mama & Copilul', icon: '👶' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────
 const lbl = (text: string, required = false) => (
-  <label style={{ color: '#000', fontWeight: 600, fontSize: '14px', display: 'block', marginBottom: '6px' }}>
-    {text}{required && <span style={{ color: '#dc2626' }}> *</span>}
+  <label style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '14px', display: 'block', marginBottom: '6px' }}>
+    {text}{required && <span style={{ color: '#f87171' }}> *</span>}
   </label>
 )
 
-const sc = 'px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full'
-const ic = 'px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full'
-const ss = { color: '#000', backgroundColor: '#fff' }
+const sc = 'px-3 py-2.5 rounded-lg text-sm focus:outline-none w-full'
+const ic = 'px-3 py-2.5 rounded-lg text-sm focus:outline-none w-full'
+const ss = {
+  color: 'var(--text-primary)',
+  backgroundColor: 'var(--bg-card-hover)',
+  border: '1px solid var(--border-subtle)',
+}
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition ${active ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'}`}>
+      className="px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition-all duration-200"
+      style={{
+        background: active ? 'rgba(59,130,246,0.15)' : 'var(--bg-card-hover)',
+        borderColor: active ? 'var(--blue-electric)' : 'var(--border-subtle)',
+        color: active ? '#60a5fa' : 'var(--text-secondary)',
+      }}>
       {children}
     </button>
   )
@@ -258,6 +319,9 @@ export default function ListingForm() {
         bodyType: bodyType || truckBody || undefined,
         sellerType: sellerType || undefined,
         leasing,
+        gearbox: gearbox || undefined,
+        power: power || undefined,
+        condition: condition || undefined,
       })
       if (result?.error) { setError(result.error); setLoading(false) }
     } catch (err: any) {
@@ -589,25 +653,25 @@ export default function ListingForm() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-24 pb-20">
+    <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-6">
-          <h1 style={{ color: '#000', fontSize: '28px', fontWeight: 700 }}>Postează un anunț</h1>
-          <p style={{ color: '#555' }}>Pasul {step} din 2</p>
+          <h1 className="gradient-main-text" style={{ fontSize: '28px', fontWeight: 700 }}>Postează un anunț</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Pasul {step} din 2</p>
         </div>
 
         {/* Progress */}
         <div className="flex gap-2 mb-6">
           {[1, 2].map(s => (
-            <div key={s} className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className={`h-full transition-all ${s <= step ? 'bg-blue-600' : ''}`} />
+            <div key={s} className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+              <div className={`h-full transition-all gradient-main`} style={{ width: s <= step ? '100%' : '0%' }} />
             </div>
           ))}
         </div>
 
-        <Card shadow="md" className="mb-8">
+        <div className="rounded-2xl p-6 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg"><p style={{ color: '#991b1b' }}>❌ {error}</p></div>}
+            {error && <div className="p-3 rounded-lg" style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)' }}><p style={{ color: '#f87171' }}>❌ {error}</p></div>}
 
             {/* ─── STEP 1: Categorie → Câmpuri specifice → Titlu → Descriere ─── */}
             {step === 1 && (
@@ -615,13 +679,18 @@ export default function ListingForm() {
 
                 {/* Categorie principală */}
                 <div>
-                  <h2 style={{ color: '#000', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>Ce dorești să postezi?</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 700, marginBottom: '12px' }}>Ce dorești să postezi?</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                     {MAIN_CATS.map(c => (
                       <button key={c.slug} type="button" onClick={() => handleCatSelect(c.slug)}
-                        className={`p-4 rounded-xl border-2 transition text-center ${mainCat === c.slug ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-300'}`}>
-                        <span className="text-3xl block mb-1">{c.icon}</span>
-                        <span style={{ color: '#000', fontWeight: 600, fontSize: '13px' }}>{c.name}</span>
+                        className="p-3 rounded-xl border-2 transition-all duration-200 text-center hover:scale-105"
+                        style={{
+                          background: mainCat === c.slug ? 'rgba(139,92,246,0.15)' : 'var(--bg-card-hover)',
+                          borderColor: mainCat === c.slug ? 'var(--purple)' : 'var(--border-subtle)',
+                          boxShadow: mainCat === c.slug ? 'var(--glow-purple)' : 'none',
+                        }}>
+                        <span className="text-2xl block mb-1">{c.icon}</span>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '12px' }}>{c.name}</span>
                       </button>
                     ))}
                   </div>
@@ -630,11 +699,16 @@ export default function ListingForm() {
                 {/* Subcategorii */}
                 {mainCat && subs.length > 0 && (
                   <div>
-                    <p style={{ color: '#000', fontWeight: 600, fontSize: '14px', marginBottom: '10px' }}>Subcategorie</p>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '14px', marginBottom: '10px' }}>Subcategorie</p>
                     <div className="flex flex-wrap gap-2">
                       {subs.map(s => (
                         <button key={s.slug} type="button" onClick={() => setSubCat(subCat === s.slug ? '' : s.slug)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition ${subCat === s.slug ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'}`}>
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all duration-200"
+                          style={{
+                            background: subCat === s.slug ? 'rgba(59,130,246,0.15)' : 'var(--bg-card-hover)',
+                            borderColor: subCat === s.slug ? 'var(--blue-electric)' : 'var(--border-subtle)',
+                            color: subCat === s.slug ? '#60a5fa' : 'var(--text-secondary)',
+                          }}>
                           <span>{s.icon}</span>
                           <span style={{ fontSize: '13px', fontWeight: 600 }}>{s.name}</span>
                         </button>
@@ -655,8 +729,8 @@ export default function ListingForm() {
 
                 {/* Câmpuri specifice categoriei */}
                 {mainCat && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <h3 style={{ color: '#1e3a8a', fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                    <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>
                       {MAIN_CATS.find(c => c.slug === mainCat)?.icon} {subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name} — detalii
                     </h3>
                     {renderStep2Fields()}
@@ -666,7 +740,7 @@ export default function ListingForm() {
                 {/* Locație + Preț */}
                 {mainCat && (
                   <div className="space-y-4">
-                    <h3 style={{ color: '#000', fontWeight: 700, fontSize: '16px' }}>📍 Locație și preț</h3>
+                    <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '16px' }}>📍 Locație și preț</h3>
                     <SelField label="Oraș" val={city} set={setCity} options={ROMANIAN_CITIES} required placeholder="Alege orașul" />
                     <div className="grid grid-cols-3 gap-3">
                       <div className="col-span-1">
@@ -711,23 +785,24 @@ export default function ListingForm() {
             {/* ─── STEP 2: Imagini + Publică ─── */}
             {step === 2 && (
               <div className="space-y-6">
-                <h2 style={{ color: '#000', fontSize: '20px', fontWeight: 700 }}>Imagini și finalizare</h2>
+                <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 700 }}>Imagini și finalizare</h2>
                 <div>
-                  <p style={{ color: '#555', marginBottom: '12px', fontSize: '14px' }}>Anunțurile cu imagini primesc de 3x mai multe răspunsuri. Maxim 8 imagini.</p>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '12px', fontSize: '14px' }}>Anunțurile cu imagini primesc de 3x mai multe răspunsuri. Maxim 8 imagini.</p>
                   <ImageUploader onImagesChange={setImages} initialImages={images} />
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                  <h3 style={{ color: '#000', fontWeight: 700, marginBottom: '12px' }}>📋 Sumar anunț</h3>
+                <div className="rounded-xl p-5" style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)' }}>
+                  <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: '12px' }}>📋 Sumar anunț</h3>
                   {renderSummary()}
                 </div>
               </div>
             )}
 
             {/* Butoane */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
               {step > 1 && (
                 <button type="button" onClick={() => setStep(step - 1)}
-                  className="px-6 py-2.5 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition">
+                  className="px-6 py-2.5 rounded-lg font-semibold transition hover:scale-105"
+                  style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-card-hover)' }}>
                   ← Înapoi
                 </button>
               )}
@@ -735,18 +810,20 @@ export default function ListingForm() {
               {step < 2 ? (
                 <button type="submit"
                   disabled={!mainCat || !title || !description}
-                  className="flex-1 md:flex-none md:px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition disabled:opacity-40">
+                  className="flex-1 md:flex-none md:px-8 py-2.5 gradient-main text-white font-bold rounded-lg transition hover:scale-105 disabled:opacity-40"
+                  style={{ boxShadow: 'var(--glow-purple)' }}>
                   Continuă →
                 </button>
               ) : (
                 <button type="submit" disabled={loading}
-                  className="flex-1 md:flex-none md:px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition disabled:opacity-40">
+                  className="flex-1 md:flex-none md:px-8 py-2.5 text-white font-bold rounded-lg transition hover:scale-105 disabled:opacity-40"
+                  style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
                   {loading ? '⏳ Se postează...' : '✓ Publică anunțul'}
                 </button>
               )}
             </div>
           </form>
-        </Card>
+        </div>
       </div>
     </main>
   )
