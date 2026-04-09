@@ -41,7 +41,7 @@ export default async function FavoritesPage() {
               city: listing.city,
               images: listing.images ?? [],
               created_at: listing.created_at,
-              category: listing.categories?.slug ?? undefined,
+              category: undefined,
               metadata: listing.metadata ?? null,
             }))}
             userId={user.id}
