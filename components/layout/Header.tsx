@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getUser } from '@/lib/actions/auth'
 import HeaderClient from './HeaderClient'
 import AIHeaderBar from '@/components/AIHeaderBar'
+import MessagesBadge from './MessagesBadge'
 
 export default async function Header() {
   const user = await getUser()
@@ -29,21 +30,7 @@ export default async function Header() {
 
         {/* Right Side */}
         <div className="flex items-center gap-3 ml-auto flex-shrink-0">
-          {user && (
-            <>
-              <Link
-                href="/cont/mesaje"
-                className="p-2.5 rounded-lg transition-all duration-200 hover:glow-purple"
-                style={{
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                }}
-                title="Mesaje"
-              >
-                💬
-              </Link>
-            </>
-          )}
+          {user && <MessagesBadge />}
 
           <Link
             href="/anunt/nou"
