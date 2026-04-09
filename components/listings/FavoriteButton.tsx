@@ -13,8 +13,20 @@ function saveLocalFav(id: string, add: boolean) {
   } catch {}
 }
 
-export default function FavoriteButton({ listingId, initialFavorited = false }: { listingId: string; initialFavorited?: boolean }) {
-  const [favorited, setFavorited] = useState(initialFavorited)
+export default function FavoriteButton({
+  listingId,
+  initialFavorited = false,
+  initialIsFavorited,
+  userId: _userId,
+}: {
+  listingId: string
+  initialFavorited?: boolean
+  initialIsFavorited?: boolean
+  userId?: string
+}) {
+  // Support both prop name variants
+  const startFavorited = initialIsFavorited ?? initialFavorited
+  const [favorited, setFavorited] = useState(startFavorited)
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {

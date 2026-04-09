@@ -17,9 +17,11 @@ interface Listing {
 interface ListingGridProps {
   listings: Listing[]
   loading?: boolean
+  userId?: string
+  favoritedIds?: string[]
 }
 
-export default function ListingGrid({ listings, loading }: ListingGridProps) {
+export default function ListingGrid({ listings, loading, userId, favoritedIds = [] }: ListingGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -54,6 +56,8 @@ export default function ListingGrid({ listings, loading }: ListingGridProps) {
           createdAt={listing.created_at}
           category={listing.category}
           metadata={listing.metadata}
+          userId={userId}
+          isFavorited={favoritedIds.includes(listing.id)}
         />
       ))}
     </div>

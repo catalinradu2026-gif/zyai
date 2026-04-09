@@ -145,6 +145,12 @@ export function getCategoryIdBySlug(slug: string): number {
     imobiliare: 2,
     auto: 3,
     servicii: 4,
+    electronice: 5,
+    moda: 6,
+    'casa-gradina': 7,
+    sport: 8,
+    animale: 9,
+    'mama-copilul': 10,
   }
   return categoryMap[slug] || 1
 }

@@ -39,16 +39,28 @@ export default async function ConversationPage({ params, searchParams }: Props) 
     notFound()
   }
 
-  // Get other user info
-  const { data: otherUser } = await fetch(
-    // This is a workaround - in real app you'd query profiles table
-    new Request(new URL('/_next/data/static.json', 'http://localhost:3000'))
-  )
-    .then(() => ({ data: null }))
-    .catch(() => ({ data: null }))
+  // Get other user profile
+  const supabase = (await import('@/lib/supabase-server')).createSupabaseServerClient
+  const sb = await supabase()
+  const { data: otherProfile } = await sb
+    .from('profiles')
+    .select('id, full_name, avatar_url')
+    .eq('id', otherUserId)
+    .single()
 
   // Get messages
   const { data: messages } = await getMessageThread(listingId, user.id, otherUserId)
+
+  // Determine otherUserName: prefer fetched profile, fallback to listing owner profile
+  const listingProfileSingle = !Array.isArray(listing.profiles) ? listing.profiles as any : null
+  const listingProfileArr = Array.isArray(listing.profiles) ? (listing.profiles as any[])[0] : null
+  const otherUserName =
+    otherProfile?.full_name ||
+    (listing.user_id !== user.id ? (listingProfileSingle?.full_name || listingProfileArr?.full_name) : null) ||
+    'Utilizator'
+  const otherUserAvatar =
+    otherProfile?.avatar_url ||
+    (listing.user_id !== user.id ? (listingProfileSingle?.avatar_url || listingProfileArr?.avatar_url) : undefined)
 
   return (
     <main className="pt-24 pb-20 px-4 bg-gray-50 min-h-screen">
@@ -66,8 +78,8 @@ export default async function ConversationPage({ params, searchParams }: Props) 
           listingId={listingId}
           currentUserId={user.id}
           otherUserId={otherUserId}
-          otherUserName={(listing.profiles as any)?.full_name || (Array.isArray(listing.profiles) ? (listing.profiles as any[])[0]?.full_name : null) || 'Utilizator'}
-          otherUserAvatar={(listing.profiles as any)?.avatar_url || (Array.isArray(listing.profiles) ? (listing.profiles as any[])[0]?.avatar_url : null)}
+          otherUserName={otherUserName}
+          otherUserAvatar={otherUserAvatar}
           initialMessages={messages || []}
         />
       </div>

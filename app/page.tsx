@@ -8,6 +8,8 @@ import Button from '@/components/ui/Button'
 import type { Metadata } from 'next'
 import { getListings } from '@/lib/queries/listings'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { getUser } from '@/lib/actions/auth'
+import { getFavoritedIds } from '@/lib/queries/favorites'
 
 export const metadata: Metadata = {
   title: 'zyAI - Marketplace cu AI | Anunțuri Gratuite România',
@@ -51,23 +53,34 @@ const MOCK_LISTINGS = [
 ]
 
 export default async function Home() {
-  // Sugestii reale din anunțurile active
-  let suggestions: string[] = []
-  try {
-    const supabase = await createSupabaseServerClient()
-    const { data } = await supabase
-      .from('listings')
-      .select('title')
-      .eq('status', 'activ')
-      .order('created_at', { ascending: false })
-      .limit(6)
-    if (data && data.length > 0) {
-      suggestions = data.map((l: any) => l.title as string)
-    }
-  } catch {}
+  // Utilizator curent + favorite IDs (paralel)
+  const [userResult, suggestionsResult, dbListingsResult] = await Promise.allSettled([
+    getUser(),
+    (async () => {
+      const supabase = await createSupabaseServerClient()
+      const { data } = await supabase
+        .from('listings')
+        .select('title')
+        .eq('status', 'activ')
+        .order('created_at', { ascending: false })
+        .limit(6)
+      return data?.map((l: any) => l.title as string) ?? []
+    })(),
+    getListings({ page: 1 }),
+  ])
+
+  const user = userResult.status === 'fulfilled' ? userResult.value : null
+  const suggestions: string[] = suggestionsResult.status === 'fulfilled' ? suggestionsResult.value : []
+  const dbListings = dbListingsResult.status === 'fulfilled' ? dbListingsResult.value.data : null
+
+  // Fetch favorite IDs dacă userul e logat
+  let favoritedIds: string[] = []
+  if (user) {
+    const { data: fav } = await getFavoritedIds(user.id)
+    favoritedIds = fav || []
+  }
 
   const CATEGORY_SLUGS: Record<number, string> = { 3: 'auto', 2: 'imobiliare', 1: 'joburi', 4: 'servicii' }
-  const { data: dbListings } = await getListings({ page: 1 })
   const dbMapped = (dbListings ?? []).map((l: any) => ({
     id: l.id,
     title: l.title,
@@ -114,7 +127,7 @@ export default async function Home() {
               Postezi o dată. AI-ul îți găsește cumpărător.
             </p>
 
-            <div className="mb-8 max-w-2xl mx-auto">
+            <div className="mb-8 max-w-3xl mx-auto w-full px-2">
               <HeroSearch suggestions={suggestions} />
             </div>
           </div>
@@ -134,6 +147,8 @@ export default async function Home() {
           listings={listings}
           title="Cele mai noi anunțuri"
           subtitle="Adăugate recent pe platformă"
+          userId={user?.id}
+          favoritedIds={favoritedIds}
         />
 
         {/* ========== OFERTE PENTRU TINE (personalizat) ========== */}

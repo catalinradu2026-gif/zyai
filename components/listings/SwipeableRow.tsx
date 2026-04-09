@@ -27,9 +27,11 @@ interface SwipeableRowProps {
   listings: Listing[]
   title: string
   subtitle?: string
+  userId?: string
+  favoritedIds?: string[]
 }
 
-export default function SwipeableRow({ listings, title, subtitle }: SwipeableRowProps) {
+export default function SwipeableRow({ listings, title, subtitle, userId, favoritedIds = [] }: SwipeableRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const scroll = (dir: 'left' | 'right') => {
@@ -124,7 +126,11 @@ export default function SwipeableRow({ listings, title, subtitle }: SwipeableRow
                   <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
                     ✨ AI
                   </div>
-                  <FavoriteButton listingId={listing.id} />
+                  <FavoriteButton
+                    listingId={listing.id}
+                    userId={userId}
+                    initialFavorited={favoritedIds.includes(listing.id)}
+                  />
                 </div>
 
                 {/* Content */}

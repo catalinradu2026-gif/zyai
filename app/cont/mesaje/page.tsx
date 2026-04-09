@@ -32,12 +32,13 @@ export default async function MessagesPage() {
         <div className="space-y-2">
           {conversations.map((conv: any) => {
             const otherUser = conv.sender_id === user.id ? conv.receiver : conv.sender
+            const otherUserId = conv.sender_id === user.id ? conv.receiver_id : conv.sender_id
             const isUnread = conv.receiver_id === user.id && !conv.read
 
             return (
               <Link
                 key={conv.id}
-                href={`/cont/mesaje/${conv.listing_id}?user=${otherUser?.id}`}
+                href={`/cont/mesaje/${conv.listing_id}?user=${otherUser?.id ?? otherUserId}`}
                 className={`
                   block p-4 rounded-lg border transition
                   ${

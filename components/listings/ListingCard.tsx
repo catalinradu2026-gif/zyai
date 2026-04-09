@@ -25,6 +25,8 @@ interface ListingCardProps {
   createdAt: string
   metadata?: AutoMeta | null
   category?: string
+  userId?: string
+  isFavorited?: boolean
 }
 
 export default function ListingCard({
@@ -39,6 +41,8 @@ export default function ListingCard({
   createdAt,
   metadata,
   category,
+  userId,
+  isFavorited = false,
 }: ListingCardProps) {
   const firstImage = images?.[0]
   const formattedPrice =
@@ -111,7 +115,7 @@ export default function ListingCard({
               ✨ AI
             </div>
           </div>
-          <FavoriteButton listingId={id} />
+          <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} />
         </div>
 
         {/* Content */}

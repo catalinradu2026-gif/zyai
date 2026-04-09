@@ -7,11 +7,23 @@ import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 const CATEGORY_IDS: Record<string, number> = {
-  joburi: 1, imobiliare: 2, auto: 3, servicii: 4,
+  joburi: 1,
+  imobiliare: 2,
+  auto: 3,
+  servicii: 4,
+  electronice: 5,
+  moda: 6,
+  'casa-gradina': 7,
+  sport: 8,
+  animale: 9,
+  'mama-copilul': 10,
 }
 
 function getCatId(slug: string) {
-  return CATEGORY_IDS[slug] || CATEGORY_IDS[Object.keys(CATEGORY_IDS).find(k => slug.startsWith(k)) || ''] || 1
+  // Match exact first, then prefix-match for subcategory slugs (e.g. "auto-autoturisme" → 3)
+  if (CATEGORY_IDS[slug] !== undefined) return CATEGORY_IDS[slug]
+  const parentKey = Object.keys(CATEGORY_IDS).find(k => slug.startsWith(k))
+  return parentKey ? CATEGORY_IDS[parentKey] : 1
 }
 
 export async function createListing(formData: {
@@ -45,6 +57,10 @@ export async function createListing(formData: {
 
   const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto')
 
+  // Detectăm dacă categorySlug este o subcategorie (nu e cheia directă din CATEGORY_IDS)
+  const isSubcategory = CATEGORY_IDS[formData.categorySlug] === undefined
+  const subcategorySlug = isSubcategory ? formData.categorySlug : null
+
   const insertData: any = {
     user_id: user.id,
     title: formData.title,
@@ -57,6 +73,7 @@ export async function createListing(formData: {
     currency: formData.currency,
     images: formData.images,
     status: 'activ',
+    metadata: subcategorySlug ? { subcategory: subcategorySlug } : {},
   }
 
   if (isAuto) {

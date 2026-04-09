@@ -3,6 +3,9 @@ import type { Metadata } from 'next'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Groq from 'groq-sdk'
 import FavoriteButton from '@/components/listings/FavoriteButton'
+import SearchInline from '@/components/SearchInline'
+import { getUser } from '@/lib/actions/auth'
+import { getFavoritedIds } from '@/lib/queries/favorites'
 
 type Props = { searchParams: Promise<{ q?: string }> }
 
@@ -94,20 +97,32 @@ export default async function SearchPage({ searchParams }: Props) {
     } catch {}
   }
 
+  // User + favorite IDs pentru butonul inimă
+  const user = await getUser()
+  let favoritedIds: string[] = []
+  if (user) {
+    const { data: fav } = await getFavoritedIds(user.id)
+    favoritedIds = fav || []
+  }
+
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
+      {/* Search bar reîncercare */}
       <div style={{ marginBottom: '32px' }}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '6px' }}>Rezultate căutare AI</p>
-        <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-          <span style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            "{query}"
-          </span>
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-          {count > 0
-            ? `${count} anunț${count !== 1 ? 'uri' : ''} găsit${count !== 1 ? 'e' : ''}`
-            : query ? 'Niciun rezultat găsit' : ''}
-        </p>
+        <SearchInline defaultValue={query} />
+        <div style={{ marginTop: '16px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '4px' }}>Rezultate căutare AI</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            <span style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              "{query}"
+            </span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            {count > 0
+              ? `${count} anunț${count !== 1 ? 'uri' : ''} găsit${count !== 1 ? 'e' : ''}`
+              : query ? 'Niciun rezultat găsit' : ''}
+          </p>
+        </div>
       </div>
 
       {listings.length > 0 ? (
@@ -138,7 +153,11 @@ export default async function SearchPage({ searchParams }: Props) {
                       : <span className="text-4xl opacity-40">📦</span>}
                     <div className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full"
                       style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>✨ AI</div>
-                    <FavoriteButton listingId={listing.id} />
+                    <FavoriteButton
+                      listingId={listing.id}
+                      userId={user?.id}
+                      initialFavorited={favoritedIds.includes(listing.id)}
+                    />
                   </div>
                   <div className="p-3 flex flex-col gap-1.5">
                     <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-blue-400 transition-colors"

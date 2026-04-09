@@ -84,12 +84,10 @@ Returnează DOAR valid JSON fără explicații:
       q = q.lte('price', parsed.maxPrice)
     }
 
-    // Search by text
+    // Search by text — ilike pe titlu SAU descriere (compatibil fără search_vector)
     if (parsed.product) {
-      q = q.textSearch('search_vector', parsed.product, {
-        type: 'websearch',
-        config: 'romanian',
-      })
+      const kw = parsed.product.trim()
+      q = q.or(`title.ilike.%${kw}%,description.ilike.%${kw}%`)
     }
 
     const { data: listings, error, count } = await q

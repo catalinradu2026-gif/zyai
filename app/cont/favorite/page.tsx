@@ -16,6 +16,9 @@ export default async function FavoritesPage() {
 
   const { data: favorites } = await getUserFavorites(user.id)
 
+  // Toate anunțurile favorite sunt deja favorite — favoritedIds = toate ID-urile
+  const favoritedIds = favorites?.map((l: any) => l.id) || []
+
   return (
     <div>
       <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
@@ -31,13 +34,18 @@ export default async function FavoritesPage() {
             listings={favorites.map((listing: any) => ({
               id: listing.id,
               title: listing.title,
+              description: listing.description ?? undefined,
               price: listing.price,
-              price_type: listing.price_type,
-              currency: listing.currency,
+              price_type: listing.price_type ?? 'fix',
+              currency: listing.currency ?? 'RON',
               city: listing.city,
-              images: listing.images,
+              images: listing.images ?? [],
               created_at: listing.created_at,
+              category: listing.categories?.slug ?? undefined,
+              metadata: listing.metadata ?? null,
             }))}
+            userId={user.id}
+            favoritedIds={favoritedIds}
           />
         </div>
       ) : (

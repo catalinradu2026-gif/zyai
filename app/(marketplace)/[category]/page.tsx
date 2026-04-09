@@ -33,6 +33,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   try {
     const result = await getListings({
+      category,
+      subcategory: activeSub || undefined,
       city: sp.city,
       minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
       maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
@@ -103,7 +105,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       )}
 
       {/* GRID: Filters + Listings */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '24px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_3fr] gap-6">
 
         {/* Filters */}
         <div>

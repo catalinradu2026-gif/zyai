@@ -2,25 +2,27 @@
 
 import { useState } from 'react'
 import { toggleFavorite } from '@/lib/actions/favorites'
-import Link from 'next/link'
 
 interface FavoriteButtonProps {
   listingId: string
-  initialIsFavorited?: boolean
+  initialFavorited?: boolean
   userId?: string
   showLabel?: boolean
 }
 
 export default function FavoriteButton({
   listingId,
-  initialIsFavorited = false,
+  initialFavorited = false,
   userId,
   showLabel = false,
 }: FavoriteButtonProps) {
-  const [isFavorited, setIsFavorited] = useState(initialIsFavorited)
+  const [isFavorited, setIsFavorited] = useState(initialFavorited)
   const [loading, setLoading] = useState(false)
 
-  async function handleToggle() {
+  async function handleToggle(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+
     if (!userId) {
       // Redirect to login
       window.location.href = `/login?next=/anunt/${listingId}`
@@ -40,7 +42,7 @@ export default function FavoriteButton({
 
   return (
     <button
-      onClick={handleToggle}
+      onClick={(e) => handleToggle(e)}
       disabled={loading}
       className={`
         inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-all

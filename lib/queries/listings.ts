@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export type ListingFilters = {
   category?: string
+  subcategory?: string
   city?: string
   minPrice?: number
   maxPrice?: number
@@ -49,6 +50,10 @@ export async function getListings(filters: ListingFilters = {}) {
     const { getCategoryIdBySlug } = await import('@/lib/constants/categories')
     const categoryId = getCategoryIdBySlug(filters.category)
     q = q.eq('category_id', categoryId)
+  }
+
+  if (filters.subcategory) {
+    q = q.eq('metadata->>subcategory', filters.subcategory)
   }
 
   const { data, error, count } = await q

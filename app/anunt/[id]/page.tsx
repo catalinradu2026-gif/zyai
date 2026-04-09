@@ -9,6 +9,7 @@ import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import ImageGallery from '@/components/listings/ImageGallery'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
 import ShareButtons from '@/components/listings/ShareButtons'
+import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -30,6 +31,13 @@ export default async function ListingDetailPage({ params }: Props) {
 
   if (error || !listing) {
     notFound()
+  }
+
+  // Verifică dacă anunțul este deja favorit
+  let listingIsFavorited = false
+  if (user) {
+    const { isFavorited: fav } = await checkIsFavorited(user.id, id)
+    listingIsFavorited = fav
   }
 
   // profiles poate fi array sau obiect în funcție de join
@@ -173,7 +181,7 @@ export default async function ListingDetailPage({ params }: Props) {
             <div className="sticky top-24 space-y-4">
               {/* Favorite Button */}
               <div className="flex gap-2">
-                <FavoriteButton listingId={id} userId={user?.id} showLabel />
+                <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
               </div>
 
               {/* Price */}

@@ -1,10 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function HeroSearch({ suggestions = [] }: { suggestions?: string[] }) {
   const [search, setSearch] = useState('')
   const [focused, setFocused] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [interimText, setInterimText] = useState('')
+  const recognitionRef = useRef<any>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+
+  // Cleanup la unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.abort()
+    }
+  }, [])
 
   function saveSearch(term: string) {
     try {
@@ -14,70 +27,222 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
     } catch {}
   }
 
+  function navigate(query: string) {
+    const q = query.trim()
+    if (!q) return
+    saveSearch(q)
+    router.push(`/cauta?q=${encodeURIComponent(q)}`)
+  }
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    if (!search.trim()) return
-
-    saveSearch(search.trim())
-    const event = new CustomEvent('openChatWithQuery', { detail: search })
-    window.dispatchEvent(event)
-    setSearch('')
+    navigate(search)
   }
 
   function handleExampleClick(example: string) {
-    saveSearch(example)
-    const event = new CustomEvent('openChatWithQuery', { detail: example })
-    window.dispatchEvent(event)
+    navigate(example)
   }
+
+  function startListening() {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      alert('Browserul tău nu suportă recunoașterea vocală. Încearcă Chrome sau Edge.')
+      return
+    }
+
+    // Dacă deja ascultăm, oprim
+    if (listening) {
+      recognitionRef.current?.stop()
+      setListening(false)
+      setInterimText('')
+      return
+    }
+
+    const rec = new SpeechRecognition()
+    rec.lang = 'ro-RO'
+    rec.continuous = false
+    rec.interimResults = true
+    recognitionRef.current = rec
+
+    rec.onstart = () => {
+      setListening(true)
+      setInterimText('')
+    }
+
+    rec.onresult = (e: any) => {
+      let interim = ''
+      let final = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += t
+        else interim += t
+      }
+      if (interim) setInterimText(interim)
+      if (final) {
+        setSearch(final)
+        setInterimText('')
+        setListening(false)
+        // Navighează automat după transcriere finală
+        setTimeout(() => navigate(final), 300)
+      }
+    }
+
+    rec.onerror = (e: any) => {
+      console.error('Speech error:', e.error)
+      setListening(false)
+      setInterimText('')
+      if (e.error === 'not-allowed') {
+        alert('Accesul la microfon a fost blocat. Verifică permisiunile browserului.')
+      }
+    }
+
+    rec.onend = () => {
+      setListening(false)
+      setInterimText('')
+    }
+
+    rec.start()
+  }
+
+  const displayValue = listening && interimText ? interimText : search
 
   return (
     <div className="w-full">
-      <form className="flex gap-3 max-w-3xl mx-auto flex-col sm:flex-row" onSubmit={handleSearch}>
-        <div className="flex-1 relative">
+      <form onSubmit={handleSearch} className="relative max-w-3xl mx-auto">
+        {/* Container pill */}
+        <div
+          className="flex items-center gap-0 transition-all duration-300"
+          style={{
+            background: 'var(--bg-input, rgba(15,22,41,0.9))',
+            border: `2px solid ${listening ? '#ef4444' : focused ? 'var(--purple, #8B5CF6)' : 'var(--border-subtle, rgba(139,92,246,0.25))'}`,
+            borderRadius: '999px',
+            boxShadow: listening
+              ? '0 0 0 4px rgba(239,68,68,0.18), 0 8px 32px rgba(239,68,68,0.12)'
+              : focused
+              ? '0 0 0 4px rgba(139,92,246,0.15), 0 8px 32px rgba(139,92,246,0.2)'
+              : '0 4px 24px rgba(0,0,0,0.25)',
+            transition: 'all 0.25s ease',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Icona search */}
+          <span
+            className="flex-shrink-0 pl-5 pr-2 text-xl"
+            style={{ color: focused || listening ? 'var(--purple, #8B5CF6)' : 'rgba(148,163,184,0.5)' }}
+          >
+            🔍
+          </span>
+
+          {/* Input */}
           <input
+            ref={inputRef}
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={displayValue}
+            onChange={(e) => {
+              if (!listening) setSearch(e.target.value)
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Spune ce cauți… ex: iPhone ieftin sau BMW sub 5000€"
-            className="w-full px-6 py-4 text-lg rounded-2xl border-2 transition-all duration-300"
+            placeholder={listening ? '🎤 Te ascult...' : 'Caută apartament, mașină, job...'}
+            className="flex-1 py-4 text-base md:text-lg bg-transparent outline-none"
             style={{
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-primary)',
-              borderColor: focused ? 'var(--purple)' : 'var(--border-subtle)',
-              boxShadow: focused ? 'var(--glow-purple)' : 'none',
+              color: listening ? '#ef4444' : 'var(--text-primary, #F8FAFC)',
+              caretColor: listening ? '#ef4444' : 'var(--purple, #8B5CF6)',
+              minWidth: 0,
             }}
+            readOnly={listening}
           />
-          {focused && (
-            <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 animate-fade-up" style={{ boxShadow: 'var(--glow-purple)' }} />
-          )}
+
+          {/* Buton microfon */}
+          <button
+            type="button"
+            onClick={startListening}
+            className="flex-shrink-0 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 mx-2"
+            title={listening ? 'Oprește microfonul' : 'Caută cu vocea (ro-RO)'}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: listening
+                ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                : 'rgba(139,92,246,0.15)',
+              border: `1.5px solid ${listening ? 'rgba(239,68,68,0.7)' : 'rgba(139,92,246,0.3)'}`,
+              boxShadow: listening ? '0 0 16px rgba(239,68,68,0.5)' : 'none',
+              animation: listening ? 'micPulseHero 1s ease-in-out infinite' : 'none',
+              fontSize: '18px',
+              flexShrink: 0,
+            }}
+          >
+            🎤
+          </button>
+
+          {/* Buton submit */}
+          <button
+            type="submit"
+            className="flex-shrink-0 flex items-center gap-2 font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)',
+              padding: '10px 20px',
+              borderRadius: '999px',
+              margin: '4px',
+              fontSize: '15px',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 16px rgba(139,92,246,0.35)',
+            }}
+          >
+            <span className="hidden sm:inline">Caută</span>
+            <span className="sm:hidden">→</span>
+          </button>
         </div>
-        <button
-          type="submit"
-          className="px-8 py-4 font-semibold rounded-2xl text-white whitespace-nowrap gradient-main transition-all duration-200 transform hover:scale-105 shadow-lg"
-          style={{ boxShadow: 'var(--glow-purple)' }}
-        >
-          🔍 Caută
-        </button>
+
+        {/* Indicator ascultare */}
+        {listening && (
+          <div
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-sm"
+            style={{ color: '#ef4444', whiteSpace: 'nowrap' }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#ef4444',
+                animation: 'micPulseHero 1s ease-in-out infinite',
+              }}
+            />
+            Ascult... vorbește acum
+          </div>
+        )}
       </form>
 
-      {/* Suggested Queries */}
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          💡 Sugestii:
-        </span>
-        {suggestions.map((example) => (
-          <button
-            key={example}
-            onClick={() => handleExampleClick(example)}
-            className="px-4 py-2 rounded-full text-sm transition-all duration-200 transform hover:scale-105 glass glass-hover"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {example}
-          </button>
-        ))}
-      </div>
+      {/* Sugestii */}
+      {suggestions.length > 0 && (
+        <div className="mt-10 flex flex-wrap justify-center gap-2">
+          <span className="text-sm self-center" style={{ color: 'var(--text-secondary)' }}>
+            Populare:
+          </span>
+          {suggestions.map((example) => (
+            <button
+              key={example}
+              onClick={() => handleExampleClick(example)}
+              className="px-4 py-1.5 rounded-full text-sm transition-all duration-200 hover:scale-105 glass glass-hover"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes micPulseHero {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+          50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+      `}</style>
     </div>
   )
 }

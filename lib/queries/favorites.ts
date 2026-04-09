@@ -10,7 +10,7 @@ export async function getUserFavorites(userId: string) {
       `
       listing_id,
       listings(
-        id, title, price, price_type, currency, city, images, created_at,
+        id, title, description, price, price_type, currency, city, images, created_at, metadata,
         categories(slug, name),
         profiles(id, full_name, avatar_url)
       )

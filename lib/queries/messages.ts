@@ -9,8 +9,8 @@ export async function getConversations(userId: string) {
       `
       id, listing_id, sender_id, receiver_id, content, read, created_at,
       listings(id, title, images),
-      sender:sender_id(id, full_name, avatar_url),
-      receiver:receiver_id(id, full_name, avatar_url)
+      sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url),
+      receiver:profiles!messages_receiver_id_fkey(id, full_name, avatar_url)
     `
     )
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -18,13 +18,41 @@ export async function getConversations(userId: string) {
 
   if (error) {
     console.error('Error fetching conversations:', error)
-    return { data: null, error }
+    // Fallback: try without profile join hints
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('messages')
+      .select(
+        `
+        id, listing_id, sender_id, receiver_id, content, read, created_at,
+        listings(id, title, images)
+      `
+      )
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+
+    if (fallbackError) {
+      console.error('Error fetching conversations (fallback):', fallbackError)
+      return { data: null, error: fallbackError }
+    }
+
+    // Group by listing_id + other user pair, keep latest per thread
+    const grouped = new Map()
+    fallbackData?.forEach((msg: any) => {
+      const otherUserId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id
+      const key = `${msg.listing_id}__${otherUserId}`
+      if (!grouped.has(key) || new Date(msg.created_at) > new Date(grouped.get(key).created_at)) {
+        grouped.set(key, { ...msg, sender: null, receiver: null })
+      }
+    })
+
+    return { data: Array.from(grouped.values()), error: null }
   }
 
-  // Group by listing_id and get latest message per listing
+  // Group by listing_id + other user pair, keep latest per thread
   const grouped = new Map()
   data?.forEach((msg: any) => {
-    const key = msg.listing_id
+    const otherUserId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id
+    const key = `${msg.listing_id}__${otherUserId}`
     if (!grouped.has(key) || new Date(msg.created_at) > new Date(grouped.get(key).created_at)) {
       grouped.set(key, msg)
     }
