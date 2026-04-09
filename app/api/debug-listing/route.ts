@@ -4,23 +4,23 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   const admin = createSupabaseAdmin()
 
-  // Verifică primele 5 anunțuri cu category_id=3 (auto)
-  const { data, error } = await admin
+  // Ultimul anunț postat
+  const { data: latest, error: e1 } = await admin
     .from('listings')
-    .select('id, title, category_id, metadata')
-    .eq('category_id', 3)
-    .limit(5)
+    .select('id, title, category_id, metadata, created_at')
+    .order('created_at', { ascending: false })
+    .limit(3)
 
-  // Verifică dacă coloana metadata există
-  const { data: allCols, error: colErr } = await admin
+  // Coloane disponibile
+  const { data: cols, error: e2 } = await admin
     .from('listings')
-    .select('metadata')
+    .select('id, metadata')
     .limit(1)
 
   return NextResponse.json({
-    auto_listings: data,
-    error: error?.message,
-    metadata_col_exists: !colErr,
-    metadata_col_error: colErr?.message,
+    latest_listings: latest,
+    error: e1?.message,
+    metadata_accessible: !e2,
+    metadata_error: e2?.message,
   })
 }

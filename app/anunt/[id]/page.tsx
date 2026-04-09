@@ -54,18 +54,17 @@ export default async function ListingDetailPage({ params }: Props) {
   const canContact = user && !isOwner
   const needsLogin = !user && !isOwner
 
-  const meta = (listing as any).metadata as Record<string, any> | null | undefined
-  const isAuto = (listing as any).category_id === 3
+  const l = listing as any
+  const isAuto = l.category_id === 3
   const N = 'Nespecificat'
   const autoDetails = isAuto ? [
-    { icon: '📅', label: 'An fabricație', value: meta?.year || N },
-    { icon: '🛣️', label: 'Kilometraj', value: meta?.mileage ? `${Number(meta.mileage).toLocaleString('ro-RO')} km` : N },
-    { icon: '⚙️', label: 'Cutie viteze', value: meta?.gearbox || N },
-    { icon: '⛽', label: 'Combustibil', value: meta?.fuelType || N },
-    { icon: '💪', label: 'Putere', value: meta?.power ? `${meta.power} CP` : N },
-    { icon: '✅', label: 'Stare', value: meta?.condition || N },
-    { icon: '🚗', label: 'Caroserie', value: meta?.bodyType || N },
-    { icon: '🏷️', label: 'Marcă/Model', value: meta?.brand ? `${meta.brand}${meta.model ? ' ' + meta.model : ''}` : N },
+    { icon: '📅', label: 'An fabricație', value: l.auto_year || N },
+    { icon: '🛣️', label: 'Kilometraj', value: l.auto_mileage ? `${Number(l.auto_mileage).toLocaleString('ro-RO')} km` : N },
+    { icon: '⚙️', label: 'Cutie viteze', value: l.auto_gearbox || N },
+    { icon: '⛽', label: 'Combustibil', value: l.auto_fuel || N },
+    { icon: '💪', label: 'Putere', value: l.auto_power ? `${l.auto_power} CP` : N },
+    { icon: '✅', label: 'Stare', value: l.auto_condition || N },
+    { icon: '🏷️', label: 'Marcă/Model', value: l.auto_brand ? `${l.auto_brand}${l.auto_model ? ' ' + l.auto_model : ''}` : N },
   ] : []
 
   return (

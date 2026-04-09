@@ -1,0 +1,12 @@
+
+> zyai@0.1.0 dev
+> next dev -p 3006 -p 3006
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3006
+- Network:       http://192.168.1.149:3006
+- Environments: .env.local
+✓ Ready in 540ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+[?25h

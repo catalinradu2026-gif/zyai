@@ -45,21 +45,6 @@ export async function createListing(formData: {
 
   const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto')
 
-  const metadata = isAuto ? {
-    brand: formData.brand || null,
-    model: formData.model || null,
-    fuelType: formData.fuelType || null,
-    year: formData.year || null,
-    mileage: formData.mileage || null,
-    bodyType: formData.bodyType || null,
-    sellerType: formData.sellerType || null,
-    leasing: formData.leasing || false,
-    gearbox: formData.gearbox || null,
-    power: formData.power || null,
-    condition: formData.condition || null,
-  } : null
-
-  // Try with metadata first
   const insertData: any = {
     user_id: user.id,
     title: formData.title,
@@ -74,7 +59,16 @@ export async function createListing(formData: {
     status: 'activ',
   }
 
-  if (metadata) insertData.metadata = metadata
+  if (isAuto) {
+    insertData.auto_year = formData.year || null
+    insertData.auto_mileage = formData.mileage || null
+    insertData.auto_fuel = formData.fuelType || null
+    insertData.auto_gearbox = formData.gearbox || null
+    insertData.auto_power = formData.power || null
+    insertData.auto_condition = formData.condition || null
+    insertData.auto_brand = formData.brand || null
+    insertData.auto_model = formData.model || null
+  }
 
   let { data, error } = await admin
     .from('listings')
@@ -82,11 +76,13 @@ export async function createListing(formData: {
     .select('id')
     .single()
 
-  // If metadata column doesn't exist, retry without it
-  if (error && error.message.includes('metadata')) {
+  // Dacă coloanele auto_ nu există încă, încearcă fără ele
+  if (error && (error.message.includes('auto_') || error.message.includes('column'))) {
+    const safeData = { ...insertData }
+    ;['auto_year','auto_mileage','auto_fuel','auto_gearbox','auto_power','auto_condition','auto_brand','auto_model'].forEach(k => delete safeData[k])
     const { data: d2, error: e2 } = await admin
       .from('listings')
-      .insert({ ...insertData, metadata: undefined })
+      .insert(safeData)
       .select('id')
       .single()
     data = d2
