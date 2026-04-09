@@ -79,12 +79,8 @@ export default async function Home() {
     category: CATEGORY_SLUGS[l.category_id] ?? undefined,
     metadata: l.metadata ?? null,
   }))
-  // Filter out mocks that overlap with real DB IDs, then combine
-  const dbIds = new Set(dbMapped.map((l: any) => l.id))
-  const listings = [
-    ...dbMapped,
-    ...MOCK_LISTINGS.filter((m) => !dbIds.has(m.id)),
-  ]
+  // Folosește doar anunțuri reale din DB — mock-urile cauzau 404 la click
+  const listings = dbMapped.length > 0 ? dbMapped : []
 
   return (
     <>
