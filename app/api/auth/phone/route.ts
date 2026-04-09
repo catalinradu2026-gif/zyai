@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       })
 
       response.cookies.set('user_id', userId, {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 30,
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
       })
 
       response.cookies.set('user_id', existing.id, {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 30,

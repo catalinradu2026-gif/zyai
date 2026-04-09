@@ -34,6 +34,13 @@ export async function POST(req: Request) {
     if (!message || typeof message !== 'string') {
       return Response.json({ error: 'Invalid message' }, { status: 400 })
     }
+    if (message.length > 500) {
+      return Response.json({ error: 'Mesaj prea lung (max 500 caractere)' }, { status: 400 })
+    }
+    // Validare history — previne prompt injection via history falsificat
+    const validHistory = (history as HistoryMessage[]).filter(
+      (m) => ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length < 1000
+    )
 
     // Fallback simple chat if GROQ_API_KEY is missing
     if (!process.env.GROQ_API_KEY) {
@@ -138,8 +145,8 @@ User: "ceva ieftin"
 User: "salut"
 → {"intent":"chat","message":"Salut! Spune-mi ce cauți și găsim împreună cel mai bun anunț.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}`
 
-    // Construieste mesajele cu history (max ultimele 6 pentru context)
-    const recentHistory = history.slice(-6)
+    // Construieste mesajele cu history validat (max ultimele 6 pentru context)
+    const recentHistory = validHistory.slice(-6)
 
     let rawText = ''
     try {

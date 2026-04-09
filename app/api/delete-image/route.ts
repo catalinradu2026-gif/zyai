@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
+    // Verificare autentificare
+    const supabaseAuth = await createSupabaseServerClient()
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -39,6 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Delete handler error:', err)
-    return NextResponse.json({ error: `Server error: ${String(err)}` }, { status: 500 })
+    console.error('Delete handler error:', err)
+    return NextResponse.json({ error: 'Eroare internă server' }, { status: 500 })
   }
 }

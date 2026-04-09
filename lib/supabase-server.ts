@@ -3,11 +3,10 @@ import { cookies } from 'next/headers'
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies()
-  // Use SERVICE_ROLE_KEY for server-side queries to bypass RLS
-  // This is safe because it's server-side only
+  // Folosim ANON_KEY — RLS activ, sesiunea utilizatorului setează contextul auth
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
