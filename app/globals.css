@@ -68,13 +68,6 @@ p {
   color: var(--text-secondary);
 }
 
-/* Override Tailwind gray text classes to be visible on dark background */
-.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700 {
-  color: #CBD5E1 !important;
-}
-.text-gray-800, .text-gray-900 {
-  color: #F1F5F9 !important;
-}
 
 /* Labels */
 label {

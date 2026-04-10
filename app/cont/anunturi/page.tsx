@@ -20,11 +20,13 @@ export default async function MyListingsPage() {
 
   const { data: listings } = await getUserListings(user.id)
 
-  // Calculăm numărul de favorite pentru fiecare anunț
+  // Calculăm numărul de favorite și phone_views pentru fiecare anunț
   const favCountMap: Record<string, number> = {}
+  const phoneViewsMap: Record<string, number> = {}
   if (listings && listings.length > 0) {
     const listingIds = listings.map((l: any) => l.id)
     const admin = createSupabaseAdmin()
+
     const { data: favData } = await admin
       .from('favorites')
       .select('listing_id')
@@ -34,6 +36,19 @@ export default async function MyListingsPage() {
         favCountMap[row.listing_id] = (favCountMap[row.listing_id] || 0) + 1
       }
     }
+
+    // phone_views — separat cu try/catch în caz că coloana nu există
+    try {
+      const { data: pvData } = await admin
+        .from('listings')
+        .select('id, phone_views')
+        .in('id', listingIds)
+      if (pvData) {
+        for (const row of pvData) {
+          phoneViewsMap[row.id] = (row as any).phone_views ?? 0
+        }
+      }
+    } catch { /* coloana nu există încă */ }
   }
 
   return (
@@ -42,7 +57,7 @@ export default async function MyListingsPage() {
       <div className="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-600">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">📝 Anunțurile mele</h1>
+            <h1 className="text-3xl font-bold text-black mb-1">📝 Anunțurile mele</h1>
             <p className="text-gray-600">
               {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
             </p>
@@ -115,11 +130,11 @@ export default async function MyListingsPage() {
                     <p className="text-xl lg:text-2xl font-bold text-green-600 mb-2">{formattedPrice}</p>
 
                     {/* Stats: 2-col grid on mobile, flex-wrap on desktop */}
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 lg:flex lg:flex-wrap lg:gap-4 text-sm text-gray-600 mb-2">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 lg:flex lg:flex-wrap lg:gap-4 text-sm text-gray-900 mb-2">
                       <span className="flex items-center gap-1 truncate">📍 {listing.city}</span>
                       <span className="flex items-center gap-1">👁️ {listing.views} viz.</span>
                       <span className="flex items-center gap-1">❤️ {favCountMap[listing.id] || 0} fav.</span>
-                      <span className="flex items-center gap-1">📞 {listing.phone_views || 0} tel</span>
+                      <span className="flex items-center gap-1">📞 {phoneViewsMap[listing.id] || 0} tel</span>
                       <span
                         className={`col-span-2 lg:col-span-1 w-fit px-3 py-0.5 rounded-full text-xs font-semibold ${
                           statusColors[listing.status] || statusColors.inactiv
@@ -134,7 +149,7 @@ export default async function MyListingsPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-500 hidden lg:block">
+                    <p className="text-xs text-gray-900 hidden lg:block">
                       Creat: {new Date(listing.created_at).toLocaleDateString('ro-RO')}
                     </p>
                   </div>
