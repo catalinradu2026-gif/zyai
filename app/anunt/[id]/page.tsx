@@ -233,6 +233,14 @@ export default async function ListingDetailPage({ params }: Props) {
                       <p className="text-sm font-semibold text-blue-900">✓ Acesta este anunțul tău</p>
                       <p className="text-xs text-blue-700">Publicat pe {formattedDate}</p>
                     </div>
+                    {profile?.phone && (
+                      <a
+                        href={`tel:${profile.phone.replace(/\s/g, '')}`}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-green-600 bg-green-50 text-green-700 font-semibold text-base hover:bg-green-100 transition"
+                      >
+                        📞 {profile.phone}
+                      </a>
+                    )}
                     <div className="flex gap-2">
                       <Link href={`/anunt/${id}/edit`} className="flex-1">
                         <Button variant="secondary" size="md" fullWidth>

@@ -11,9 +11,9 @@ export default function DeleteListingButton({ id }: { id: string }) {
   return (
     <button
       onClick={handleDelete}
-      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+      className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm whitespace-nowrap"
     >
-      🗑️ Șterge
+      🗑️
     </button>
   )
 }
