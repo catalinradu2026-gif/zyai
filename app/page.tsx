@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AIGreetingBubble from '@/components/AIGreetingBubble'
 import CategoriesBrowser from '@/components/CategoriesBrowser'
 import HeroSearch from '@/components/HeroSearch'
 import LiveStats from '@/components/LiveStats'
@@ -97,6 +98,7 @@ export default async function Home() {
 
   return (
     <>
+      <AIGreetingBubble />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="min-h-screen pt-20 pb-16 px-4">
         {/* ========== HERO SECTION ========== */}
