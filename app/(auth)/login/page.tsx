@@ -119,27 +119,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 pb-20 px-4">
+    <main className="min-h-screen pt-24 pb-20 px-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <div className="max-w-md mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-4xl font-bold text-center mb-2">zyAI</h1>
-          <p className="text-center text-gray-600 mb-6">Platformă de anunțuri</p>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 0 40px rgba(139,92,246,0.1)' }}>
+          <h1 className="text-4xl font-black text-center mb-1 gradient-main-text">zyAI</h1>
+          <p className="text-center mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>Platformă de anunțuri</p>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-8">
+          <div className="flex gap-2 mb-8 p-1 rounded-xl" style={{ backgroundColor: 'var(--bg-input)' }}>
             <button
               onClick={() => { setMode('login'); setError(''); setSuccess('') }}
-              className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
-                mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className="flex-1 py-2 px-4 font-semibold rounded-lg transition text-sm"
+              style={mode === 'login' ? { background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: '#fff' } : { color: 'var(--text-secondary)' }}
             >
               🔓 Conectare
             </button>
             <button
               onClick={() => { setMode('register'); setError(''); setSuccess('') }}
-              className={`flex-1 py-2 px-4 font-medium rounded-lg transition ${
-                mode === 'register' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className="flex-1 py-2 px-4 font-semibold rounded-lg transition text-sm"
+              style={mode === 'register' ? { background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: '#fff' } : { color: 'var(--text-secondary)' }}
             >
               ✏️ Înregistrare
             </button>
@@ -150,7 +148,8 @@ export default function LoginPage() {
             <button
               onClick={() => handleOAuth('google')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 font-medium text-gray-700"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl transition disabled:opacity-50 font-medium text-sm"
+              style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
             >
               {oauthLoading === 'google' ? (
                 <span className="animate-pulse text-sm">Se conectează...</span>
@@ -164,7 +163,8 @@ export default function LoginPage() {
             <button
               onClick={() => handleOAuth('facebook')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-lg transition disabled:opacity-50 font-medium"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl transition disabled:opacity-50 font-medium text-sm"
+              style={{ backgroundColor: '#1877F2', color: '#fff' }}
             >
               {oauthLoading === 'facebook' ? (
                 <span className="animate-pulse text-sm">Se conectează...</span>
@@ -178,7 +178,8 @@ export default function LoginPage() {
             <button
               onClick={() => handleOAuth('apple')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-[#000000] hover:bg-[#1a1a1a] text-white rounded-lg transition disabled:opacity-50 font-medium"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl transition disabled:opacity-50 font-medium text-sm"
+              style={{ backgroundColor: '#000', color: '#fff' }}
             >
               {oauthLoading === 'apple' ? (
                 <span className="animate-pulse text-sm">Se conectează...</span>
@@ -190,28 +191,29 @@ export default function LoginPage() {
               )}
             </button>
             <div className="relative">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
-              <div className="relative flex justify-center text-sm"><span className="px-3 bg-white text-gray-500">sau</span></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full" style={{ borderTop: '1px solid var(--border-subtle)' }} /></div>
+              <div className="relative flex justify-center text-sm"><span className="px-3 text-xs" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}>sau</span></div>
             </div>
           </div>
 
           <div className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium mb-2 text-black">Nume complet *</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Nume complet *</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Ion Popescu"
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                 {mode === 'register' ? 'Email *' : 'Email sau telefon *'}
               </label>
               <input
@@ -220,56 +222,60 @@ export default function LoginPage() {
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder={mode === 'register' ? 'email@exemplu.com' : 'email@exemplu.com sau +40723...'}
                 disabled={loading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
+                style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
               />
             </div>
 
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium mb-2 text-black">Număr de telefon</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Număr de telefon</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+40 723 123 456"
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
                 />
-                <p className="text-xs text-gray-400 mt-1">Opțional — pentru contact direct</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Opțional — pentru contact direct</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">Parolă *</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Parolă *</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={loading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
+                style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
               />
               {mode === 'register' && (
-                <p className="text-xs text-gray-400 mt-1">Minim 6 caractere</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Minim 6 caractere</p>
               )}
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800 text-sm">{error}</p>
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <p className="text-sm" style={{ color: '#FCA5A5' }}>{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-800 text-sm">{success}</p>
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+                <p className="text-sm" style={{ color: '#86EFAC' }}>{success}</p>
               </div>
             )}
 
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
+              className="w-full py-3 px-4 text-white font-semibold rounded-xl transition hover:scale-[1.02] disabled:opacity-50 text-sm"
+              style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', boxShadow: '0 0 20px rgba(139,92,246,0.4)' }}
             >
               {loading
                 ? '⏳ Se procesează...'

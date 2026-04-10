@@ -63,15 +63,16 @@ export default async function ConversationPage({ params, searchParams }: Props) 
     (listing.user_id !== user.id ? (listingProfileSingle?.avatar_url || listingProfileArr?.avatar_url) : undefined)
 
   return (
-    <main className="pt-24 pb-20 px-4 bg-gray-50 min-h-screen">
+    <main className="pt-24 pb-20 px-4 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <div className="max-w-2xl mx-auto">
-        <Link href="/cont/mesaje" className="text-blue-600 hover:underline mb-6 inline-block">
+        <Link href="/cont/mesaje" className="inline-block mb-6 text-sm font-medium transition-colors"
+          style={{ color: '#A78BFA' }}>
           ← Înapoi la mesaje
         </Link>
 
         <div className="mb-6">
-          <p className="text-gray-600 text-sm">Despre anunț:</p>
-          <h1 className="text-2xl font-bold text-gray-900">{listing.title}</h1>
+          <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Despre anunț:</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{listing.title}</h1>
         </div>
 
         <MessageThread

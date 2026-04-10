@@ -35,14 +35,12 @@ export default async function ListingDetailPage({ params }: Props) {
     notFound()
   }
 
-  // Verifică dacă anunțul este deja favorit
   let listingIsFavorited = false
   if (user) {
     const { isFavorited: fav } = await checkIsFavorited(user.id, id)
     listingIsFavorited = fav
   }
 
-  // Phone views — citit separat cu admin, doar dacă owner (ignoră eroare dacă coloana nu există)
   let phoneViews = 0
   const isOwnerCheck = user && user.id === listing!.user_id
   if (isOwnerCheck) {
@@ -57,11 +55,9 @@ export default async function ListingDetailPage({ params }: Props) {
     } catch { phoneViews = 0 }
   }
 
-  // profiles poate fi array sau obiect în funcție de join
   const profileRaw = listing.profiles as any
   const profile = Array.isArray(profileRaw) ? profileRaw[0] : profileRaw
 
-  // Telefonul de contact: prioritate metadata.contactPhone > profil
   const listingMetadata = (listing.metadata as any) || {}
   const contactPhone: string | null = listingMetadata.contactPhone || profile?.phone || null
 
@@ -86,7 +82,6 @@ export default async function ListingDetailPage({ params }: Props) {
   const l = listing as any
   const isAuto = l.category_id === 3
   const N = 'Nespecificat'
-  // Citim din metadata (JSONB) — cu fallback pe coloanele auto_ dacă există
   const m = (l.metadata || {}) as Record<string, any>
   const autoDetails = isAuto ? [
     { icon: '📅', label: 'An fabricație', value: m.year || N },
@@ -98,69 +93,80 @@ export default async function ListingDetailPage({ params }: Props) {
     { icon: '🏷️', label: 'Marcă/Model', value: m.brand ? `${m.brand}${m.model ? ' ' + m.model : ''}` : N },
   ] : []
 
+  const CATEGORY_NAMES: Record<number, string> = {
+    1: 'Joburi', 2: 'Imobiliare', 3: 'Auto', 4: 'Servicii',
+    5: 'Electronice', 6: 'Modă', 7: 'Casă & Grădină', 8: 'Sport',
+    9: 'Animale', 10: 'Mamă & Copil',
+  }
+  const categoryName = (() => {
+    const meta = (listing.metadata as any) || {}
+    if (meta.subcategory) return meta.subcategory.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+    return CATEGORY_NAMES[listing.category_id] || 'Nespecificată'
+  })()
+
   return (
-    <main className="pt-24 pb-20 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-700 font-medium">
-            ← Înapoi
+    <main className="pt-24 pb-20 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Breadcrumb */}
+      <div style={{ borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 text-sm">
+          <Link href="/" className="transition-colors" style={{ color: 'var(--text-secondary)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>
+            Acasă
           </Link>
-          <span className="text-gray-400">|</span>
-          <span className="text-sm text-gray-600">{listing.city}</span>
+          <span style={{ color: 'var(--border-light)' }}>›</span>
+          <Link href={`/marketplace/${l.category_id === 3 ? 'auto' : l.category_id === 2 ? 'imobiliare' : 'electronice'}`}
+            className="transition-colors" style={{ color: 'var(--text-secondary)' }}>
+            {categoryName}
+          </Link>
+          <span style={{ color: 'var(--border-light)' }}>›</span>
+          <span className="truncate max-w-xs" style={{ color: 'var(--text-primary)' }}>{listing.title}</span>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
+
+          {/* ── Main Content ── */}
+          <div className="lg:col-span-2 space-y-6">
+
             {/* Image Gallery */}
-            <div className="bg-white rounded-lg overflow-hidden shadow-md mb-6 p-6">
-              <ImageGallery images={listing.images || []} title={listing.title} />
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+              <div className="p-4">
+                <ImageGallery images={listing.images || []} title={listing.title} />
+              </div>
             </div>
 
-            {/* Listing Info */}
-            <div className="bg-white rounded-lg p-6 shadow-md mb-6">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{listing.title}</h1>
+            {/* Title + Meta */}
+            <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+              <h1 className="text-2xl md:text-3xl font-bold mb-5" style={{ color: 'var(--text-primary)' }}>
+                {listing.title}
+              </h1>
 
-              {/* Meta Info */}
-              <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200 mb-6">
-                <div>
-                  <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Locație</p>
-                  <p className="text-lg font-semibold text-gray-900">📍 {listing.city}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Categorie</p>
-                  <p className="text-lg font-semibold text-gray-900">{
-                    (() => {
-                      const CATEGORY_NAMES: Record<number, string> = { 1:'Joburi', 2:'Imobiliare', 3:'Auto', 4:'Servicii', 5:'Electronice', 6:'Modă', 7:'Casă & Grădină', 8:'Sport', 9:'Animale', 10:'Mamă & Copil' }
-                      const m = (listing.metadata as any) || {}
-                      if (m.subcategory) return m.subcategory.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-                      return CATEGORY_NAMES[listing.category_id] || 'Nespecificată'
-                    })()
-                  }</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Vizualizări</p>
-                  <p className="text-lg font-semibold text-gray-900">👁️ {listing.views}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Publicat</p>
-                  <p className="text-lg font-semibold text-gray-900">{formattedDate}</p>
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                {[
+                  { label: 'Locație', value: `📍 ${listing.city}` },
+                  { label: 'Categorie', value: categoryName },
+                  { label: 'Vizualizări', value: `👁️ ${listing.views}` },
+                  { label: 'Publicat', value: formattedDate },
+                ].map(item => (
+                  <div key={item.label} className="rounded-xl p-3" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+                    <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
+                    <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{item.value}</p>
+                  </div>
+                ))}
               </div>
 
               {/* Auto Details */}
               {isAuto && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">Caracteristici vehicul</h2>
+                <div className="mt-5 mb-5">
+                  <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Caracteristici vehicul</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {(autoDetails as any[]).map((d) => (
-                      <div key={d.label} className="rounded-xl p-3 text-center" style={{ background: '#f8f9fa', border: '1px solid #e9ecef' }}>
+                      <div key={d.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
                         <div className="text-2xl mb-1">{d.icon}</div>
-                        <div className="text-xs text-gray-500 font-medium mb-0.5">{d.label}</div>
-                        <div className="text-sm font-bold text-gray-900">{d.value}</div>
+                        <div className="text-xs font-medium mb-0.5" style={{ color: 'var(--text-secondary)' }}>{d.label}</div>
+                        <div className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{d.value}</div>
                       </div>
                     ))}
                   </div>
@@ -168,158 +174,121 @@ export default async function ListingDetailPage({ params }: Props) {
               )}
 
               {/* Description */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Descriere</h2>
-                <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+              <div className="mt-5">
+                <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Descriere</h2>
+                <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
                   {listing.description}
                 </p>
               </div>
             </div>
 
             {/* Safety Section */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-yellow-900 mb-4">🛡️ Protejează-te în tranzacții sigure</h3>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid rgba(234,179,8,0.3)', boxShadow: '0 0 20px rgba(234,179,8,0.08)' }}>
+              <h3 className="text-base font-bold mb-4" style={{ color: '#FDE68A' }}>🛡️ Protejează-te în tranzacții sigure</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex gap-3">
-                  <span className="text-2xl flex-shrink-0">💰</span>
-                  <div>
-                    <p className="font-semibold text-yellow-900">Plătește sigur</p>
-                    <p className="text-sm text-yellow-800">Plătește după primire și verificare</p>
+                {[
+                  { icon: '💰', title: 'Plătește sigur', desc: 'Plătește după primire și verificare' },
+                  { icon: '🔍', title: 'Verifică bunul', desc: 'Inspectează produsul înainte de plată' },
+                  { icon: '📍', title: 'Loc sigur', desc: 'Întâlnește-te în locuri publice' },
+                ].map(tip => (
+                  <div key={tip.title} className="flex gap-3">
+                    <span className="text-2xl flex-shrink-0">{tip.icon}</span>
+                    <div>
+                      <p className="font-semibold text-sm" style={{ color: '#FDE68A' }}>{tip.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(253,230,138,0.7)' }}>{tip.desc}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-3">
-                  <span className="text-2xl flex-shrink-0">🔍</span>
-                  <div>
-                    <p className="font-semibold text-yellow-900">Verifică bunul</p>
-                    <p className="text-sm text-yellow-800">Inspectează produsul înainte de plată</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <span className="text-2xl flex-shrink-0">📍</span>
-                  <div>
-                    <p className="font-semibold text-yellow-900">Loc sigur</p>
-                    <p className="text-sm text-yellow-800">Intâlnește-te în locuri publice</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* ── Sidebar ── */}
           <div>
-            {/* Price Card - Sticky */}
             <div className="sticky top-24 space-y-4">
-              {/* Favorite Button */}
-              <div className="flex gap-2">
-                <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
-              </div>
 
-              {/* Price */}
-              <div className="rounded-lg p-6 shadow-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+              {/* Favorite */}
+              <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
+
+              {/* Price Card */}
+              <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 0 24px rgba(139,92,246,0.1)' }}>
                 <p className="text-xs uppercase font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>PREȚ</p>
-                <h2 className="text-4xl font-bold mb-2 text-green-400">{formattedPrice}</h2>
+                <h2 className="text-4xl font-black mb-1 price-text">{formattedPrice}</h2>
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {listing.price_type === 'negociabil'
-                    ? 'Negociabil'
-                    : listing.price_type === 'gratuit'
-                      ? 'Ofertă gratuită'
-                      : 'Preț fix'}
+                  {listing.price_type === 'negociabil' ? 'Negociabil' : listing.price_type === 'gratuit' ? 'Ofertă gratuită' : 'Preț fix'}
                 </p>
               </div>
 
-              {/* Contact Section */}
-              <div className="bg-white rounded-lg p-6 shadow-md space-y-3">
-                {/* Seller Card */}
-                <div className="pb-4 border-b border-gray-200">
-                  <p className="text-xs text-gray-600 uppercase font-semibold mb-3">Vânzător</p>
+              {/* Contact Card */}
+              <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+                {/* Seller */}
+                <div className="pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <p className="text-xs uppercase font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Vânzător</p>
                   <div className="flex items-center gap-3">
                     {profile?.avatar_url ? (
-                      <Image
-                        src={profile?.avatar_url}
-                        alt={profile?.full_name || 'Seller'}
-                        width={48}
-                        height={48}
-                        className="rounded-full"
-                      />
+                      <Image src={profile.avatar_url} alt={profile.full_name || 'Seller'} width={44} height={44} className="rounded-full" />
                     ) : (
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                        style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>
                         {(profile?.full_name || 'U')[0].toUpperCase()}
                       </div>
                     )}
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{profile?.full_name || 'Utilizator'}</p>
-                      <p className="text-sm text-gray-600">📍 {profile?.city || listing.city}</p>
+                    <div>
+                      <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{profile?.full_name || 'Utilizator'}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>📍 {profile?.city || listing.city}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Actions */}
                 {isOwner ? (
-                  <div className="space-y-3 py-4 border-t border-gray-200">
-                    <div className="bg-blue-50 rounded-lg p-4 text-center">
-                      <p className="text-sm font-semibold text-blue-900">✓ Acesta este anunțul tău</p>
-                      <p className="text-xs text-blue-700">Publicat pe {formattedDate}</p>
+                  <div className="space-y-3">
+                    <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                      <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>✓ Acesta este anunțul tău</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Publicat pe {formattedDate}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-center">
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xl font-bold text-gray-900">👁️ {listing.views ?? 0}</p>
-                        <p className="text-xs text-gray-500">vizualizări</p>
+                      <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+                        <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>👁️ {listing.views ?? 0}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>vizualizări</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xl font-bold text-gray-900">📞 {phoneViews}</p>
-                        <p className="text-xs text-gray-500">nr. tel văzut</p>
+                      <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+                        <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>📞 {phoneViews}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>nr. tel văzut</p>
                       </div>
                     </div>
                     {contactPhone && (
-                      <a
-                        href={`tel:${contactPhone.replace(/\s/g, '')}`}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-green-600 bg-green-50 text-green-700 font-semibold text-base hover:bg-green-100 transition"
-                      >
+                      <a href={`tel:${contactPhone.replace(/\s/g, '')}`}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition hover:scale-105"
+                        style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', color: '#4ADE80' }}>
                         📞 {contactPhone}
                       </a>
                     )}
                     <div className="flex gap-2">
                       <Link href={`/anunt/${id}/edit`} className="flex-1">
-                        <Button variant="secondary" size="md" fullWidth>
-                          ✏️ Editează
-                        </Button>
+                        <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
                       </Link>
                       <DeleteListingButton id={id} />
                     </div>
                   </div>
                 ) : canContact ? (
-                  <div className="space-y-2 pt-2">
+                  <div className="space-y-2">
                     <Link href={`/cont/mesaje/${listing.id}?user=${listing.user_id}`} className="w-full block">
-                      <Button variant="primary" size="lg" fullWidth icon="💬">
-                        Trimite mesaj
-                      </Button>
+                      <Button variant="primary" size="lg" fullWidth icon="💬">Trimite mesaj</Button>
                     </Link>
                     {contactPhone && (
-                      <a
-                        href={`https://wa.me/${contactPhone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full block"
-                      >
-                        <Button
-                          variant="ghost"
-                          size="lg"
-                          fullWidth
-                          icon="📱"
-                          className="border-2 border-green-600 text-green-600 hover:bg-green-50"
-                        >
-                          WhatsApp
-                        </Button>
+                      <a href={`https://wa.me/${contactPhone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
+                        target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition hover:scale-105"
+                        style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ADE80' }}>
+                        📱 WhatsApp
                       </a>
                     )}
                     {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                   </div>
                 ) : needsLogin ? (
-                  <div className="space-y-2 pt-2">
+                  <div className="space-y-2">
                     <Link href={`/login?next=/anunt/${id}`} className="w-full block">
-                      <Button variant="primary" size="lg" fullWidth>
-                        Conectare pentru contact
-                      </Button>
+                      <Button variant="primary" size="lg" fullWidth>Conectare pentru contact</Button>
                     </Link>
                     {contactPhone && <PhoneRevealButton listingId={id} userId={undefined} />}
                   </div>
@@ -327,19 +296,20 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
 
               {/* Share Card */}
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <p className="text-xs text-gray-600 uppercase font-semibold mb-3">Distribuie</p>
+              <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+                <p className="text-xs uppercase font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Distribuie</p>
                 <ShareButtons listingId={id} listingTitle={listing.title} />
               </div>
 
-              {/* Report Card */}
-              <div className="bg-white rounded-lg p-4 shadow-md text-center">
-                <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+              {/* Report */}
+              <div className="rounded-2xl p-4 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+                <button className="text-sm font-medium transition hover:opacity-80" style={{ color: 'rgba(239,68,68,0.7)' }}>
                   ⚠️ Raportează anunț
                 </button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </main>

@@ -11,13 +11,15 @@ export default function MarketplaceLayout({
   return (
     <>
       {/* Category Navigation */}
-      <nav className="fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-40">
-        <div className="max-w-7xl mx-auto px-4 flex gap-6 overflow-x-auto">
+      <nav className="fixed top-16 left-0 right-0 z-40 overflow-x-auto backdrop-blur-xl"
+        style={{ backgroundColor: 'rgba(8,11,20,0.9)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="max-w-7xl mx-auto px-4 flex gap-1">
           {categories.map((cat) => (
             <Link
               key={cat.slug}
               href={`/marketplace/${cat.slug}`}
-              className="py-3 px-2 text-gray-700 hover:text-blue-600 hover:border-b-2 hover:border-blue-600 whitespace-nowrap transition"
+              className="py-3 px-3 text-sm font-medium whitespace-nowrap transition-all hover:scale-105"
+              style={{ color: 'var(--text-secondary)' }}
             >
               {cat.icon} {cat.name}
             </Link>

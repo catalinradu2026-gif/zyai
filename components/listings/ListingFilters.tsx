@@ -36,16 +36,20 @@ interface ListingFiltersProps { category: string }
 
 // ─── helpers ────────────────────────────────────────────────────
 const lbl = (text: string) => (
-  <label style={{ color: '#000', fontWeight: 600, fontSize: '13px', display: 'block', marginBottom: '6px' }}>{text}</label>
+  <label style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '12px', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{text}</label>
 )
-const ss = { color: '#000', backgroundColor: '#fff', width: '100%' }
-const is = { color: '#000', backgroundColor: '#fff', width: '100%' }
-const sc = 'px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
-const ic = 'px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+const ss = { color: 'var(--text-primary)', backgroundColor: 'var(--bg-input)', width: '100%', border: '1px solid var(--border-subtle)' }
+const is = { color: 'var(--text-primary)', backgroundColor: 'var(--bg-input)', width: '100%', border: '1px solid var(--border-subtle)' }
+const sc = 'px-3 py-2 rounded-lg text-sm focus:outline-none'
+const ic = 'px-3 py-2 rounded-lg text-sm focus:outline-none'
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} className={`px-2.5 py-1.5 rounded-lg border-2 text-xs font-semibold transition ${active ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'}`}>
+    <button onClick={onClick}
+      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition"
+      style={active
+        ? { background: 'rgba(139,92,246,0.2)', border: '1.5px solid rgba(139,92,246,0.7)', color: '#A78BFA' }
+        : { background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
       {children}
     </button>
   )
@@ -918,31 +922,34 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
       <button
         onClick={() => setShowFilters(!showFilters)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-blue-600 text-white font-bold hover:bg-blue-700 transition"
+        className="w-full flex items-center justify-between px-4 py-3 font-bold text-sm transition"
+        style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: '#fff' }}
       >
         <span>🔍 FILTRE</span>
         <span>{showFilters ? '▲' : '▼'}</span>
       </button>
 
       {showFilters && (
-        <div className="p-4 space-y-4" style={{ color: '#000' }}>
+        <div className="p-4 space-y-4">
           <CityField />
-          <PriceField currency={category === 'joburi' ? 'RON' : category === 'imobiliare' ? 'EUR' : 'EUR'} />
+          <PriceField currency={category === 'joburi' ? 'RON' : 'EUR'} />
           {renderFilters()}
 
-          <div className="flex gap-2 pt-2 border-t border-gray-100">
+          <div className="flex gap-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
             <button
               onClick={() => router.push(`/marketplace/${category}?${buildParams().toString()}`)}
-              className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
+              className="flex-1 py-2 px-4 text-white rounded-lg transition font-semibold text-sm hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}
             >
               Aplică filtre
             </button>
             <button
               onClick={() => router.push(`/marketplace/${category}${activeSub ? `?sub=${activeSub}` : ''}`)}
-              className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition text-sm"
+              className="px-3 py-2 rounded-lg transition text-sm"
+              style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-input)' }}
             >
               Reset
             </button>
