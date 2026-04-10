@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import FavoriteButton from './FavoriteButton'
+import CompareButton from '@/components/compare/CompareButton'
 
 interface AutoMeta {
   year?: string | null
@@ -57,12 +58,11 @@ export default function ListingCard({
   const diffMs = now.getTime() - timeAgo.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   const isNew = diffDays === 0
-  const timeLabel = isNew ? 'Astazi' : diffDays === 1 ? 'Ieri' : `${diffDays} zile`
+  const timeLabel = isNew ? 'Astăzi' : diffDays === 1 ? 'Ieri' : `${diffDays} zile`
 
   const isAuto = category === 'auto' || category?.startsWith('auto')
   const meta = metadata as AutoMeta | null | undefined
 
-  // Build detail chips for auto listings
   const chips: { icon: string; label: string }[] = []
   if (isAuto && meta) {
     if (meta.year) chips.push({ icon: '📅', label: meta.year })
@@ -71,25 +71,30 @@ export default function ListingCard({
     if (meta.gearbox) chips.push({ icon: '⚙️', label: meta.gearbox })
   }
 
+  const compareItem = {
+    id, title, price, priceType, currency, city,
+    image: firstImage,
+    category,
+  }
+
   return (
     <Link href={`/anunt/${id}`}>
       <div
-        className="group rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 h-full cursor-pointer"
+        className="group rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] h-full cursor-pointer"
         style={{
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'initial',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.boxShadow = 'var(--glow-blue)'
-          e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'
+          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = 'initial'
-          e.currentTarget.style.backgroundColor = 'var(--bg-card)'
+          e.currentTarget.style.boxShadow = 'none'
+          e.currentTarget.style.borderColor = 'var(--border-subtle)'
         }}
       >
-        {/* Image Container */}
+        {/* Image */}
         <div className="relative w-full h-48 overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600">
           {firstImage ? (
             <Image
@@ -104,17 +109,50 @@ export default function ListingCard({
             </div>
           )}
 
-          {/* Badges top-left */}
-          <div className="absolute top-2 left-2 flex gap-1.5">
-            {isNew && (
-              <div className="px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
-                Nou
-              </div>
-            )}
+          {/* New badge — top left */}
+          {isNew && (
+            <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
+              Nou
+            </div>
+          )}
+
+          {/* Favorite heart — top right */}
+          <div className="absolute top-2 right-2" onClick={e => e.preventDefault()}>
+            <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} />
           </div>
 
-          {/* Favorite button — absolute bottom-right via component */}
-          <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} />
+          {/* Compare button — bottom left overlay */}
+          <div className="absolute bottom-2 left-2" onClick={e => e.preventDefault()}>
+            <CompareButton item={compareItem} />
+          </div>
+
+          {/* Share button — bottom right */}
+          <div
+            className="absolute bottom-2 right-2"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              const url = `${window.location.origin}/anunt/${id}`
+              if (navigator.share) {
+                navigator.share({ title, url })
+              } else {
+                navigator.clipboard.writeText(url)
+              }
+            }}
+          >
+            <div
+              style={{
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+                border: '1.5px solid rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontSize: '13px',
+              }}
+              title="Distribuie"
+            >
+              ↗
+            </div>
+          </div>
         </div>
 
         {/* Content */}
@@ -123,14 +161,12 @@ export default function ListingCard({
             {title}
           </h3>
 
-          {/* Description */}
           {description && (
             <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
               {description}
             </p>
           )}
 
-          {/* AutoScout24-style detail chips */}
           {chips.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {chips.map((chip) => (
@@ -150,52 +186,13 @@ export default function ListingCard({
             </div>
           )}
 
-          <div className="flex items-baseline justify-between gap-2 mt-1">
-            <span className="text-xl font-black price-text">
-              {formattedPrice}
-            </span>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              {city}
-            </span>
+          <div className="flex items-center justify-between gap-2 mt-1">
+            <span className="text-xl font-black price-text">{formattedPrice}</span>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{city}</span>
           </div>
 
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              {timeLabel}
-            </span>
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                const url = `${window.location.origin}/anunt/${id}`
-                if (navigator.share) {
-                  navigator.share({ title, url })
-                } else {
-                  navigator.clipboard.writeText(url).then(() => {
-                    const btn = e.currentTarget
-                    btn.textContent = '✓'
-                    setTimeout(() => { btn.textContent = '↗' }, 1500)
-                  })
-                }
-              }}
-              title="Distribuie anunțul"
-              className="transition-all duration-200 hover:scale-110 active:scale-95"
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(139,92,246,0.12)',
-                border: '1px solid rgba(139,92,246,0.25)',
-                color: '#A78BFA',
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
-              ↗
-            </button>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {timeLabel}
           </div>
         </div>
       </div>

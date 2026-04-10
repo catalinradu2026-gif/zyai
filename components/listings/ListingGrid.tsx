@@ -1,4 +1,6 @@
 import ListingCard from './ListingCard'
+import { CompareProvider } from '@/components/compare/CompareContext'
+import CompareBar from '@/components/compare/CompareBar'
 
 interface Listing {
   id: string
@@ -26,7 +28,7 @@ export default function ListingGrid({ listings, loading, userId, favoritedIds = 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-gray-200 rounded-lg h-64 animate-pulse" />
+          <div key={i} className="rounded-xl h-64 animate-pulse" style={{ background: 'var(--bg-card)' }} />
         ))}
       </div>
     )
@@ -35,31 +37,34 @@ export default function ListingGrid({ listings, loading, userId, favoritedIds = 
   if (listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600 text-lg">Nu au fost găsite anunțuri</p>
+        <p className="text-base" style={{ color: 'var(--text-secondary)' }}>Nu au fost găsite anunțuri</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {listings.map((listing) => (
-        <ListingCard
-          key={listing.id}
-          id={listing.id}
-          title={listing.title}
-          description={listing.description}
-          price={listing.price}
-          priceType={listing.price_type}
-          currency={listing.currency}
-          city={listing.city}
-          images={listing.images}
-          createdAt={listing.created_at}
-          category={listing.category}
-          metadata={listing.metadata}
-          userId={userId}
-          isFavorited={favoritedIds.includes(listing.id)}
-        />
-      ))}
-    </div>
+    <CompareProvider>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-24">
+        {listings.map((listing) => (
+          <ListingCard
+            key={listing.id}
+            id={listing.id}
+            title={listing.title}
+            description={listing.description}
+            price={listing.price}
+            priceType={listing.price_type}
+            currency={listing.currency}
+            city={listing.city}
+            images={listing.images}
+            createdAt={listing.created_at}
+            category={listing.category}
+            metadata={listing.metadata}
+            userId={userId}
+            isFavorited={favoritedIds.includes(listing.id)}
+          />
+        ))}
+      </div>
+      <CompareBar />
+    </CompareProvider>
   )
 }
