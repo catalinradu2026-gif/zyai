@@ -301,7 +301,7 @@ export default async function ListingDetailPage({ params }: Props) {
                         </Button>
                       </a>
                     )}
-                    <PhoneRevealButton listingId={id} userId={user?.id} />
+                    {profile?.phone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                   </div>
                 ) : needsLogin ? (
                   <div className="space-y-2 pt-2">
@@ -310,7 +310,7 @@ export default async function ListingDetailPage({ params }: Props) {
                         Conectare pentru contact
                       </Button>
                     </Link>
-                    <PhoneRevealButton listingId={id} userId={undefined} />
+                    {profile?.phone && <PhoneRevealButton listingId={id} userId={undefined} />}
                   </div>
                 ) : null}
               </div>
