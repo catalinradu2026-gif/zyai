@@ -39,20 +39,25 @@ export async function POST(req: Request) {
     const metadata = (listing.metadata as any) || {}
     const phone: string | null = metadata.contactPhone || profile?.phone || null
 
-    // Incrementează phone_views (ignoră eroarea dacă coloana nu există)
+    // Incrementează phone_views atomic via RPC
     try {
-      const { data: cur } = await admin
-        .from('listings')
-        .select('phone_views')
-        .eq('id', listingId)
-        .single()
-      const currentViews = (cur as any)?.phone_views ?? 0
-      await admin
-        .from('listings')
-        .update({ phone_views: currentViews + 1 })
-        .eq('id', listingId)
+      await admin.rpc('increment_phone_views', { listing_id: listingId })
     } catch {
-      // coloana phone_views nu există — nu blocăm
+      // Fallback dacă RPC nu există: citire + scriere simplă
+      try {
+        const { data: cur } = await admin
+          .from('listings')
+          .select('phone_views')
+          .eq('id', listingId)
+          .single()
+        const currentViews = (cur as any)?.phone_views ?? 0
+        await admin
+          .from('listings')
+          .update({ phone_views: currentViews + 1 })
+          .eq('id', listingId)
+      } catch {
+        // coloana phone_views nu există — nu blocăm
+      }
     }
 
     return Response.json({ phone })
