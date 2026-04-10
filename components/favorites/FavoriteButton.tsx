@@ -8,6 +8,7 @@ interface FavoriteButtonProps {
   initialFavorited?: boolean
   userId?: string
   showLabel?: boolean
+  overlay?: boolean
 }
 
 export default function FavoriteButton({
@@ -15,6 +16,7 @@ export default function FavoriteButton({
   initialFavorited = false,
   userId,
   showLabel = false,
+  overlay = false,
 }: FavoriteButtonProps) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited)
   const [loading, setLoading] = useState(false)
@@ -24,7 +26,6 @@ export default function FavoriteButton({
     e.stopPropagation()
 
     if (!userId) {
-      // Redirect to login
       window.location.href = `/login?next=/anunt/${listingId}`
       return
     }
@@ -40,32 +41,67 @@ export default function FavoriteButton({
     setLoading(false)
   }
 
+  if (overlay) {
+    return (
+      <button
+        onClick={handleToggle}
+        disabled={loading}
+        title={isFavorited ? 'Elimină din favorite' : 'Adaugă la favorite'}
+        className="transition-all duration-200 disabled:opacity-50"
+        style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: isFavorited
+            ? 'rgba(239,68,68,0.9)'
+            : 'rgba(0,0,0,0.45)',
+          backdropFilter: 'blur(4px)',
+          border: isFavorited ? '1.5px solid rgba(239,68,68,0.6)' : '1.5px solid rgba(255,255,255,0.15)',
+          boxShadow: isFavorited ? '0 0 12px rgba(239,68,68,0.5)' : '0 2px 8px rgba(0,0,0,0.3)',
+          transform: loading ? 'scale(0.9)' : 'scale(1)',
+          cursor: loading ? 'default' : 'pointer',
+        }}
+      >
+        <style>{`
+          @keyframes heartPop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.35); }
+          }
+        `}</style>
+        <span style={{
+          fontSize: '16px',
+          lineHeight: 1,
+          animation: isFavorited && !loading ? 'heartPop 0.3s ease' : 'none',
+        }}>
+          {isFavorited ? '❤️' : '🤍'}
+        </span>
+      </button>
+    )
+  }
+
   return (
     <button
-      onClick={(e) => handleToggle(e)}
+      onClick={handleToggle}
       disabled={loading}
-      className={`
-        inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-all
-        ${
-          isFavorited
-            ? 'bg-red-100 text-red-600 hover:bg-red-200'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }
-        disabled:opacity-50 disabled:cursor-not-allowed
-      `}
+      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 font-semibold disabled:opacity-50"
       style={{
-        animation: isFavorited && !loading ? 'heartBeat 0.3s' : 'none',
+        background: isFavorited ? 'rgba(239,68,68,0.15)' : 'var(--bg-card-hover)',
+        border: isFavorited ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--border-subtle)',
+        color: isFavorited ? '#f87171' : 'var(--text-secondary)',
+        animation: isFavorited && !loading ? 'heartPop 0.3s ease' : 'none',
       }}
     >
       <style>{`
-        @keyframes heartBeat {
+        @keyframes heartPop {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.3); }
         }
       `}</style>
-
       <span className="text-lg">{isFavorited ? '❤️' : '🤍'}</span>
-      {showLabel && <span className="text-sm font-medium">Favorite</span>}
+      {showLabel && <span className="text-sm">{isFavorited ? 'Salvat' : 'Favorite'}</span>}
     </button>
   )
 }

@@ -104,17 +104,16 @@ export default function ListingCard({
             </div>
           )}
 
-          {/* Badges */}
-          <div className="absolute top-2 right-2 flex gap-2">
+          {/* Badges top-left */}
+          <div className="absolute top-2 left-2 flex gap-1.5">
             {isNew && (
               <div className="px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
-                🆕 Nou
+                Nou
               </div>
             )}
-            <div className="px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
-              ✨ AI
-            </div>
           </div>
+
+          {/* Favorite button — absolute bottom-right via component */}
           <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} />
         </div>
 
@@ -160,8 +159,43 @@ export default function ListingCard({
             </span>
           </div>
 
-          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {timeLabel}
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              {timeLabel}
+            </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                const url = `${window.location.origin}/anunt/${id}`
+                if (navigator.share) {
+                  navigator.share({ title, url })
+                } else {
+                  navigator.clipboard.writeText(url).then(() => {
+                    const btn = e.currentTarget
+                    btn.textContent = '✓'
+                    setTimeout(() => { btn.textContent = '↗' }, 1500)
+                  })
+                }
+              }}
+              title="Distribuie anunțul"
+              className="transition-all duration-200 hover:scale-110 active:scale-95"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(139,92,246,0.12)',
+                border: '1px solid rgba(139,92,246,0.25)',
+                color: '#A78BFA',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              ↗
+            </button>
           </div>
         </div>
       </div>

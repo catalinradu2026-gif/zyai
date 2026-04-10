@@ -123,9 +123,6 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                   ) : (
                     <span className="text-white text-3xl opacity-50">📦</span>
                   )}
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-xs font-bold rounded-full">
-                    ✨ AI
-                  </div>
                   <FavoriteButton
                     listingId={listing.id}
                     userId={userId}
