@@ -31,19 +31,22 @@ export default async function FavoritesPage() {
       {favorites && favorites.length > 0 ? (
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <ListingGrid
-            listings={favorites.map((listing: any) => ({
-              id: listing.id,
-              title: listing.title,
-              description: listing.description ?? undefined,
-              price: listing.price,
-              price_type: listing.price_type ?? 'fix',
-              currency: listing.currency ?? 'RON',
-              city: listing.city,
-              images: listing.images ?? [],
-              created_at: listing.created_at,
-              category: undefined,
-              metadata: listing.metadata ?? null,
-            }))}
+            listings={favorites.map((listing: any) => {
+              const CATEGORY_SLUGS: Record<number, string> = { 1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii', 5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport', 9: 'animale', 10: 'mama-copilul' }
+              return {
+                id: listing.id,
+                title: listing.title,
+                description: listing.description ?? undefined,
+                price: listing.price,
+                price_type: listing.price_type ?? 'fix',
+                currency: listing.currency ?? 'RON',
+                city: listing.city,
+                images: listing.images ?? [],
+                created_at: listing.created_at,
+                category: listing.category ?? CATEGORY_SLUGS[listing.category_id] ?? undefined,
+                metadata: listing.metadata ?? null,
+              }
+            })}
             userId={user.id}
             favoritedIds={favoritedIds}
           />

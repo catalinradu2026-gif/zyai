@@ -85,6 +85,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const subs = SUBS[category] || []
 
+  const CATEGORY_SLUGS: Record<number, string> = { 1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii', 5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport', 9: 'animale', 10: 'mama-copilul' }
+  const mappedListings = listings.map((l: any) => ({
+    ...l,
+    category: l.category ?? CATEGORY_SLUGS[l.category_id] ?? undefined,
+    metadata: l.metadata ?? null,
+  }))
+
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 16px' }}>
 
@@ -154,8 +161,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <h2 style={{ color: '#713f12', fontSize: '20px', fontWeight: 700 }}>Baza de date nu e conectată</h2>
               <p style={{ color: '#92400e', marginTop: '8px' }}>Folosește chat-ul 💬 pentru a căuta anunțuri!</p>
             </div>
-          ) : listings && listings.length > 0 ? (
-            <ListingGrid listings={listings} />
+          ) : mappedListings && mappedListings.length > 0 ? (
+            <ListingGrid listings={mappedListings} />
           ) : (
             <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '48px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
               <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📭</span>
