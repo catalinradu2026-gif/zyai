@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server'
 
 export const maxDuration = 30
 
+async function toBase64DataUrl(imageUrl: string): Promise<string> {
+  const res = await fetch(imageUrl)
+  if (!res.ok) throw new Error(`fetch image failed: ${res.status}`)
+  const contentType = res.headers.get('content-type') || 'image/jpeg'
+  const buffer = await res.arrayBuffer()
+  const base64 = Buffer.from(buffer).toString('base64')
+  return `data:${contentType};base64,${base64}`
+}
+
 export async function POST(req: Request) {
   try {
     const { imageUrl } = await req.json()
@@ -9,6 +18,15 @@ export async function POST(req: Request) {
 
     const GROQ_API_KEY = process.env.GROQ_API_KEY
     if (!GROQ_API_KEY) return NextResponse.json({ error: 'no api key' }, { status: 500 })
+
+    // Convert to base64 so Groq doesn't need to fetch the URL directly
+    let imageData: string
+    try {
+      imageData = await toBase64DataUrl(imageUrl)
+    } catch (e: any) {
+      console.error('[analyze-image] could not fetch image:', e?.message)
+      return NextResponse.json({ error: 'cannot_fetch_image', detail: e?.message }, { status: 400 })
+    }
 
     const prompt = `Ești un expert în evaluarea produselor pentru marketplace românesc.
 Analizează această imagine și returnează DOAR un JSON valid, fără text suplimentar, fără markdown, fără backticks.
@@ -31,12 +49,10 @@ Reguli stricte:
 - category: alege STRICT una din lista de mai sus
 - confidence: 0-1 cât de sigur ești de analiză`
 
-    // Try vision-capable models in order of preference
+    // Only vision-capable models available on Groq
     const models = [
       'meta-llama/llama-4-scout-17b-16e-instruct',
       'meta-llama/llama-4-maverick-17b-128e-instruct',
-      'llama-3.2-90b-vision-preview',
-      'llama-3.2-11b-vision-preview',
     ]
 
     let parsed: any = null
@@ -57,7 +73,7 @@ Reguli stricte:
                 role: 'user',
                 content: [
                   { type: 'text', text: prompt },
-                  { type: 'image_url', image_url: { url: imageUrl } },
+                  { type: 'image_url', image_url: { url: imageData } },
                 ],
               },
             ],
@@ -70,7 +86,7 @@ Reguli stricte:
           const errText = await response.text()
           console.error(`[analyze-image] ${model} error:`, errText)
           lastError = errText
-          continue // try next model
+          continue
         }
 
         const data = await response.json()
@@ -80,7 +96,7 @@ Reguli stricte:
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
           parsed = JSON.parse(jsonMatch[0])
-          break // success
+          break
         }
       } catch (e: any) {
         console.error(`[analyze-image] ${model} threw:`, e?.message)
