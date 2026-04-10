@@ -36,30 +36,39 @@ export default function CategorySubsBar({ category }: CategorySubsBarProps) {
       <div className="flex gap-2 min-w-max">
         <button
           onClick={handleAll}
-          className={`flex flex-col items-center gap-1 px-4 py-3 rounded-xl border-2 transition-all whitespace-nowrap ${
-            !activeSub
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'
-          }`}
+          className="group flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 whitespace-nowrap"
+          style={{
+            backgroundColor: !activeSub ? 'rgba(139,92,246,0.15)' : 'var(--bg-card)',
+            border: !activeSub ? '1px solid rgba(139,92,246,0.6)' : '1px solid var(--border-subtle)',
+            boxShadow: !activeSub ? '0 0 16px rgba(139,92,246,0.25)' : 'none',
+            minWidth: '72px',
+          }}
         >
-          <span className="text-2xl">🔍</span>
-          <span className="text-xs font-semibold">Toate</span>
+          <span className="text-2xl group-hover:scale-110 transition-transform duration-300">🔍</span>
+          <span className="text-xs font-bold" style={{ color: !activeSub ? '#A78BFA' : 'var(--text-primary)' }}>Toate</span>
         </button>
 
-        {subs.map((sub) => (
-          <button
-            key={sub.slug}
-            onClick={() => handleSub(sub.slug)}
-            className={`flex flex-col items-center gap-1 px-4 py-3 rounded-xl border-2 transition-all whitespace-nowrap ${
-              activeSub === sub.slug
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'
-            }`}
-          >
-            <span className="text-2xl">{sub.icon}</span>
-            <span className="text-xs font-semibold">{sub.name}</span>
-          </button>
-        ))}
+        {subs.map((sub) => {
+          const isActive = activeSub === sub.slug
+          return (
+            <button
+              key={sub.slug}
+              onClick={() => handleSub(sub.slug)}
+              className="group flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 whitespace-nowrap"
+              style={{
+                backgroundColor: isActive ? 'rgba(139,92,246,0.15)' : 'var(--bg-card)',
+                border: isActive ? '1px solid rgba(139,92,246,0.6)' : '1px solid var(--border-subtle)',
+                boxShadow: isActive ? '0 0 16px rgba(139,92,246,0.25)' : 'none',
+                minWidth: '72px',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.boxShadow = '0 0 16px rgba(59,130,246,0.2)' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{sub.icon}</span>
+              <span className="text-xs font-bold" style={{ color: isActive ? '#A78BFA' : 'var(--text-primary)' }}>{sub.name}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

@@ -283,3 +283,86 @@ export const MOTO_BRANDS = [
 ]
 export const MOTO_TYPES = ['Sport', 'Naked', 'Touring', 'Adventure', 'Enduro/Cross', 'Scooter', 'Custom/Chopper', 'Trial', 'Moped', 'Electric']
 export const MOTO_CC = ['Sub 125cc', '125-250cc', '250-500cc', '500-750cc', '750-1000cc', 'Peste 1000cc']
+
+// ─── ELECTRONICE ──────────────────────────────────────────────
+export const ELECTRO_STARE = ['Nou (sigilat)', 'Nou (fără cutie)', 'Second-hand - ca nou', 'Second-hand - bun', 'Defect/Piese']
+export const TELEFON_BRANDS = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'OnePlus', 'Google', 'Sony', 'Motorola', 'Nokia', 'Oppo', 'Realme', 'Vivo', 'Nothing', 'Altele']
+export const TELEFON_STOCARE = ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB']
+export const TELEFON_RAM = ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB']
+export const LAPTOP_BRANDS = ['Apple', 'Asus', 'Acer', 'Dell', 'HP', 'Lenovo', 'MSI', 'Microsoft', 'Razer', 'Samsung', 'LG', 'Toshiba', 'Altele']
+export const LAPTOP_RAM = ['4GB', '8GB', '16GB', '32GB', '64GB']
+export const LAPTOP_STOCARE = ['128GB', '256GB', '512GB', '1TB', '2TB', '4TB']
+export const LAPTOP_DIAGONALA = ['11"', '12"', '13"', '14"', '15"', '15.6"', '16"', '17"', '18"']
+export const LAPTOP_OS = ['Windows 11', 'Windows 10', 'macOS', 'Linux', 'ChromeOS', 'Fără sistem de operare']
+export const LAPTOP_PROCESOR = ['Intel Core i3', 'Intel Core i5', 'Intel Core i7', 'Intel Core i9', 'Intel Core Ultra', 'AMD Ryzen 3', 'AMD Ryzen 5', 'AMD Ryzen 7', 'AMD Ryzen 9', 'Apple M1', 'Apple M2', 'Apple M3', 'Apple M4']
+export const TV_DIAGONALA = ['24"', '32"', '40"', '43"', '50"', '55"', '58"', '65"', '70"', '75"', '85"', '98"+']
+export const TV_REZOLUTIE = ['HD (720p)', 'Full HD (1080p)', '4K (2160p)', '8K']
+export const TV_TIP = ['LED/LCD', 'OLED', 'QLED/AMOLED', 'QNED', 'MicroLED', 'Proiector']
+export const AUDIO_TIP = ['Căști on-ear/over-ear', 'Căști in-ear', 'Boxe portabile', 'Soundbar', 'Sistem home cinema', 'Amplificator', 'Subwoofer', 'Altele']
+export const GAMING_PLATFORMA = ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC Gaming', 'Retro / Alte console']
+export const GAMING_TIP = ['Consolă', 'Joc fizic', 'Accesoriu', 'Scaun gaming', 'Monitor gaming', 'Periferice PC']
+export const FOTO_TIP = ['DSLR', 'Mirrorless', 'Compact', 'Instant', 'Cameră acțiune / Dronă', 'Obiectiv', 'Trepied & Accesorii', 'Cameră video']
+export const FOTO_BRANDS = ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Panasonic', 'Olympus', 'Leica', 'GoPro', 'DJI', 'Altele']
+export const TABLETA_STOCARE = ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB']
+export const TABLETA_CONECTIVITATE = ['WiFi', 'WiFi + 4G/LTE', 'WiFi + 5G']
+
+// ─── MODĂ ─────────────────────────────────────────────────────
+export const MODA_STARE = ['Nou cu etichetă', 'Nou fără etichetă', 'Folosit - ca nou', 'Folosit - bun', 'Folosit - acceptabil']
+export const MODA_GEN = ['Femei', 'Bărbați', 'Fete', 'Băieți', 'Unisex']
+export const MODA_MARIMI_ADULTI = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL+']
+export const MODA_MARIMI_PANTOFI = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47+']
+export const MODA_MARIMI_COPII = ['0-3 luni', '3-6 luni', '6-12 luni', '1-2 ani', '2-3 ani', '3-4 ani', '4-5 ani', '5-6 ani', '6-8 ani', '8-10 ani', '10-12 ani', '12-14 ani', '14-16 ani']
+export const MODA_MATERIAL = ['Bumbac', 'Poliester', 'Denim / Jean', 'Lână', 'Mătase', 'Piele naturală', 'Piele ecologică', 'Catifea', 'In', 'Viscoză', 'Nylon', 'Amestec']
+export const BIJUTERII_TIP = ['Inel', 'Colier / Lanț', 'Brățară', 'Cercei', 'Ceas bărbătesc', 'Ceas dama', 'Set bijuterii', 'Brose', 'Altele']
+export const BIJUTERII_MATERIAL = ['Aur 14k', 'Aur 18k', 'Aur 24k', 'Argint', 'Platină', 'Titan', 'Oțel inoxidabil', 'Bijuterie fashion', 'Altele']
+export const GENTI_TIP = ['Geantă de mână', 'Rucsac', 'Geantă de umăr', 'Portmoneu / Portofel', 'Geantă laptop', 'Valiză / Troleu', 'Geantă sport', 'Altele']
+
+// ─── CASĂ & GRĂDINĂ ──────────────────────────────────────────
+export const CASA_STARE = ['Nou (în cutie)', 'Nou (fără cutie)', 'Ca nou', 'Bun', 'Acceptabil', 'Necesită reparații']
+export const MOBILA_TIP = ['Canapea / Colțar', 'Pat / Somieră', 'Dulap / Șifonier', 'Masă & Scaune', 'Bibliotecă / Raft', 'Birou', 'Comodă / Noptieră', 'Fotoliu', 'Mobilă bucătărie', 'Mobilier baie', 'Mobilier hol', 'Altele']
+export const MOBILA_MATERIAL = ['Lemn masiv', 'PAL / MDF', 'Metal', 'Sticlă', 'Tapițat', 'Rattan / Împletit', 'Plastic', 'Altele']
+export const ELECTROCASNICE_TIP = ['Frigider / Combină', 'Mașină de spălat', 'Uscător de rufe', 'Mașină de spălat vase', 'Cuptor', 'Plită', 'Microunde', 'Aspirator', 'Robot de bucătărie', 'Cafetieră', 'Aer condiționat', 'Ventilator / Răcitor', 'Convector / Calorifer', 'Fer de călcat', 'Altele']
+export const ELECTROCASNICE_BRANDS = ['Bosch', 'Samsung', 'LG', 'Whirlpool', 'Indesit', 'Arctic', 'Zanussi', 'Electrolux', 'Beko', 'Candy', 'Gorenje', 'Philips', 'Tefal', 'Dyson', 'Altele']
+export const GRADINA_TIP = ['Mobilier grădină / Terasă', 'Unelte & Echipamente', 'Plante & Semințe', 'Jardiniere & Ghivece', 'Sisteme irigații', 'Piscine & Accesorii', 'Grătare & BBQ', 'Iluminat exterior', 'Altele']
+export const DECORARE_TIP = ['Tablouri & Postere', 'Covoare & Mochete', 'Draperii & Perdele', 'Vaze & Decoruri', 'Lumânări & Aromaterapie', 'Oglinzi', 'Ceasuri de perete', 'Perne & Textile', 'Altele']
+export const ILUMINAT_TIP = ['Lustră / Plafonieră', 'Lampă de masă / Podea', 'Aplică de perete', 'Spot / Downlight', 'Bandă LED', 'Bec smart', 'Proiector LED', 'Lanternă', 'Altele']
+export const BRICOLAJ_TIP = ['Unelte electrice', 'Unelte manuale', 'Scule pneumatice', 'Echipament de sudură', 'Compresoare', 'Materiale construcții', 'Vopsele & Tencuieli', 'Altele']
+
+// ─── SPORT ────────────────────────────────────────────────────
+export const SPORT_STARE = ['Nou (neutilizat)', 'Ca nou', 'Bun', 'Acceptabil']
+export const SPORT_TIP = ['Fotbal', 'Baschet', 'Volei', 'Tenis', 'Badminton', 'Box & Arte marțiale', 'Atletism', 'Înot', 'Golf', 'Rugby', 'Baseball', 'Hochei', 'Altele']
+export const BICICLETA_TIP = ['MTB / Mountain bike', 'Road / Cursieră', 'City / Trekking', 'BMX', 'Electric / E-bike', 'Fat bike', 'Copii', 'Altele']
+export const BICICLETA_BRANDS = ['Trek', 'Giant', 'Specialized', 'Cannondale', 'Scott', 'Merida', 'Cube', 'Bianchi', 'Orbea', 'Focus', 'Kross', 'Altele']
+export const BICICLETA_CADRU = ['XS (13"-14")', 'S (15"-16")', 'M (17"-18")', 'L (19"-20")', 'XL (21"-22")', 'XXL (23"+)']
+export const FITNESS_TIP = ['Bicicletă fitness / spinning', 'Bandă de alergare', 'Eliptic / Stepper', 'Aparat multifuncțional', 'Gantere & Bare', 'Greutăți & Discuri', 'Saltea & Yoga', 'TRX & Benzi', 'Banca fitness', 'Altele']
+export const OUTDOOR_TIP = ['Cort', 'Sac de dormit', 'Rucsac drumeție', 'Bocanci & Încălțăminte', 'Îmbrăcăminte outdoor', 'Echipament escaladă', 'Kayak & Caiac', 'Altele']
+export const SPORTURI_APA_TIP = ['Surf / Windsurf', 'Kiteboarding', 'Scuba Diving', 'Snorkeling', 'Paddleboarding (SUP)', 'Caiac & Kayak', 'Barcă & Accesorii', 'Altele']
+export const SPORTURI_IARNA_TIP = ['Ski alpin', 'Snowboard', 'Ski fond', 'Sanie', 'Patine', 'Îmbrăcăminte ski', 'Altele']
+
+// ─── ANIMALE ──────────────────────────────────────────────────
+export const ANIMALE_VARSTA = ['Sub 3 luni (pui)', '3-6 luni', '6-12 luni', '1-3 ani', '3-7 ani', 'Peste 7 ani (senior)']
+export const ANIMALE_SEX = ['Mascul', 'Femelă']
+export const CAINI_RASE = [
+  'Labrador', 'Golden Retriever', 'German Shepherd', 'Bulldog Francez', 'Beagle',
+  'Poodle / Pudel', 'Rottweiler', 'Yorkshire Terrier', 'Husky Siberian', 'Dachshund',
+  'Boxer', 'Doberman', 'Maltese', 'Chihuahua', 'Shih Tzu', 'Border Collie',
+  'Cocker Spaniel', 'Mops / Pug', 'Bichon', 'Ciobănesc Românesc Carpatin',
+  'Mioritic', 'Metis / Mix', 'Altă rasă',
+]
+export const PISICI_RASE = [
+  'Persan', 'Maine Coon', 'Siamese', 'Bengal', 'British Shorthair',
+  'Ragdoll', 'Scottish Fold', 'Sphynx', 'Abisinian', 'Norwegian Forest Cat',
+  'Birman', 'Devon Rex', 'Metis / Mix', 'Altă rasă',
+]
+export const ACCESORII_ANIMALE_TIP = ['Hrană uscată', 'Hrană umedă', 'Gulere & Lese', 'Cuști & Adăposturi', 'Jucării', 'Îmbrăcăminte', 'Toaletare', 'Patul & Saltele', 'Acvariu & Accesorii', 'Altele']
+
+// ─── MAMĂ & COPILUL ───────────────────────────────────────────
+export const MAMA_STARE = ['Nou cu etichetă', 'Nou fără etichetă', 'Ca nou', 'Bun', 'Acceptabil']
+export const MAMA_VARSTA_COPIL = ['0-3 luni', '3-6 luni', '6-12 luni', '1-2 ani', '2-3 ani', '3-4 ani', '4-5 ani', '5-6 ani', '6-8 ani', '8-10 ani', '10-12 ani', '12+ ani']
+export const MAMA_GEN_COPIL = ['Fată', 'Băiat', 'Unisex']
+export const JUCARII_VARSTA = ['0-1 an', '1-3 ani', '3-5 ani', '5-8 ani', '8-12 ani', '12+ ani']
+export const JUCARII_TIP = ['Jucării educative', 'Lego & Construcție', 'Mașinuțe & Vehicule', 'Păpuși & Figurine', 'Jocuri de masă', 'Jocuri video & Console', 'Jocuri de exterior', 'Instrumente muzicale copii', 'Altele']
+export const CARUCIOR_TIP = ['Cărucior complet (landou + sport)', 'Landou', 'Cărucior sport / ușor', 'Jogger', 'Cărucior geamăn', 'Scaun auto grup 0+', 'Scaun auto grup 1', 'Scaun auto grup 2-3', 'Altele']
+export const CARUCIOR_BRANDS = ['Britax Römer', 'Bugaboo', 'Cybex', 'Doona', 'Inglesina', 'Jane', 'Maxi-Cosi', 'Nuna', 'Quinny', 'Silver Cross', 'Stokke', 'Thule', 'UPPAbaby', 'Altele']
+export const MOBILIER_COPII_TIP = ['Pătuț bebeluș', 'Pat copil', 'Leagăn & Șezlong', 'Balansoar', 'Masă de înfășat', 'Masă & scaun copii', 'Scaun înalt', 'Saltea', 'Altele']
+export const INGRIJIRE_TIP = ['Cădiță & Accesorii baie', 'Sterilizatoare', 'Pompe de sân', 'Monitor bebeluș', 'Termometre', 'Biberon & Suzete', 'Sac de dormit bebeluș', 'Marsupiu & Hamac', 'Altele']
