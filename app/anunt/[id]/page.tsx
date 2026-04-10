@@ -132,7 +132,14 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Categorie</p>
-                  <p className="text-lg font-semibold text-gray-900">{'Nespecificată'}</p>
+                  <p className="text-lg font-semibold text-gray-900">{
+                    (() => {
+                      const CATEGORY_NAMES: Record<number, string> = { 1:'Joburi', 2:'Imobiliare', 3:'Auto', 4:'Servicii', 5:'Electronice', 6:'Modă', 7:'Casă & Grădină', 8:'Sport', 9:'Animale', 10:'Mamă & Copil' }
+                      const m = (listing.metadata as any) || {}
+                      if (m.subcategory) return m.subcategory.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                      return CATEGORY_NAMES[listing.category_id] || 'Nespecificată'
+                    })()
+                  }</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-600 uppercase font-semibold mb-1">Vizualizări</p>
@@ -208,10 +215,10 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
 
               {/* Price */}
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg p-6 shadow-lg">
-                <p className="text-sm text-blue-100 mb-2">PREȚ</p>
-                <h2 className="text-4xl font-bold mb-2">{formattedPrice}</h2>
-                <p className="text-sm text-blue-100">
+              <div className="rounded-lg p-6 shadow-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+                <p className="text-xs uppercase font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>PREȚ</p>
+                <h2 className="text-4xl font-bold mb-2 text-green-400">{formattedPrice}</h2>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   {listing.price_type === 'negociabil'
                     ? 'Negociabil'
                     : listing.price_type === 'gratuit'
