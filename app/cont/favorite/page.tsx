@@ -15,21 +15,19 @@ export default async function FavoritesPage() {
   }
 
   const { data: favorites } = await getUserFavorites(user.id)
-
-  // Toate anunțurile favorite sunt deja favorite — favoritedIds = toate ID-urile
   const favoritedIds = favorites?.map((l: any) => l.id) || []
 
   return (
     <div>
-      <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-        <h2 className="text-2xl font-bold mb-2">❤️ Anunțurile mele favorite</h2>
-        <p className="text-gray-600">
+      <div className="rounded-lg p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid #8B5CF6' }}>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>❤️ Anunțurile mele favorite</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>
           {favorites?.length || 0} anunț{favorites && favorites.length !== 1 ? 'uri' : ''}
         </p>
       </div>
 
       {favorites && favorites.length > 0 ? (
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="rounded-lg p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <ListingGrid
             listings={favorites.map((listing: any) => {
               const CATEGORY_SLUGS: Record<number, string> = { 1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii', 5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport', 9: 'animale', 10: 'mama-copilul' }
@@ -52,14 +50,11 @@ export default async function FavoritesPage() {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg p-12 shadow-sm text-center">
-          <p className="text-gray-600 text-lg mb-4">
+        <div className="rounded-lg p-12 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+          <p className="text-lg mb-4" style={{ color: 'var(--text-secondary)' }}>
             Nu ai salvat încă niciun anunț
           </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
+          <Link href="/" className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
             Explorează anunțuri →
           </Link>
         </div>

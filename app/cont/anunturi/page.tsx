@@ -54,11 +54,11 @@ export default async function MyListingsPage() {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-600">
+      <div className="rounded-lg p-6 border-l-4 border-purple-500" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid #8B5CF6' }}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-black mb-1">📝 Anunțurile mele</h1>
-            <p className="text-gray-900">
+            <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>📝 Anunțurile mele</h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
               {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
             </p>
           </div>
@@ -96,7 +96,7 @@ export default async function MyListingsPage() {
             return (
               <div
                 key={listing.id}
-                className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition border border-gray-100 flex flex-col lg:flex-row lg:gap-4"
+                className="rounded-lg p-4 transition flex flex-col lg:flex-row lg:gap-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
               >
                 {/* Top row on mobile: image + title/price side by side */}
                 <div className="flex gap-3 lg:contents">
@@ -112,8 +112,8 @@ export default async function MyListingsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-400 text-3xl">📷</span>
+                      <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-lg flex items-center justify-center" style={{ background: 'var(--bg-card-hover)' }}>
+                        <span className="text-3xl">📷</span>
                       </div>
                     )}
                   </div>
@@ -122,7 +122,7 @@ export default async function MyListingsPage() {
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/anunt/${listing.id}`}
-                      className="text-base lg:text-xl font-bold text-black hover:text-blue-600 transition line-clamp-2 block mb-1"
+                      className="text-base lg:text-xl font-bold transition line-clamp-2 block mb-1" style={{ color: 'var(--text-primary)' }}
                     >
                       {listing.title}
                     </Link>
@@ -130,7 +130,7 @@ export default async function MyListingsPage() {
                     <p className="text-xl lg:text-2xl font-bold text-green-600 mb-2">{formattedPrice}</p>
 
                     {/* Stats: 2-col grid on mobile, flex-wrap on desktop */}
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 lg:flex lg:flex-wrap lg:gap-4 text-sm text-gray-900 mb-2">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 lg:flex lg:flex-wrap lg:gap-4 text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                       <span className="flex items-center gap-1 truncate">📍 {listing.city}</span>
                       <span className="flex items-center gap-1">👁️ {listing.views} viz.</span>
                       <span className="flex items-center gap-1">❤️ {favCountMap[listing.id] || 0} fav.</span>
@@ -149,7 +149,7 @@ export default async function MyListingsPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-900 hidden lg:block">
+                    <p className="text-xs hidden lg:block" style={{ color: 'var(--text-secondary)' }}>
                       Creat: {new Date(listing.created_at).toLocaleDateString('ro-RO')}
                     </p>
                   </div>
@@ -176,10 +176,10 @@ export default async function MyListingsPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-lg p-16 shadow-md text-center border border-gray-100">
+        <div className="rounded-lg p-16 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <span className="text-6xl mb-4 block">📋</span>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Nu ai postat niciun anunț</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Nu ai postat niciun anunț</h2>
+          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
             Postează-ți primul anunț și ajunge la mii de potențiali cumpărători
           </p>
           <Link href="/anunt/nou">

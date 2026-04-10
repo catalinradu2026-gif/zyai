@@ -14,36 +14,24 @@ export default async function AccountLayout({
   }
 
   return (
-    <main className="pt-24 pb-20 px-4 bg-gray-50 min-h-screen">
+    <main className="pt-24 pb-20 px-4 min-h-screen" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Contul Meu</h1>
+        <h1 className="text-4xl font-bold mb-8" style={{ color: 'var(--text-primary)' }}>Contul Meu</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
-          <div className="bg-white rounded-lg p-6 h-fit shadow-sm">
-            <div className="space-y-2">
-              <Link
-                href="/cont/anunturi"
-                className="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition"
-              >
+          <div className="rounded-lg p-6 h-fit" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+            <div className="space-y-1">
+              <Link href="/cont/anunturi" className="block px-4 py-2 rounded-lg transition font-medium" style={{ color: 'var(--text-primary)' }}>
                 📝 Anunțurile mele
               </Link>
-              <Link
-                href="/cont/favorite"
-                className="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition"
-              >
+              <Link href="/cont/favorite" className="block px-4 py-2 rounded-lg transition font-medium" style={{ color: 'var(--text-primary)' }}>
                 ❤️ Favorite
               </Link>
-              <Link
-                href="/cont/mesaje"
-                className="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition"
-              >
+              <Link href="/cont/mesaje" className="block px-4 py-2 rounded-lg transition font-medium" style={{ color: 'var(--text-primary)' }}>
                 💬 Mesaje
               </Link>
-              <Link
-                href="/cont/profil"
-                className="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition"
-              >
+              <Link href="/cont/profil" className="block px-4 py-2 rounded-lg transition font-medium" style={{ color: 'var(--text-primary)' }}>
                 👤 Profil
               </Link>
             </div>
