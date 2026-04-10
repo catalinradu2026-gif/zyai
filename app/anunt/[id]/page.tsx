@@ -11,6 +11,7 @@ import FavoriteButton from '@/components/favorites/FavoriteButton'
 import ShareButtons from '@/components/listings/ShareButtons'
 import PhoneRevealButton from '@/components/listings/PhoneRevealButton'
 import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -39,6 +40,21 @@ export default async function ListingDetailPage({ params }: Props) {
   if (user) {
     const { isFavorited: fav } = await checkIsFavorited(user.id, id)
     listingIsFavorited = fav
+  }
+
+  // Phone views — citit separat cu admin, doar dacă owner (ignoră eroare dacă coloana nu există)
+  let phoneViews = 0
+  const isOwnerCheck = user && user.id === listing!.user_id
+  if (isOwnerCheck) {
+    try {
+      const admin = createSupabaseAdmin()
+      const { data: pvData } = await admin
+        .from('listings')
+        .select('phone_views')
+        .eq('id', id)
+        .single()
+      phoneViews = (pvData as any)?.phone_views ?? 0
+    } catch { phoneViews = 0 }
   }
 
   // profiles poate fi array sau obiect în funcție de join
@@ -239,7 +255,7 @@ export default async function ListingDetailPage({ params }: Props) {
                         <p className="text-xs text-gray-500">vizualizări</p>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xl font-bold text-gray-900">📞 {(listing as any).phone_views ?? 0}</p>
+                        <p className="text-xl font-bold text-gray-900">📞 {phoneViews}</p>
                         <p className="text-xs text-gray-500">nr. tel văzut</p>
                       </div>
                     </div>
