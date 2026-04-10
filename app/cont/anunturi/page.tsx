@@ -81,70 +81,74 @@ export default async function MyListingsPage() {
             return (
               <div
                 key={listing.id}
-                className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition flex gap-4 border border-gray-100"
+                className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition border border-gray-100 flex flex-col lg:flex-row lg:gap-4"
               >
-                {/* Thumbnail Image */}
-                <div className="flex-shrink-0">
-                  {listing.images && listing.images.length > 0 ? (
-                    <div className="relative w-32 h-32 rounded-lg overflow-hidden">
-                      <Image
-                        src={listing.images[0]}
-                        alt={listing.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-3xl">📷</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/anunt/${listing.id}`}
-                    className="text-xl font-bold text-gray-900 hover:text-blue-600 transition line-clamp-2 block mb-2"
-                  >
-                    {listing.title}
-                  </Link>
-
-                  <p className="text-2xl font-bold text-green-600 mb-3">{formattedPrice}</p>
-
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
-                    <span className="flex items-center gap-1">📍 {listing.city}</span>
-                    <span className="flex items-center gap-1">👁️ {listing.views} vizualizări</span>
-                    <span className="flex items-center gap-1">❤️ {favCountMap[listing.id] || 0} favorite</span>
-                    <span className="flex items-center gap-1">📞 {listing.phone_views || 0} tel</span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        statusColors[listing.status] || statusColors.inactiv
-                      }`}
-                    >
-                      {statusEmojis[listing.status]}{' '}
-                      {listing.status === 'activ'
-                        ? 'Activ'
-                        : listing.status === 'vandut'
-                          ? 'Vândut'
-                          : 'Inactiv'}
-                    </span>
+                {/* Top row on mobile: image + title/price side by side */}
+                <div className="flex gap-3 lg:contents">
+                  {/* Thumbnail Image */}
+                  <div className="flex-shrink-0">
+                    {listing.images && listing.images.length > 0 ? (
+                      <div className="relative w-24 h-24 lg:w-32 lg:h-32 rounded-lg overflow-hidden">
+                        <Image
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-3xl">📷</span>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-xs text-gray-500">
-                    Creat: {new Date(listing.created_at).toLocaleDateString('ro-RO')}
-                  </p>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/anunt/${listing.id}`}
+                      className="text-base lg:text-xl font-bold text-gray-900 hover:text-blue-600 transition line-clamp-2 block mb-1"
+                    >
+                      {listing.title}
+                    </Link>
+
+                    <p className="text-xl lg:text-2xl font-bold text-green-600 mb-2">{formattedPrice}</p>
+
+                    {/* Stats: 2-col grid on mobile, flex-wrap on desktop */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 lg:flex lg:flex-wrap lg:gap-4 text-sm text-gray-600 mb-2">
+                      <span className="flex items-center gap-1 truncate">📍 {listing.city}</span>
+                      <span className="flex items-center gap-1">👁️ {listing.views} viz.</span>
+                      <span className="flex items-center gap-1">❤️ {favCountMap[listing.id] || 0} fav.</span>
+                      <span className="flex items-center gap-1">📞 {listing.phone_views || 0} tel</span>
+                      <span
+                        className={`col-span-2 lg:col-span-1 w-fit px-3 py-0.5 rounded-full text-xs font-semibold ${
+                          statusColors[listing.status] || statusColors.inactiv
+                        }`}
+                      >
+                        {statusEmojis[listing.status]}{' '}
+                        {listing.status === 'activ'
+                          ? 'Activ'
+                          : listing.status === 'vandut'
+                            ? 'Vândut'
+                            : 'Inactiv'}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-gray-500 hidden lg:block">
+                      Creat: {new Date(listing.created_at).toLocaleDateString('ro-RO')}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  <Link href={`/anunt/${listing.id}`} className="w-full">
+                {/* Action Buttons — row on mobile, column on desktop */}
+                <div className="flex flex-row gap-2 mt-3 lg:mt-0 lg:flex-col lg:flex-shrink-0 lg:justify-start">
+                  <Link href={`/anunt/${listing.id}`} className="flex-1 lg:flex-none lg:w-full">
                     <Button variant="secondary" size="md" fullWidth>
                       👁️ Vezi
                     </Button>
                   </Link>
 
-                  <Link href={`/anunt/${listing.id}/edit`} className="w-full">
+                  <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
                     <Button variant="secondary" size="md" fullWidth>
                       ✏️ Editează
                     </Button>
