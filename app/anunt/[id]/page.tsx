@@ -109,9 +109,7 @@ export default async function ListingDetailPage({ params }: Props) {
       {/* Breadcrumb */}
       <div style={{ borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 text-sm">
-          <Link href="/" className="transition-colors" style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>
+          <Link href="/" className="breadcrumb-link">
             Acasă
           </Link>
           <span style={{ color: 'var(--border-light)' }}>›</span>

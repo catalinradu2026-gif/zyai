@@ -171,6 +171,14 @@ option {
   background-clip: text;
 }
 
+.breadcrumb-link {
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+.breadcrumb-link:hover {
+  color: #A78BFA;
+}
+
 .price-text {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   -webkit-background-clip: text;

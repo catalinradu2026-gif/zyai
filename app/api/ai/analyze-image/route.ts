@@ -31,50 +31,68 @@ Reguli stricte:
 - category: alege STRICT una din lista de mai sus
 - confidence: 0-1 cât de sigur ești de analiză`
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: imageUrl } },
-            ],
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 600,
-      }),
-    })
+    // Try vision-capable models in order of preference
+    const models = [
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+      'meta-llama/llama-4-maverick-17b-128e-instruct',
+      'llama-3.2-90b-vision-preview',
+      'llama-3.2-11b-vision-preview',
+    ]
 
-    if (!response.ok) {
-      const err = await response.text()
-      console.error('[analyze-image] Groq error:', err)
-      return NextResponse.json({ error: 'groq_error' }, { status: 500 })
-    }
-
-    const data = await response.json()
-    const raw = data.choices?.[0]?.message?.content || ''
-
-    // Parse JSON din răspuns
     let parsed: any = null
-    try {
-      // Curăță eventuale backticks sau text extra
-      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-      if (jsonMatch) parsed = JSON.parse(jsonMatch[0])
-    } catch {
-      console.error('[analyze-image] parse error, raw:', raw)
-      return NextResponse.json({ error: 'parse_error', raw }, { status: 500 })
+    let lastError = ''
+
+    for (const model of models) {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: prompt },
+                  { type: 'image_url', image_url: { url: imageUrl } },
+                ],
+              },
+            ],
+            temperature: 0.2,
+            max_tokens: 600,
+          }),
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          console.error(`[analyze-image] ${model} error:`, errText)
+          lastError = errText
+          continue // try next model
+        }
+
+        const data = await response.json()
+        const raw = data.choices?.[0]?.message?.content || ''
+
+        const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0])
+          break // success
+        }
+      } catch (e: any) {
+        console.error(`[analyze-image] ${model} threw:`, e?.message)
+        lastError = e?.message || 'unknown'
+        continue
+      }
     }
 
-    if (!parsed) return NextResponse.json({ error: 'no_result' }, { status: 500 })
+    if (!parsed) {
+      console.error('[analyze-image] all models failed, last error:', lastError)
+      return NextResponse.json({ error: 'all_models_failed', detail: lastError }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true, result: parsed })
   } catch (err) {
