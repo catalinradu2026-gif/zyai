@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { getUser } from '@/lib/actions/auth'
 import HeaderClient from './HeaderClient'
-import AIHeaderBar from '@/components/AIHeaderBar'
 import MessagesBadge from './MessagesBadge'
 
 export default async function Header() {
@@ -24,9 +23,6 @@ export default async function Header() {
           <span className="gradient-main-text text-2xl font-black">zyAI</span>
           <span className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">AI</span>
         </Link>
-
-        {/* AI Bar - Center */}
-        <AIHeaderBar />
 
         {/* Right Side */}
         <div className="flex items-center gap-3 ml-auto flex-shrink-0">
