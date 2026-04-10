@@ -190,10 +190,25 @@ function ChipsField({ label, val, set, options }: { label: string; val: string; 
 
 // ════════════════════════════════════════════════════════════════
 export default function ListingForm() {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [images, setImages] = useState<string[]>([])
+
+  // AI Image Analysis
+  const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    title: string; description: string; category: string; subcategory: string;
+    condition: string; brand: string | null; tags: string[]; confidence: number;
+  } | null>(null)
+  const [aiAnalysisAccepted, setAiAnalysisAccepted] = useState(false)
+
+  // AI Price Suggestion
+  const [aiPriceLoading, setAiPriceLoading] = useState(false)
+  const [aiPrice, setAiPrice] = useState<{
+    currency: string; min: number; max: number; suggested: number;
+    reasoning: string; tips: string[];
+  } | null>(null)
 
   // Category
   const [mainCat, setMainCat] = useState('')
@@ -297,8 +312,94 @@ export default function ListingForm() {
     setCurrency(cat === 'joburi' ? 'RON' : 'EUR')
   }
 
+  async function analyzeImages(uploadedImages: string[]) {
+    if (!uploadedImages.length) return
+    setAiAnalyzing(true)
+    setAiAnalysis(null)
+    try {
+      const res = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: uploadedImages[0] }),
+      })
+      const data = await res.json()
+      if (data.ok && data.result) {
+        setAiAnalysis(data.result)
+      }
+    } catch {
+      // analiză eșuată — nu blocăm, utilizatorul completează manual
+    } finally {
+      setAiAnalyzing(false)
+    }
+  }
+
+  function acceptAiAnalysis() {
+    if (!aiAnalysis) return
+    setTitle(aiAnalysis.title || '')
+    setDescription(aiAnalysis.description || '')
+    // mapare categorie
+    const catMap: Record<string, string> = {
+      'auto': 'auto', 'imobiliare': 'imobiliare', 'electronice': 'electronice',
+      'moda': 'moda', 'casa-gradina': 'casa-gradina', 'sport': 'sport',
+      'animale': 'animale', 'mama-copilul': 'mama-copilul',
+      'servicii': 'servicii', 'joburi': 'joburi',
+    }
+    const detectedCat = catMap[aiAnalysis.category] || ''
+    if (detectedCat) {
+      handleCatSelect(detectedCat)
+      // setează subcategorie dacă există
+      const detectedSubs = SUBS[detectedCat] || []
+      const matchedSub = detectedSubs.find(s =>
+        s.slug === aiAnalysis.subcategory ||
+        s.name.toLowerCase().includes(aiAnalysis.subcategory?.toLowerCase() || '')
+      )
+      if (matchedSub) setSubCat(matchedSub.slug)
+    }
+    if (aiAnalysis.brand) setBrand(aiAnalysis.brand)
+    if (aiAnalysis.condition) setCondition(aiAnalysis.condition)
+    setAiAnalysisAccepted(true)
+    setStep(1)
+  }
+
+  async function suggestPrice() {
+    if (!title && !aiAnalysis?.title) return
+    setAiPriceLoading(true)
+    setAiPrice(null)
+    try {
+      const res = await fetch('/api/ai/suggest-price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title || aiAnalysis?.title,
+          description: description || aiAnalysis?.description,
+          category: mainCat || aiAnalysis?.category,
+          subcategory: subCat || aiAnalysis?.subcategory,
+          condition: condition || aiAnalysis?.condition,
+          brand: brand || aiAnalysis?.brand,
+          city,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok && data.result) {
+        setAiPrice(data.result)
+        // pre-fill prețul sugerat
+        if (data.result.suggested) {
+          setPrice(String(data.result.suggested))
+          setCurrency(data.result.currency || currency)
+        }
+      }
+    } catch {
+      // eșuat — nu blocăm
+    } finally {
+      setAiPriceLoading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (step === 0) {
+      setStep(1); return
+    }
     if (step === 1) {
       if (!mainCat) { setError('Alege o categorie'); return }
       if (!title || !description) { setError('Completează titlul și descrierea'); return }
@@ -661,14 +762,16 @@ export default function ListingForm() {
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-6">
           <h1 className="gradient-main-text" style={{ fontSize: '28px', fontWeight: 700 }}>Postează un anunț</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Pasul {step} din 2</p>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            {step === 0 ? '✨ AI analizează poza ta automat' : `Pasul ${step} din 2`}
+          </p>
         </div>
 
         {/* Progress */}
         <div className="flex gap-2 mb-6">
-          {[1, 2].map(s => (
+          {[0, 1, 2].map(s => (
             <div key={s} className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
-              <div className={`h-full transition-all gradient-main`} style={{ width: s <= step ? '100%' : '0%' }} />
+              <div className="h-full transition-all duration-500 gradient-main" style={{ width: s <= step ? '100%' : '0%' }} />
             </div>
           ))}
         </div>
@@ -676,6 +779,117 @@ export default function ListingForm() {
         <div className="rounded-2xl p-6 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && <div className="p-3 rounded-lg" style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)' }}><p style={{ color: '#f87171' }}>❌ {error}</p></div>}
+
+            {/* ─── STEP 0: Foto + AI Analiză ─── */}
+            {step === 0 && (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="text-5xl mb-3">🤖</div>
+                  <h2 style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>
+                    Lasă AI-ul să completeze pentru tine
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                    Încarcă o poză cu produsul tău și zyAI detectează automat ce vinzi, completează titlul, descrierea și categoria
+                  </p>
+                </div>
+
+                <div className="rounded-2xl p-5" style={{ background: 'rgba(139,92,246,0.06)', border: '1px dashed rgba(139,92,246,0.4)' }}>
+                  <ImageUploader
+                    onImagesChange={(imgs) => {
+                      setImages(imgs)
+                      if (imgs.length > 0 && !aiAnalysis) analyzeImages(imgs)
+                    }}
+                    initialImages={images}
+                  />
+                </div>
+
+                {/* AI Loading */}
+                {aiAnalyzing && (
+                  <div className="rounded-2xl p-6 text-center" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                      <div className="flex gap-1">
+                        {[0,1,2,3,4,5,6,7].map(i => (
+                          <span key={i} style={{
+                            display: 'block', width: '3px', borderRadius: '2px',
+                            background: 'linear-gradient(to top,#8B5CF6,#3B82F6)',
+                            height: '16px',
+                            animation: `vbarIdle 1.2s ease-in-out ${i*0.12}s infinite alternate`,
+                          }} />
+                        ))}
+                      </div>
+                      <span style={{ color: '#A78BFA', fontWeight: 700, fontSize: '15px' }}>zyAI analizează imaginea...</span>
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Detectez produsul, starea și detaliile...</p>
+                  </div>
+                )}
+
+                {/* AI Result */}
+                {aiAnalysis && !aiAnalyzing && (
+                  <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(139,92,246,0.5)', boxShadow: '0 0 30px rgba(139,92,246,0.15)' }}>
+                    <div className="px-5 py-3 flex items-center gap-2" style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>
+                      <span className="text-white text-lg">🤖</span>
+                      <span className="text-white font-bold text-sm">zyAI a detectat produsul tău</span>
+                      <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-white/20 text-white">
+                        {Math.round((aiAnalysis.confidence || 0.8) * 100)}% sigur
+                      </span>
+                    </div>
+                    <div className="p-5 space-y-3" style={{ background: 'var(--bg-card)' }}>
+                      <div>
+                        <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>Titlu detectat</p>
+                        <p className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>{aiAnalysis.title}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>Descriere generată</p>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{aiAnalysis.description}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)' }}>
+                          {MAIN_CATS.find(c => c.slug === aiAnalysis.category)?.icon} {aiAnalysis.category}
+                        </span>
+                        {aiAnalysis.subcategory && (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(59,130,246,0.15)', color: '#60A5FA', border: '1px solid rgba(59,130,246,0.3)' }}>
+                            {aiAnalysis.subcategory}
+                          </span>
+                        )}
+                        {aiAnalysis.condition && (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ADE80', border: '1px solid rgba(34,197,94,0.3)' }}>
+                            ✅ {aiAnalysis.condition}
+                          </span>
+                        )}
+                        {aiAnalysis.brand && (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(234,179,8,0.15)', color: '#FDE047', border: '1px solid rgba(234,179,8,0.3)' }}>
+                            🏷️ {aiAnalysis.brand}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button type="button" onClick={acceptAiAnalysis}
+                          className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition hover:scale-105"
+                          style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}>
+                          ✓ Acceptă și continuă
+                        </button>
+                        <button type="button" onClick={() => { setAiAnalysis(null); setAiAnalysisAccepted(false) }}
+                          className="px-4 py-2.5 rounded-xl font-semibold text-sm transition"
+                          style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}>
+                          🔄 Reanaliza
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Skip if no photo */}
+                {!aiAnalyzing && (
+                  <div className="text-center">
+                    <button type="button" onClick={() => setStep(1)}
+                      className="text-sm transition"
+                      style={{ color: 'var(--text-secondary)' }}>
+                      Completez manual →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ─── STEP 1: Categorie → Câmpuri specifice → Titlu → Descriere ─── */}
             {step === 1 && (
@@ -770,6 +984,71 @@ export default function ListingForm() {
                         </select>
                       </div>
                     </div>
+
+                    {/* AI Price Suggestion */}
+                    {mainCat !== 'joburi' && mainCat !== 'imobiliare' && title && (
+                      <div>
+                        {!aiPrice && !aiPriceLoading && (
+                          <button type="button" onClick={suggestPrice}
+                            className="w-full py-2.5 rounded-xl font-semibold text-sm transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px dashed rgba(139,92,246,0.5)', color: '#A78BFA' }}>
+                            🤖 Sugerează preț corect cu AI
+                          </button>
+                        )}
+                        {aiPriceLoading && (
+                          <div className="py-3 text-center rounded-xl" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                            <span style={{ color: '#A78BFA', fontSize: '13px' }}>⏳ zyAI calculează prețul corect pentru piața română...</span>
+                          </div>
+                        )}
+                        {aiPrice && (
+                          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(139,92,246,0.4)', boxShadow: '0 0 20px rgba(139,92,246,0.1)' }}>
+                            <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>
+                              <span className="text-white text-base">💡</span>
+                              <span className="text-white font-bold text-sm">Sugestie preț — piața română 2025</span>
+                            </div>
+                            <div className="p-4 space-y-3" style={{ background: 'var(--bg-card)' }}>
+                              <div className="flex items-center justify-between">
+                                <div className="text-center">
+                                  <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Minim</p>
+                                  <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.min} {aiPrice.currency}</p>
+                                </div>
+                                <div className="text-center px-4 py-2 rounded-xl" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)' }}>
+                                  <p className="text-xs mb-1" style={{ color: '#A78BFA' }}>Preț recomandat</p>
+                                  <p className="text-2xl font-black price-text">{aiPrice.suggested} {aiPrice.currency}</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Maxim</p>
+                                  <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.max} {aiPrice.currency}</p>
+                                </div>
+                              </div>
+                              <p className="text-xs italic text-center" style={{ color: 'var(--text-secondary)' }}>💬 {aiPrice.reasoning}</p>
+                              {aiPrice.tips?.length > 0 && (
+                                <div className="space-y-1.5">
+                                  {aiPrice.tips.map((tip, i) => (
+                                    <p key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+                                      <span style={{ color: '#4ADE80' }}>✓</span> {tip}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-2 pt-1">
+                                <button type="button"
+                                  onClick={() => { setPrice(String(aiPrice.suggested)); setCurrency(aiPrice.currency) }}
+                                  className="flex-1 py-2 rounded-lg text-xs font-bold text-white transition hover:scale-105"
+                                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
+                                  ✓ Folosește {aiPrice.suggested} {aiPrice.currency}
+                                </button>
+                                <button type="button" onClick={() => setAiPrice(null)}
+                                  className="px-3 py-2 rounded-lg text-xs transition"
+                                  style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}>
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -786,10 +1065,10 @@ export default function ListingForm() {
               </div>
             )}
 
-            {/* ─── STEP 2: Imagini + Publică ─── */}
+            {/* ─── STEP 2: Contact + Imagini extra + Publică ─── */}
             {step === 2 && (
               <div className="space-y-6">
-                <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 700 }}>Imagini și finalizare</h2>
+                <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 700 }}>Finalizare și publicare</h2>
                 <div>
                   {lbl('📞 Număr de telefon pentru contact (opțional)')}
                   <input
@@ -802,8 +1081,11 @@ export default function ListingForm() {
                   />
                   <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Dacă nu completezi, se folosește numărul din profil</p>
                 </div>
+                {/* Adaugă mai multe imagini dacă doresc */}
                 <div>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '12px', fontSize: '14px' }}>Anunțurile cu imagini primesc de 3x mai multe răspunsuri. Maxim 8 imagini.</p>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>
+                    {images.length > 0 ? `📸 Ai ${images.length} imagine(i). Poți adăuga până la 8.` : 'Adaugă imagini pentru a atrage mai mulți cumpărători.'}
+                  </p>
                   <ImageUploader onImagesChange={setImages} initialImages={images} />
                 </div>
                 <div className="rounded-xl p-5" style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)' }}>
@@ -815,24 +1097,33 @@ export default function ListingForm() {
 
             {/* Butoane */}
             <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-              {step > 1 && (
+              {step > 0 && (
                 <button type="button" onClick={() => setStep(step - 1)}
-                  className="px-6 py-2.5 rounded-lg font-semibold transition hover:scale-105"
+                  className="px-6 py-2.5 rounded-xl font-semibold transition hover:scale-105"
                   style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-card-hover)' }}>
                   ← Înapoi
                 </button>
               )}
               <div className="flex-1" />
-              {step < 2 ? (
+              {step === 0 && (
+                <button type="button" onClick={() => setStep(1)}
+                  disabled={images.length === 0 && !aiAnalyzing}
+                  className="flex-1 md:flex-none md:px-8 py-2.5 gradient-main text-white font-bold rounded-xl transition hover:scale-105 disabled:opacity-40"
+                  style={{ boxShadow: 'var(--glow-purple)' }}>
+                  {aiAnalyzing ? '⏳ Analizez...' : images.length > 0 ? 'Continuă →' : 'Sari peste →'}
+                </button>
+              )}
+              {step === 1 && (
                 <button type="submit"
                   disabled={!mainCat || !title || !description}
-                  className="flex-1 md:flex-none md:px-8 py-2.5 gradient-main text-white font-bold rounded-lg transition hover:scale-105 disabled:opacity-40"
+                  className="flex-1 md:flex-none md:px-8 py-2.5 gradient-main text-white font-bold rounded-xl transition hover:scale-105 disabled:opacity-40"
                   style={{ boxShadow: 'var(--glow-purple)' }}>
                   Continuă →
                 </button>
-              ) : (
+              )}
+              {step === 2 && (
                 <button type="submit" disabled={loading}
-                  className="flex-1 md:flex-none md:px-8 py-2.5 text-white font-bold rounded-lg transition hover:scale-105 disabled:opacity-40"
+                  className="flex-1 md:flex-none md:px-8 py-2.5 text-white font-bold rounded-xl transition hover:scale-105 disabled:opacity-40"
                   style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
                   {loading ? '⏳ Se postează...' : '✓ Publică anunțul'}
                 </button>
