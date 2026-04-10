@@ -11,7 +11,7 @@
   --blue-electric: #3B82F6;
   --blue-light: #60A5FA;
   --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  --text-secondary: #E2E8F0;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.15);
   --gradient-main: linear-gradient(135deg, #8B5CF6, #3B82F6);
@@ -66,6 +66,14 @@ h1, h2, h3, h4, h5, h6 {
 /* Paragraphs and text */
 p {
   color: var(--text-secondary);
+}
+
+/* Override Tailwind gray text classes to be visible on dark background */
+.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700 {
+  color: #CBD5E1 !important;
+}
+.text-gray-800, .text-gray-900 {
+  color: #F1F5F9 !important;
 }
 
 /* Labels */
