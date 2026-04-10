@@ -285,6 +285,9 @@ export default function ListingForm() {
   const [zona, setZona] = useState('')
   const [experienta, setExperienta] = useState('')
 
+  // Contact
+  const [contactPhone, setContactPhone] = useState('')
+
   const availableModels = brand && AUTO_MODELS[brand] ? AUTO_MODELS[brand] : []
   const subs = SUBS[mainCat] || []
 
@@ -322,6 +325,7 @@ export default function ListingForm() {
         gearbox: gearbox || undefined,
         power: power || undefined,
         condition: condition || undefined,
+        contactPhone: contactPhone || undefined,
       })
       if (result?.error) { setError(result.error); setLoading(false) }
     } catch (err: any) {
@@ -786,6 +790,18 @@ export default function ListingForm() {
             {step === 2 && (
               <div className="space-y-6">
                 <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 700 }}>Imagini și finalizare</h2>
+                <div>
+                  {lbl('📞 Număr de telefon pentru contact (opțional)')}
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={e => setContactPhone(e.target.value)}
+                    placeholder="+40 723 123 456"
+                    style={ss}
+                    className={ic}
+                  />
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Dacă nu completezi, se folosește numărul din profil</p>
+                </div>
                 <div>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '12px', fontSize: '14px' }}>Anunțurile cu imagini primesc de 3x mai multe răspunsuri. Maxim 8 imagini.</p>
                   <ImageUploader onImagesChange={setImages} initialImages={images} />

@@ -49,6 +49,7 @@ export async function createListing(formData: {
   gearbox?: string
   power?: string
   condition?: string
+  contactPhone?: string
 }) {
   const user = await getUser()
   if (!user?.id) return { error: 'Trebuie să fii autentificat' }
@@ -74,6 +75,8 @@ export async function createListing(formData: {
     if (formData.brand) metadata.brand = formData.brand
     if (formData.model) metadata.model = formData.model
   }
+
+  if (formData.contactPhone) metadata.contactPhone = formData.contactPhone
 
   const insertData: any = {
     user_id: user.id,
