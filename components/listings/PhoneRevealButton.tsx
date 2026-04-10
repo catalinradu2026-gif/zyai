@@ -18,7 +18,6 @@ export default function PhoneRevealButton({ listingId, userId }: Props) {
       window.location.href = '/login'
       return
     }
-
     if (revealed) return
 
     setLoading(true)
@@ -39,14 +38,18 @@ export default function PhoneRevealButton({ listingId, userId }: Props) {
       const data = await res.json()
 
       if (!res.ok) {
-        setError('Eroare la încărcarea numărului')
+        setError(data?.error === 'listing not found' ? 'Anunț negăsit' : 'Eroare server. Încearcă din nou.')
         return
       }
 
-      setPhone(data.phone || 'Număr indisponibil')
+      if (!data.phone) {
+        setPhone('Număr necompletat')
+      } else {
+        setPhone(data.phone)
+      }
       setRevealed(true)
     } catch {
-      setError('Eroare de rețea')
+      setError('Eroare de rețea. Verifică conexiunea.')
     } finally {
       setLoading(false)
     }
@@ -55,7 +58,7 @@ export default function PhoneRevealButton({ listingId, userId }: Props) {
   if (revealed && phone) {
     return (
       <a
-        href={`tel:${phone.replace(/\s/g, '')}`}
+        href={phone !== 'Număr necompletat' ? `tel:${phone.replace(/\s/g, '')}` : undefined}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-green-600 bg-green-50 text-green-700 font-semibold text-base hover:bg-green-100 transition"
       >
         📞 {phone}
