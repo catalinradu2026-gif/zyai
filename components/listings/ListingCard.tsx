@@ -117,16 +117,16 @@ export default function ListingCard({
           )}
 
           {/* Favorite heart — top right */}
-          <div className="absolute top-2 right-2" onClick={e => e.preventDefault()}>
-            <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} />
-          </div>
+          <span onClick={e => e.preventDefault()}>
+            <FavoriteButton listingId={id} userId={userId} initialFavorited={isFavorited} top="8px" bottom={undefined} />
+          </span>
 
           {/* Compare button — bottom left overlay */}
           <div className="absolute bottom-2 left-2" onClick={e => e.preventDefault()}>
             <CompareButton item={compareItem} />
           </div>
 
-          {/* Share button — bottom right */}
+          {/* Share button — bottom right (separate from favorite) */}
           <div
             className="absolute bottom-2 right-2"
             onClick={e => {

@@ -18,11 +18,19 @@ export default function FavoriteButton({
   initialFavorited = false,
   initialIsFavorited,
   userId: _userId,
+  top,
+  bottom = '8px',
+  right = '8px',
+  left,
 }: {
   listingId: string
   initialFavorited?: boolean
   initialIsFavorited?: boolean
   userId?: string
+  top?: string
+  bottom?: string
+  right?: string
+  left?: string
 }) {
   // Support both prop name variants
   const startFavorited = initialIsFavorited ?? initialFavorited
@@ -76,8 +84,10 @@ export default function FavoriteButton({
       aria-label={favorited ? 'Elimină din favorite' : 'Adaugă la favorite'}
       style={{
         position: 'absolute',
-        bottom: '8px',
-        right: '8px',
+        bottom: top ? undefined : bottom,
+        top: top ?? undefined,
+        right: left ? undefined : right,
+        left: left ?? undefined,
         width: '34px',
         height: '34px',
         borderRadius: '50%',
