@@ -61,6 +61,20 @@ export async function createListing(formData: {
   const isSubcategory = CATEGORY_IDS[formData.categorySlug] === undefined
   const subcategorySlug = isSubcategory ? formData.categorySlug : null
 
+  // Salvăm totul în metadata JSONB — garantat existent, nu depinde de coloane extra
+  const metadata: Record<string, any> = {}
+  if (subcategorySlug) metadata.subcategory = subcategorySlug
+  if (isAuto) {
+    if (formData.year) metadata.year = formData.year
+    if (formData.mileage) metadata.mileage = formData.mileage
+    if (formData.fuelType) metadata.fuelType = formData.fuelType
+    if (formData.gearbox) metadata.gearbox = formData.gearbox
+    if (formData.power) metadata.power = formData.power
+    if (formData.condition) metadata.condition = formData.condition
+    if (formData.brand) metadata.brand = formData.brand
+    if (formData.model) metadata.model = formData.model
+  }
+
   const insertData: any = {
     user_id: user.id,
     title: formData.title,
@@ -73,18 +87,7 @@ export async function createListing(formData: {
     currency: formData.currency,
     images: formData.images,
     status: 'activ',
-    metadata: subcategorySlug ? { subcategory: subcategorySlug } : {},
-  }
-
-  if (isAuto) {
-    insertData.auto_year = formData.year || null
-    insertData.auto_mileage = formData.mileage || null
-    insertData.auto_fuel = formData.fuelType || null
-    insertData.auto_gearbox = formData.gearbox || null
-    insertData.auto_power = formData.power || null
-    insertData.auto_condition = formData.condition || null
-    insertData.auto_brand = formData.brand || null
-    insertData.auto_model = formData.model || null
+    metadata,
   }
 
   let { data, error } = await admin
@@ -92,19 +95,6 @@ export async function createListing(formData: {
     .insert(insertData)
     .select('id')
     .single()
-
-  // Dacă coloanele auto_ nu există încă, încearcă fără ele
-  if (error && (error.message.includes('auto_') || error.message.includes('column'))) {
-    const safeData = { ...insertData }
-    ;['auto_year','auto_mileage','auto_fuel','auto_gearbox','auto_power','auto_condition','auto_brand','auto_model'].forEach(k => delete safeData[k])
-    const { data: d2, error: e2 } = await admin
-      .from('listings')
-      .insert(safeData)
-      .select('id')
-      .single()
-    data = d2
-    error = e2
-  }
 
   if (error) {
     console.error('createListing error:', error)

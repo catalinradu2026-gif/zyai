@@ -71,7 +71,7 @@ export async function getListing(id: string) {
 
   const { data, error } = await supabase
     .from('listings')
-    .select('id, title, description, price, price_type, currency, city, county, images, status, views, created_at, user_id, category_id, auto_year, auto_mileage, auto_fuel, auto_gearbox, auto_power, auto_condition, auto_brand, auto_model, profiles(full_name, phone, avatar_url, city)')
+    .select('id, title, description, price, price_type, currency, city, county, images, status, views, created_at, user_id, category_id, metadata, auto_year, auto_mileage, auto_fuel, auto_gearbox, auto_power, auto_condition, auto_brand, auto_model, profiles(full_name, phone, avatar_url, city)')
     .eq('id', id)
     .single()
 

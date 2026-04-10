@@ -65,14 +65,16 @@ export default async function ListingDetailPage({ params }: Props) {
   const l = listing as any
   const isAuto = l.category_id === 3
   const N = 'Nespecificat'
+  // Citim din metadata (JSONB) — cu fallback pe coloanele auto_ dacă există
+  const m = (l.metadata || {}) as Record<string, any>
   const autoDetails = isAuto ? [
-    { icon: '📅', label: 'An fabricație', value: l.auto_year || N },
-    { icon: '🛣️', label: 'Kilometraj', value: l.auto_mileage ? `${Number(l.auto_mileage).toLocaleString('ro-RO')} km` : N },
-    { icon: '⚙️', label: 'Cutie viteze', value: l.auto_gearbox || N },
-    { icon: '⛽', label: 'Combustibil', value: l.auto_fuel || N },
-    { icon: '💪', label: 'Putere', value: l.auto_power ? `${l.auto_power} CP` : N },
-    { icon: '✅', label: 'Stare', value: l.auto_condition || N },
-    { icon: '🏷️', label: 'Marcă/Model', value: l.auto_brand ? `${l.auto_brand}${l.auto_model ? ' ' + l.auto_model : ''}` : N },
+    { icon: '📅', label: 'An fabricație', value: m.year || l.auto_year || N },
+    { icon: '🛣️', label: 'Kilometraj', value: (m.mileage || l.auto_mileage) ? `${Number(m.mileage || l.auto_mileage).toLocaleString('ro-RO')} km` : N },
+    { icon: '⚙️', label: 'Cutie viteze', value: m.gearbox || l.auto_gearbox || N },
+    { icon: '⛽', label: 'Combustibil', value: m.fuelType || l.auto_fuel || N },
+    { icon: '💪', label: 'Putere', value: (m.power || l.auto_power) ? `${m.power || l.auto_power} CP` : N },
+    { icon: '✅', label: 'Stare', value: m.condition || l.auto_condition || N },
+    { icon: '🏷️', label: 'Marcă/Model', value: (m.brand || l.auto_brand) ? `${m.brand || l.auto_brand}${(m.model || l.auto_model) ? ' ' + (m.model || l.auto_model) : ''}` : N },
   ] : []
 
   return (
