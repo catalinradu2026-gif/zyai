@@ -164,7 +164,7 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                   )}
 
                   <div className="flex items-baseline justify-between gap-1">
-                    <span className="text-base font-black gradient-main-text">{formattedPrice}</span>
+                    <span className="text-base font-black price-text">{formattedPrice}</span>
                     <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{listing.city}</span>
                   </div>
                 </div>

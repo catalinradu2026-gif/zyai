@@ -152,7 +152,7 @@ export default function ListingCard({
           )}
 
           <div className="flex items-baseline justify-between gap-2 mt-1">
-            <span className="text-xl font-black gradient-main-text">
+            <span className="text-xl font-black price-text">
               {formattedPrice}
             </span>
             <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>

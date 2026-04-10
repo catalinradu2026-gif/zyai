@@ -171,6 +171,13 @@ option {
   background-clip: text;
 }
 
+.price-text {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .glow-purple {
   box-shadow: var(--glow-purple);
 }
