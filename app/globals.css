@@ -35,7 +35,6 @@ html {
 
 body {
   background: var(--bg-primary);
-  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -58,40 +57,10 @@ body {
   background: var(--blue-electric);
 }
 
-/* Headings - light text for dark bg */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-primary);
-}
-
-/* Paragraphs and text */
-p {
-  color: var(--text-secondary);
-}
-
-
-/* Labels */
-label {
-  color: var(--text-primary);
-}
-
-/* Links */
-a {
-  color: var(--blue-light);
-  transition: color 0.2s ease;
-}
-
-a:hover {
-  color: var(--purple-light);
-}
-
-/* Input & Form Elements */
+/* Input & Form Elements — dark theme pentru paginile dark */
 input,
 textarea,
 select {
-  background-color: var(--bg-input);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
   font-family: inherit;
   font-size: 16px;
   font-weight: 400;
@@ -102,35 +71,17 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--purple);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-secondary);
   opacity: 1;
-}
-
-/* Autofill dark mode */
-input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 /* Option elements */
 option {
   background-color: var(--bg-card);
   color: var(--text-primary);
-}
-
-/* Disabled state */
-input:disabled,
-textarea:disabled,
-select:disabled {
-  background-color: rgba(255, 255, 255, 0.02) !important;
-  color: var(--text-secondary) !important;
-  opacity: 0.5;
 }
 
 /* === ANIMATIONS === */

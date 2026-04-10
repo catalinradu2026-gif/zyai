@@ -58,7 +58,7 @@ export default async function MyListingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-black mb-1">📝 Anunțurile mele</h1>
-            <p className="text-gray-600">
+            <p className="text-gray-900">
               {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
             </p>
           </div>
@@ -122,7 +122,7 @@ export default async function MyListingsPage() {
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/anunt/${listing.id}`}
-                      className="text-base lg:text-xl font-bold text-gray-900 hover:text-blue-600 transition line-clamp-2 block mb-1"
+                      className="text-base lg:text-xl font-bold text-black hover:text-blue-600 transition line-clamp-2 block mb-1"
                     >
                       {listing.title}
                     </Link>
