@@ -61,6 +61,10 @@ export default async function ListingDetailPage({ params }: Props) {
   const profileRaw = listing.profiles as any
   const profile = Array.isArray(profileRaw) ? profileRaw[0] : profileRaw
 
+  // Telefonul de contact: prioritate metadata.contactPhone > profil
+  const listingMetadata = (listing.metadata as any) || {}
+  const contactPhone: string | null = listingMetadata.contactPhone || profile?.phone || null
+
   const formattedPrice =
     listing.price && listing.price_type !== 'gratuit'
       ? `${listing.price.toLocaleString('ro-RO')} ${listing.currency}`
@@ -259,12 +263,12 @@ export default async function ListingDetailPage({ params }: Props) {
                         <p className="text-xs text-gray-500">nr. tel văzut</p>
                       </div>
                     </div>
-                    {profile?.phone && (
+                    {contactPhone && (
                       <a
-                        href={`tel:${profile.phone.replace(/\s/g, '')}`}
+                        href={`tel:${contactPhone.replace(/\s/g, '')}`}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-green-600 bg-green-50 text-green-700 font-semibold text-base hover:bg-green-100 transition"
                       >
-                        📞 {profile.phone}
+                        📞 {contactPhone}
                       </a>
                     )}
                     <div className="flex gap-2">
@@ -283,9 +287,9 @@ export default async function ListingDetailPage({ params }: Props) {
                         Trimite mesaj
                       </Button>
                     </Link>
-                    {profile?.phone && (
+                    {contactPhone && (
                       <a
-                        href={`https://wa.me/${profile?.phone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
+                        href={`https://wa.me/${contactPhone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full block"
@@ -301,7 +305,7 @@ export default async function ListingDetailPage({ params }: Props) {
                         </Button>
                       </a>
                     )}
-                    {profile?.phone && <PhoneRevealButton listingId={id} userId={user?.id} />}
+                    {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                   </div>
                 ) : needsLogin ? (
                   <div className="space-y-2 pt-2">
@@ -310,7 +314,7 @@ export default async function ListingDetailPage({ params }: Props) {
                         Conectare pentru contact
                       </Button>
                     </Link>
-                    {profile?.phone && <PhoneRevealButton listingId={id} userId={undefined} />}
+                    {contactPhone && <PhoneRevealButton listingId={id} userId={undefined} />}
                   </div>
                 ) : null}
               </div>

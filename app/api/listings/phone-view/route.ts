@@ -17,58 +17,42 @@ export async function POST(req: Request) {
 
     const admin = createSupabaseAdmin()
 
-    // Citim listing-ul și profilul vânzătorului într-un singur query
+    // Citim listing-ul cu metadata (pentru contactPhone)
     const { data: listing, error: fetchError } = await admin
       .from('listings')
-      .select('user_id, phone_views')
+      .select('user_id, metadata')
       .eq('id', listingId)
       .single()
 
-    if (fetchError) {
-      console.error('[phone-view] fetch listing error:', fetchError)
-      // Încearcă fără phone_views (coloana poate să nu existe)
-      const { data: listing2, error: fetchError2 } = await admin
-        .from('listings')
-        .select('user_id')
-        .eq('id', listingId)
-        .single()
-      if (fetchError2 || !listing2) {
-        return Response.json({ error: 'listing not found' }, { status: 404 })
-      }
-      // Obține telefonul și returnează
-      const { data: profile2 } = await admin
-        .from('profiles')
-        .select('phone')
-        .eq('id', listing2.user_id)
-        .single()
-      return Response.json({ phone: profile2?.phone || null })
-    }
-
-    if (!listing) {
+    if (fetchError || !listing) {
       return Response.json({ error: 'listing not found' }, { status: 404 })
     }
 
-    // Obține telefonul vânzătorului
-    const { data: profile, error: profileError } = await admin
+    // Obține telefonul vânzătorului din profil
+    const { data: profile } = await admin
       .from('profiles')
       .select('phone')
       .eq('id', listing.user_id)
       .single()
 
-    if (profileError) {
-      console.error('[phone-view] fetch profile error:', profileError)
-    }
+    // Prioritate: 1) metadata.contactPhone, 2) profil
+    const metadata = (listing.metadata as any) || {}
+    const phone: string | null = metadata.contactPhone || profile?.phone || null
 
-    const phone: string | null = profile?.phone || null
-
-    // Incrementează phone_views atomic
+    // Incrementează phone_views (ignoră eroarea dacă coloana nu există)
     try {
+      const { data: cur } = await admin
+        .from('listings')
+        .select('phone_views')
+        .eq('id', listingId)
+        .single()
+      const currentViews = (cur as any)?.phone_views ?? 0
       await admin
         .from('listings')
-        .update({ phone_views: (listing.phone_views ?? 0) + 1 })
+        .update({ phone_views: currentViews + 1 })
         .eq('id', listingId)
     } catch {
-      // ignorăm — nu blocăm returnarea numărului
+      // coloana phone_views nu există — nu blocăm
     }
 
     return Response.json({ phone })
