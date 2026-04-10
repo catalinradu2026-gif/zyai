@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import FavoriteButton from './FavoriteButton'
 import CompareButton from '@/components/compare/CompareButton'
+import ShareButton from './ShareButton'
 
 interface AutoMeta {
   year?: string | null
@@ -127,32 +128,7 @@ export default function ListingCard({
           </div>
 
           {/* Share button — bottom right (separate from favorite) */}
-          <div
-            className="absolute bottom-2 right-2"
-            onClick={e => {
-              e.preventDefault()
-              e.stopPropagation()
-              const url = `${window.location.origin}/anunt/${id}`
-              if (navigator.share) {
-                navigator.share({ title, url })
-              } else {
-                navigator.clipboard.writeText(url)
-              }
-            }}
-          >
-            <div
-              style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
-                border: '1.5px solid rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontSize: '13px',
-              }}
-              title="Distribuie"
-            >
-              ↗
-            </div>
-          </div>
+          <ShareButton url={`/anunt/${id}`} title={title} />
         </div>
 
         {/* Content */}
