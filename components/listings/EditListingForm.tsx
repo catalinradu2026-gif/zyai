@@ -73,7 +73,7 @@ export default function EditListingForm({ listing }: EditListingFormProps) {
       })
       if (result.error) {
         setError(result.error)
-      } else {
+      } else if (result.id) {
         setSuccess(true)
         setTimeout(() => { window.location.href = `/anunt/${listing.id}` }, 1500)
       }

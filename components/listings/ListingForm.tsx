@@ -197,6 +197,7 @@ export default function ListingForm() {
 
   // AI Image Analysis
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiError, setAiError] = useState('')
   const [aiAnalysis, setAiAnalysis] = useState<{
     title: string; description: string; category: string; subcategory: string;
     condition: string; brand: string | null; tags: string[]; confidence: number;
@@ -316,6 +317,7 @@ export default function ListingForm() {
     if (!uploadedImages.length) return
     setAiAnalyzing(true)
     setAiAnalysis(null)
+    setAiError('')
     try {
       const res = await fetch('/api/ai/analyze-image', {
         method: 'POST',
@@ -325,9 +327,11 @@ export default function ListingForm() {
       const data = await res.json()
       if (data.ok && data.result) {
         setAiAnalysis(data.result)
+      } else {
+        setAiError('AI nu a putut analiza imaginea. Completează manual.')
       }
     } catch {
-      // analiză eșuată — nu blocăm, utilizatorul completează manual
+      setAiError('Eroare conexiune AI. Completează manual.')
     } finally {
       setAiAnalyzing(false)
     }
@@ -428,10 +432,15 @@ export default function ListingForm() {
         condition: condition || undefined,
         contactPhone: contactPhone || undefined,
       })
-      if (result?.error) { setError(result.error); setLoading(false) }
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+      } else if (result?.id) {
+        window.location.href = `/anunt/${result.id}`
+      }
     } catch (err: any) {
-      if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
-      setError('Eroare la postare. Încearcă din nou.'); setLoading(false)
+      setError('Eroare la postare. Încearcă din nou.')
+      setLoading(false)
     }
   }
 
@@ -875,6 +884,13 @@ export default function ListingForm() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* AI Error */}
+                {aiError && !aiAnalyzing && (
+                  <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                    <p className="text-sm" style={{ color: '#FCA5A5' }}>⚠️ {aiError}</p>
                   </div>
                 )}
 

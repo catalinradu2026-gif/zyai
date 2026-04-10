@@ -5,7 +5,10 @@ import { deleteListing } from '@/lib/actions/listings'
 export default function DeleteListingButton({ id }: { id: string }) {
   async function handleDelete() {
     if (!confirm('Sigur vrei să ștergi anunțul?')) return
-    await deleteListing(id)
+    const result = await deleteListing(id)
+    if (!result.error) {
+      window.location.href = '/cont/anunturi'
+    }
   }
 
   return (
