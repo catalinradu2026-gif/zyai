@@ -9,6 +9,7 @@ import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import ImageGallery from '@/components/listings/ImageGallery'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
 import ShareButtons from '@/components/listings/ShareButtons'
+import PhoneRevealButton from '@/components/listings/PhoneRevealButton'
 import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 
 type Props = {
@@ -266,13 +267,17 @@ export default async function ListingDetailPage({ params }: Props) {
                         </Button>
                       </a>
                     )}
+                    <PhoneRevealButton listingId={id} userId={user?.id} />
                   </div>
                 ) : needsLogin ? (
-                  <Link href={`/login?next=/anunt/${id}`} className="w-full block">
-                    <Button variant="primary" size="lg" fullWidth>
-                      Conectare pentru contact
-                    </Button>
-                  </Link>
+                  <div className="space-y-2 pt-2">
+                    <Link href={`/login?next=/anunt/${id}`} className="w-full block">
+                      <Button variant="primary" size="lg" fullWidth>
+                        Conectare pentru contact
+                      </Button>
+                    </Link>
+                    <PhoneRevealButton listingId={id} userId={undefined} />
+                  </div>
                 ) : null}
               </div>
 

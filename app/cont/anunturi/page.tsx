@@ -1,6 +1,7 @@
 import { getUser } from '@/lib/actions/auth'
 import { getUserListings } from '@/lib/queries/listings'
 import { deleteListing } from '@/lib/actions/listings'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import Link from 'next/link'
 import Image from 'next/image'
 import Button from '@/components/ui/Button'
@@ -18,6 +19,22 @@ export default async function MyListingsPage() {
   }
 
   const { data: listings } = await getUserListings(user.id)
+
+  // Calculăm numărul de favorite pentru fiecare anunț
+  const favCountMap: Record<string, number> = {}
+  if (listings && listings.length > 0) {
+    const listingIds = listings.map((l: any) => l.id)
+    const admin = createSupabaseAdmin()
+    const { data: favData } = await admin
+      .from('favorites')
+      .select('listing_id')
+      .in('listing_id', listingIds)
+    if (favData) {
+      for (const row of favData) {
+        favCountMap[row.listing_id] = (favCountMap[row.listing_id] || 0) + 1
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -98,6 +115,8 @@ export default async function MyListingsPage() {
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
                     <span className="flex items-center gap-1">📍 {listing.city}</span>
                     <span className="flex items-center gap-1">👁️ {listing.views} vizualizări</span>
+                    <span className="flex items-center gap-1">❤️ {favCountMap[listing.id] || 0} favorite</span>
+                    <span className="flex items-center gap-1">📞 {listing.phone_views || 0} tel</span>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         statusColors[listing.status] || statusColors.inactiv
