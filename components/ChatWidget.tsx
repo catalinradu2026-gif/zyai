@@ -20,6 +20,7 @@ type Message = {
   timestamp: Date
   listings?: ChatListing[]
   type?: 'search' | 'chat'
+  imageBase64?: string
 }
 
 type HistoryMessage = {
@@ -133,6 +134,7 @@ export default function ChatWidget() {
   const [showGuide, setShowGuide] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -206,6 +208,96 @@ export default function ChatWidget() {
     if (voiceOn) window.speechSynthesis?.cancel()
     setVoiceOn(v => !v)
     setSpeaking(false)
+  }
+
+  // Image analysis flow
+  const analyzeImage = async (base64: string) => {
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      text: '📷 Am trimis o poză pentru evaluare preț',
+      sender: 'user',
+      timestamp: new Date(),
+      imageBase64: base64,
+    }
+    setMessages(prev => [...prev, userMsg])
+    setLoading(true)
+    setShowGuide(false)
+
+    try {
+      // Pasul 1: analizează imaginea
+      const analyzeRes = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64 }),
+      })
+      if (!analyzeRes.ok) throw new Error('analyze failed')
+      const { result: product } = await analyzeRes.json()
+
+      // Pasul 2: estimează prețul
+      const priceRes = await fetch('/api/ai/suggest-price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: product.title,
+          description: product.description,
+          category: product.category,
+          subcategory: product.subcategory,
+          condition: product.condition,
+          brand: product.brand,
+        }),
+      })
+      if (!priceRes.ok) throw new Error('price failed')
+      const { result: price } = await priceRes.json()
+
+      const botText = [
+        `📸 ${product.title}`,
+        `Stare: ${product.condition}${product.brand ? ` • ${product.brand}` : ''}`,
+        '',
+        `💰 Preț recomandat: ${price.suggested} ${price.currency}`,
+        `📊 Interval: ${price.min}–${price.max} ${price.currency}`,
+        `💡 ${price.reasoning}`,
+        price.tips?.length ? `\n🎯 ${price.tips.join(' • ')}` : '',
+      ].filter(Boolean).join('\n')
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: botText,
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'chat',
+      }])
+      speakText(`Am analizat imaginea. ${product.title}. Preț recomandat: ${price.suggested} ${price.currency}.`)
+    } catch {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: 'Nu am putut analiza imaginea. Încearcă din nou cu o poză mai clară.',
+        sender: 'bot',
+        timestamp: new Date(),
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        text: 'Imaginea e prea mare (max 5MB). Încearcă o altă poză.',
+        sender: 'bot',
+        timestamp: new Date(),
+      }])
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const base64 = ev.target?.result as string
+      analyzeImage(base64)
+    }
+    reader.readAsDataURL(file)
   }
 
   // Extracted send logic
@@ -354,6 +446,15 @@ export default function ChatWidget() {
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
+                  {/* Imagine preview (user) */}
+                  {msg.imageBase64 && (
+                    <img
+                      src={msg.imageBase64}
+                      alt="Poză trimisă"
+                      className="w-40 h-28 object-cover rounded-xl border border-blue-200 mb-1"
+                    />
+                  )}
+
                   {/* Bubble text */}
                   <div
                     className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm ${
@@ -429,6 +530,22 @@ export default function ChatWidget() {
                 placeholder="Ce cauți?"
                 disabled={loading}
                 className="flex-1 px-4 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+                title="Trimite o poză pentru estimare preț"
+                className="px-3 py-2.5 border border-gray-300 rounded-full text-gray-500 hover:text-blue-600 hover:border-blue-400 transition disabled:opacity-50"
+              >
+                📷
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
               />
               <button
                 type="submit"

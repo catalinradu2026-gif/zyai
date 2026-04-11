@@ -13,19 +13,23 @@ async function toBase64DataUrl(imageUrl: string): Promise<string> {
 
 export async function POST(req: Request) {
   try {
-    const { imageUrl } = await req.json()
-    if (!imageUrl) return NextResponse.json({ error: 'imageUrl required' }, { status: 400 })
+    const { imageUrl, imageBase64 } = await req.json()
+    if (!imageUrl && !imageBase64) return NextResponse.json({ error: 'imageUrl or imageBase64 required' }, { status: 400 })
 
     const GROQ_API_KEY = process.env.GROQ_API_KEY
     if (!GROQ_API_KEY) return NextResponse.json({ error: 'no api key' }, { status: 500 })
 
-    // Convert to base64 so Groq doesn't need to fetch the URL directly
+    // Use base64 directly if provided, otherwise fetch from URL
     let imageData: string
-    try {
-      imageData = await toBase64DataUrl(imageUrl)
-    } catch (e: any) {
-      console.error('[analyze-image] could not fetch image:', e?.message)
-      return NextResponse.json({ error: 'cannot_fetch_image', detail: e?.message }, { status: 400 })
+    if (imageBase64) {
+      imageData = imageBase64
+    } else {
+      try {
+        imageData = await toBase64DataUrl(imageUrl)
+      } catch (e: any) {
+        console.error('[analyze-image] could not fetch image:', e?.message)
+        return NextResponse.json({ error: 'cannot_fetch_image', detail: e?.message }, { status: 400 })
+      }
     }
 
     const prompt = `Ești un expert în evaluarea produselor pentru marketplace românesc.
