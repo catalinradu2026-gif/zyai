@@ -44,14 +44,47 @@ Returnează exact acest format JSON:
   "condition": "Nou | Ca nou | Bun | Acceptabil | Necesită reparații",
   "brand": "marca produsului dacă e vizibilă, altfel null",
   "tags": ["tag1", "tag2", "tag3"],
-  "confidence": 0.9
+  "confidence": 0.9,
+  "details": {
+    "auto": {
+      "model": "modelul mașinii dacă vizibil, altfel null",
+      "year": număr_an_fabricatie_sau_null,
+      "mileage": număr_km_aproximativ_sau_null,
+      "fuel": "benzina | diesel | hibrid | electric | gaz | null",
+      "transmission": "manuala | automata | null",
+      "bodyType": "sedan | suv | hatchback | combi | mpv | coupe | null",
+      "damage": "neaccidentat | accident-minor | accident-major | null",
+      "color": "culoarea mașinii dacă vizibilă, altfel null"
+    },
+    "imobiliare": {
+      "propertyType": "apartament | casa | teren | spatiu-comercial | birou | garaj | null",
+      "rooms": număr_camere_sau_null,
+      "area": număr_mp_estimat_sau_null,
+      "floor": număr_etaj_sau_null,
+      "furnishing": "neamenajat | partial | complet | null",
+      "transactionType": "inchiriere | vanzare | null"
+    },
+    "electronice": {
+      "model": "modelul exact dacă vizibil, altfel null",
+      "storage": "capacitate stocare dacă vizibil (ex: 256GB), altfel null",
+      "color": "culoarea dacă vizibilă, altfel null",
+      "accessories": "accesorii vizibile (cutie, incarcator etc.), altfel null"
+    },
+    "general": {
+      "size": "dimensiune/mărime dacă relevantă (ex: XL, 42, 500ml), altfel null",
+      "material": "material dacă vizibil, altfel null",
+      "quantity": număr_bucati_sau_null
+    }
+  }
 }
 
 Reguli stricte:
 - title: fii specific (ex: "iPhone 14 Pro 256GB Space Black" nu "Telefon mobil")
 - description: scrie ca un vânzător profesionist, menționează ce se vede în imagine
 - category: alege STRICT una din lista de mai sus
-- confidence: 0-1 cât de sigur ești de analiză`
+- confidence: 0-1 cât de sigur ești de analiză
+- details: completează DOAR câmpurile relevante pentru categoria detectată, restul lasă null
+- Pentru auto: încearcă să estimezi anul și km din starea vizuală a mașinii dacă nu sunt afișate explicit`
 
     // Only vision-capable models available on Groq
     const models = [

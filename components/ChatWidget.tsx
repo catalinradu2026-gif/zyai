@@ -233,7 +233,7 @@ export default function ChatWidget() {
       if (!analyzeRes.ok) throw new Error('analyze failed')
       const { result: product } = await analyzeRes.json()
 
-      // Pasul 2: estimează prețul
+      // Pasul 2: estimează prețul (cu detalii specifice categoriei)
       const priceRes = await fetch('/api/ai/suggest-price', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -244,6 +244,7 @@ export default function ChatWidget() {
           subcategory: product.subcategory,
           condition: product.condition,
           brand: product.brand,
+          details: product.details,
         }),
       })
       if (!priceRes.ok) throw new Error('price failed')
