@@ -81,12 +81,17 @@ export async function getListings(filters: ListingFilters = {}) {
     return new Date(soldAt).getTime() >= sevenDaysAgo
   })
 
-  // Merge: vandute recente + active, re-sort, păstrăm PAGE_SIZE
+  // Merge: vandute recente PRIMELE (sortate după sold_at), apoi active
   const activeIds = new Set((data || []).map((l: any) => l.id))
-  const uniqueSold = soldRecent.filter((l: any) => !activeIds.has(l.id))
-  const merged = [...(data || []), ...uniqueSold]
-    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, PAGE_SIZE)
+  const uniqueSold = soldRecent
+    .filter((l: any) => !activeIds.has(l.id))
+    .sort((a: any, b: any) => {
+      const aTime = a.metadata?.sold_at ? new Date(a.metadata.sold_at).getTime() : new Date(a.created_at).getTime()
+      const bTime = b.metadata?.sold_at ? new Date(b.metadata.sold_at).getTime() : new Date(b.created_at).getTime()
+      return bTime - aTime
+    })
+
+  const merged = [...uniqueSold, ...(data || [])].slice(0, PAGE_SIZE)
 
   return { data: merged, error: null, count: (count || 0) + uniqueSold.length }
 }

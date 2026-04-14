@@ -87,11 +87,14 @@ export default async function Home() {
     title: l.title,
     description: l.description ?? undefined,
     price: l.price,
+    price_type: l.price_type ?? 'fix',
     currency: l.currency ?? 'RON',
     city: l.city,
     images: l.images ?? [],
+    status: l.status ?? 'activ',
     category: CATEGORY_SLUGS[l.category_id] ?? undefined,
     metadata: l.metadata ?? null,
+    created_at: l.created_at,
   }))
   // Folosește doar anunțuri reale din DB — mock-urile cauzau 404 la click
   const listings = dbMapped.length > 0 ? dbMapped : []
