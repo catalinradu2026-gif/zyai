@@ -65,8 +65,9 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  // Query 2: anunțuri vandute din ultimele 24h — apar în feed cu badge SOLD
-  const { data: allSold } = await supabase
+  // Query 2: anunțuri vandute — admin client bypass RLS (anon nu vede status=vandut)
+  const admin = createSupabaseAdmin()
+  const { data: allSold } = await admin
     .from('listings')
     .select(`id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`)
     .eq('status', 'vandut')
