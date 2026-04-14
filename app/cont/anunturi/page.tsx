@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import DeleteListingButton from '@/components/listings/DeleteListingButton'
+import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -168,6 +169,12 @@ export default async function MyListingsPage() {
                       ✏️ Editează
                     </Button>
                   </Link>
+
+                  <MarkAsSoldButton
+                    listingId={listing.id}
+                    categoryId={listing.category_id}
+                    currentStatus={listing.status}
+                  />
 
                   <DeleteListingButton id={listing.id} />
                 </div>
