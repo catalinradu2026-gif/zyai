@@ -14,7 +14,7 @@ import { getFavoritedIds } from '@/lib/queries/favorites'
 
 export const metadata: Metadata = {
   title: 'zyAI - Marketplace cu AI | Anunțuri Gratuite România',
-  description: 'Postezi o dată. AI-ul îți găsește cumpărător. Platforma de anunțuri în România cu inteligență artificială. Auto, imobiliare, joburi, servicii.',
+  description: 'Ai ceva de vândut? Zi hai pe zyAi. Faci o poză, AI-ul face restul. Marketplace românesc cu AI — auto, imobiliare, joburi, servicii.',
 }
 
 const jsonLd = {
