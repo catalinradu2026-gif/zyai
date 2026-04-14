@@ -14,6 +14,7 @@ interface Listing {
   created_at: string
   category?: string
   metadata?: Record<string, any> | null
+  status?: string
 }
 
 interface ListingGridProps {
@@ -61,6 +62,7 @@ export default function ListingGrid({ listings, loading, userId, favoritedIds = 
             metadata={listing.metadata}
             userId={userId}
             isFavorited={favoritedIds.includes(listing.id)}
+            status={listing.status}
           />
         ))}
       </div>

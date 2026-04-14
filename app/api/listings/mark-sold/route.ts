@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     // Verifică că anunțul aparține userului
     const { data: listing } = await admin
       .from('listings')
-      .select('id, user_id, status')
+      .select('id, user_id, status, metadata')
       .eq('id', listingId)
       .single()
 
@@ -27,9 +27,14 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, status: 'vandut' })
     }
 
+    // Salvează sold_at în metadata pentru filtrul de 24h
+    const currentMeta = (listing as any).metadata || {}
     const { error } = await admin
       .from('listings')
-      .update({ status: 'vandut' })
+      .update({
+        status: 'vandut',
+        metadata: { ...currentMeta, sold_at: new Date().toISOString() },
+      })
       .eq('id', listingId)
 
     if (error) return Response.json({ error: error.message }, { status: 500 })

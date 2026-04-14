@@ -29,6 +29,7 @@ interface ListingCardProps {
   category?: string
   userId?: string
   isFavorited?: boolean
+  status?: string
 }
 
 export default function ListingCard({
@@ -45,7 +46,9 @@ export default function ListingCard({
   category,
   userId,
   isFavorited = false,
+  status,
 }: ListingCardProps) {
+  const isSold = status === 'vandut'
   const firstImage = images?.[0]
   const formattedPrice =
     price && priceType !== 'gratuit'
@@ -102,7 +105,7 @@ export default function ListingCard({
               src={firstImage}
               alt={title}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              className={`object-cover group-hover:scale-110 transition-transform duration-300 ${isSold ? 'brightness-50' : ''}`}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -110,8 +113,18 @@ export default function ListingCard({
             </div>
           )}
 
+          {/* SOLD overlay */}
+          {isSold && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="px-4 py-2 rounded-xl text-white font-black text-xl tracking-widest rotate-[-15deg]"
+                style={{ background: 'rgba(220,38,38,0.92)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+                VÂNDUT
+              </div>
+            </div>
+          )}
+
           {/* New badge — top left */}
-          {isNew && (
+          {isNew && !isSold && (
             <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
               Nou
             </div>

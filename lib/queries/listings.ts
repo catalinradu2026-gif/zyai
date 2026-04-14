@@ -15,6 +15,8 @@ export async function getListings(filters: ListingFilters = {}) {
   const PAGE_SIZE = 20
   const page = filters.page ?? 1
 
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
   let q = supabase
     .from('listings')
     .select(
@@ -23,7 +25,7 @@ export async function getListings(filters: ListingFilters = {}) {
     `,
       { count: 'exact' }
     )
-    .eq('status', 'activ')
+    .or(`status.eq.activ,and(status.eq.vandut,metadata->>sold_at.gte.${oneDayAgo})`)
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 

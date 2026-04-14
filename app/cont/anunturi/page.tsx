@@ -63,11 +63,18 @@ export default async function MyListingsPage() {
               {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
             </p>
           </div>
-          <Link href="/anunt/nou" className="flex-shrink-0">
-            <Button variant="primary" size="lg">
-              ➕ Nou anunț
-            </Button>
-          </Link>
+          <div className="flex gap-2 flex-shrink-0">
+            <Link href="/cont/vandute">
+              <Button variant="secondary" size="lg">
+                🔴 Vândute
+              </Button>
+            </Link>
+            <Link href="/anunt/nou">
+              <Button variant="primary" size="lg">
+                ➕ Nou anunț
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
