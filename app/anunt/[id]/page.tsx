@@ -13,6 +13,7 @@ import PhoneRevealButton from '@/components/listings/PhoneRevealButton'
 import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
+import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -275,6 +276,11 @@ export default async function ListingDetailPage({ params }: Props) {
                         📞 {contactPhone}
                       </a>
                     )}
+                    <MarkAsSoldButton
+                      listingId={id}
+                      categoryId={listing.category_id}
+                      currentStatus={listing.status}
+                    />
                     <div className="flex gap-2">
                       <Link href={`/anunt/${id}/edit`} className="flex-1">
                         <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>

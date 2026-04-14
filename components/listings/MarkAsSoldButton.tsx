@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 
-// Categorii fără buton SOLD: Servicii (4), Joburi (1)
-const NO_SOLD_CATEGORIES = [1, 4]
+// Categorii fără buton SOLD: Servicii (4)
+const NO_SOLD_CATEGORIES = [4]
 
 type Props = {
   listingId: string
