@@ -2,6 +2,7 @@ import { getUser } from '@/lib/actions/auth'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import Link from 'next/link'
 import Image from 'next/image'
+import ReactivateButton from '@/components/listings/ReactivateButton'
 
 export const metadata = {
   title: 'Produse vândute - zyAI',
@@ -91,10 +92,13 @@ export default async function SoldListingsPage() {
                   </div>
                 </div>
 
-                {/* Badge */}
-                <div className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold"
-                  style={{ background: 'rgba(220,38,38,0.12)', color: '#f87171', border: '1px solid rgba(220,38,38,0.3)' }}>
-                  🔴 VÂNDUT
+                {/* Actions */}
+                <div className="shrink-0 flex flex-col gap-2 min-w-[130px]">
+                  <div className="px-3 py-1.5 rounded-full text-xs font-bold text-center"
+                    style={{ background: 'rgba(220,38,38,0.12)', color: '#f87171', border: '1px solid rgba(220,38,38,0.3)' }}>
+                    🔴 VÂNDUT
+                  </div>
+                  <ReactivateButton listingId={listing.id} />
                 </div>
               </div>
             )

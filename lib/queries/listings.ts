@@ -64,36 +64,7 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  // Query 2: anunțuri vandute — filtru client-side după sold_at din metadata (7 zile)
-  const { data: allSold } = await supabase
-    .from('listings')
-    .select(
-      `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`
-    )
-    .eq('status', 'vandut')
-    .order('created_at', { ascending: false })
-    .limit(100)
-
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  const soldRecent = (allSold || []).filter((l: any) => {
-    const soldAt = l.metadata?.sold_at
-    if (!soldAt) return true // dacă nu are sold_at, arată oricum (sold recent)
-    return new Date(soldAt).getTime() >= sevenDaysAgo
-  })
-
-  // Merge: vandute recente PRIMELE (sortate după sold_at), apoi active
-  const activeIds = new Set((data || []).map((l: any) => l.id))
-  const uniqueSold = soldRecent
-    .filter((l: any) => !activeIds.has(l.id))
-    .sort((a: any, b: any) => {
-      const aTime = a.metadata?.sold_at ? new Date(a.metadata.sold_at).getTime() : new Date(a.created_at).getTime()
-      const bTime = b.metadata?.sold_at ? new Date(b.metadata.sold_at).getTime() : new Date(b.created_at).getTime()
-      return bTime - aTime
-    })
-
-  const merged = [...uniqueSold, ...(data || [])].slice(0, PAGE_SIZE)
-
-  return { data: merged, error: null, count: (count || 0) + uniqueSold.length }
+  return { data: data ?? [], error: null, count: count || 0 }
 }
 
 export async function getListing(id: string) {
