@@ -18,14 +18,14 @@ export async function getListings(filters: ListingFilters = {}) {
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-  // Query 1: anunțuri active
+  // Query 1: anunțuri active + în licitație
   let q = supabase
     .from('listings')
     .select(
-      `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`,
+      `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata, bidding_end_time, current_highest_bid`,
       { count: 'exact' }
     )
-    .eq('status', 'activ')
+    .in('status', ['activ', 'bidding'])
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 
@@ -83,8 +83,33 @@ export async function getListing(id: string) {
     return { data: null, error }
   }
 
-  // Increment views (only for active listings)
-  if (data?.status === 'activ') {
+  // Auto-finalize expired bidding listings
+  if (data?.status === 'bidding' && (data as any).bidding_end_time) {
+    const endTime = new Date((data as any).bidding_end_time)
+    if (Date.now() >= endTime.getTime()) {
+      const currentMeta = (data as any).metadata || {}
+      await admin.from('listings').update({
+        status: 'vandut',
+        metadata: {
+          ...currentMeta,
+          sold_at: new Date().toISOString(),
+          sold_via: 'bidding',
+          winning_bid: (data as any).current_highest_bid,
+          winner_id: (data as any).bidding_winner_id,
+        },
+      } as any).eq('id', id)
+      // Return updated data
+      const { data: updated } = await admin
+        .from('listings')
+        .select('id, title, description, price, price_type, currency, city, county, images, status, views, created_at, user_id, category_id, metadata, profiles(full_name, phone, avatar_url, city)')
+        .eq('id', id)
+        .single()
+      return { data: updated, error: null }
+    }
+  }
+
+  // Increment views (only for active/bidding listings)
+  if (data?.status === 'activ' || data?.status === 'bidding') {
     await admin
       .from('listings')
       .update({ views: (data?.views ?? 0) + 1 })

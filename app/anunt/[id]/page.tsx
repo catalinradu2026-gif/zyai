@@ -15,6 +15,8 @@ import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
+import BidPanel from '@/components/listings/BidPanel'
+import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -254,8 +256,18 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
 
                 {/* Actions */}
-                {listing.status === 'vandut' && !isOwner ? (
-                  // SOLD — vizitator nu poate contacta
+                {listing.status === 'bidding' ? (
+                  // LICITAȚIE — BidPanel pentru toți
+                  <BidPanel
+                    listingId={id}
+                    currentHighestBid={(l as any).current_highest_bid || listing.price || 0}
+                    biddingEndTime={(l as any).bidding_end_time}
+                    currency={listing.currency ?? 'EUR'}
+                    isOwner={!!isOwner}
+                    userId={user?.id}
+                  />
+                ) : listing.status === 'vandut' && !isOwner ? (
+                  // VÂNDUT — vizitator nu poate contacta
                   <div className="rounded-xl p-5 text-center space-y-2" style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)' }}>
                     <p className="text-2xl">🔴</p>
                     <p className="font-bold text-base" style={{ color: '#f87171' }}>Acest produs a fost vândut</p>
@@ -263,7 +275,11 @@ export default async function ListingDetailPage({ params }: Props) {
                   </div>
                 ) : isOwner ? (
                   <div className="space-y-3">
-                    <div className="rounded-xl p-4 text-center" style={{ background: listing.status === 'vandut' ? 'rgba(220,38,38,0.1)' : 'rgba(139,92,246,0.1)', border: `1px solid ${listing.status === 'vandut' ? 'rgba(220,38,38,0.3)' : 'rgba(139,92,246,0.3)'}` }}>
+                    <div className="rounded-xl p-4 text-center"
+                      style={{
+                        background: listing.status === 'vandut' ? 'rgba(220,38,38,0.1)' : 'rgba(139,92,246,0.1)',
+                        border: `1px solid ${listing.status === 'vandut' ? 'rgba(220,38,38,0.3)' : 'rgba(139,92,246,0.3)'}`,
+                      }}>
                       <p className="text-sm font-semibold" style={{ color: listing.status === 'vandut' ? '#f87171' : '#A78BFA' }}>
                         {listing.status === 'vandut' ? '🔴 Anunț vândut' : '✓ Acesta este anunțul tău'}
                       </p>
@@ -279,21 +295,25 @@ export default async function ListingDetailPage({ params }: Props) {
                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>nr. tel văzut</p>
                       </div>
                     </div>
-                    <MarkAsSoldButton listingId={id} categoryId={listing.category_id} currentStatus={listing.status} />
                     {listing.status === 'vandut' ? (
-                      // Vândut — doar Reactivează + Șterge
-                      <div className="flex gap-2">
-                        <ReactivateButton listingId={id} />
-                        <DeleteListingButton id={id} />
-                      </div>
+                      <>
+                        <MarkAsSoldButton listingId={id} categoryId={listing.category_id} currentStatus="vandut" />
+                        <div className="flex gap-2">
+                          <ReactivateButton listingId={id} />
+                          <DeleteListingButton id={id} />
+                        </div>
+                      </>
                     ) : (
-                      // Activ — Edit + Șterge
-                      <div className="flex gap-2">
-                        <Link href={`/anunt/${id}/edit`} className="flex-1">
-                          <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
-                        </Link>
-                        <DeleteListingButton id={id} />
-                      </div>
+                      <>
+                        <MarkAsSoldButton listingId={id} categoryId={listing.category_id} currentStatus={listing.status} />
+                        <ActivateBiddingButton listingId={id} categoryId={listing.category_id} />
+                        <div className="flex gap-2">
+                          <Link href={`/anunt/${id}/edit`} className="flex-1">
+                            <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
+                          </Link>
+                          <DeleteListingButton id={id} />
+                        </div>
+                      </>
                     )}
                   </div>
                 ) : canContact ? (

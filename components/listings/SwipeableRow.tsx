@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import FavoriteButton from './FavoriteButton'
+import BidTimer from './BidTimer'
 
 interface AutoMeta {
   year?: string | null
@@ -22,6 +23,8 @@ interface Listing {
   category?: string
   metadata?: AutoMeta | null
   status?: string
+  bidding_end_time?: string
+  current_highest_bid?: number
 }
 
 interface SwipeableRowProps {
@@ -81,8 +84,11 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
         }}
       >
         {listings.map((listing) => {
-          const formattedPrice = listing.price
-            ? `${listing.price.toLocaleString('ro-RO')} ${listing.currency}`
+          const displayPrice = listing.status === 'bidding' && listing.current_highest_bid
+            ? listing.current_highest_bid
+            : listing.price
+          const formattedPrice = displayPrice
+            ? `${displayPrice.toLocaleString('ro-RO')} ${listing.currency}`
             : 'Negociabil'
 
           const isAuto = listing.category === 'auto' || listing.category?.startsWith('auto')
@@ -130,6 +136,20 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                         style={{ background: 'rgba(220,38,38,0.92)', border: '2px solid rgba(255,255,255,0.3)' }}>
                         VÂNDUT
                       </div>
+                    </div>
+                  )}
+                  {listing.status === 'bidding' && (
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      <div className="px-2 py-0.5 rounded-lg text-white font-black text-xs"
+                        style={{ background: 'rgba(234,88,12,0.92)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                        🔥 LICITAȚIE
+                      </div>
+                      {listing.bidding_end_time && (
+                        <div className="px-2 py-0.5 rounded-lg text-xs font-bold"
+                          style={{ background: 'rgba(0,0,0,0.7)', color: '#fb923c' }}>
+                          <BidTimer endTime={listing.bidding_end_time} />
+                        </div>
+                      )}
                     </div>
                   )}
                   <FavoriteButton

@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import type { Metadata } from 'next'
 import { getListings } from '@/lib/queries/listings'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { getUser } from '@/lib/actions/auth'
 import { getFavoritedIds } from '@/lib/queries/favorites'
 
@@ -55,7 +56,7 @@ const MOCK_LISTINGS = [
 
 export default async function Home() {
   // Utilizator curent + favorite IDs (paralel)
-  const [userResult, suggestionsResult, dbListingsResult] = await Promise.allSettled([
+  const [userResult, suggestionsResult, dbListingsResult, soldListingsResult] = await Promise.allSettled([
     getUser(),
     (async () => {
       const supabase = await createSupabaseServerClient()
@@ -68,11 +69,25 @@ export default async function Home() {
       return data?.map((l: any) => l.title as string) ?? []
     })(),
     getListings({ page: 1 }),
+    // Anunțuri vandute din ultimele 7 zile — admin client bypass RLS
+    (async () => {
+      const admin = createSupabaseAdmin()
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data } = await admin
+        .from('listings')
+        .select('id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata')
+        .eq('status', 'vandut')
+        .gte('updated_at', cutoff)
+        .order('updated_at', { ascending: false })
+        .limit(20)
+      return data ?? []
+    })(),
   ])
 
   const user = userResult.status === 'fulfilled' ? userResult.value : null
   const suggestions: string[] = suggestionsResult.status === 'fulfilled' ? suggestionsResult.value : []
   const dbListings = dbListingsResult.status === 'fulfilled' ? dbListingsResult.value.data : null
+  const soldListings = soldListingsResult.status === 'fulfilled' ? soldListingsResult.value : []
 
   // Fetch favorite IDs dacă userul e logat
   let favoritedIds: string[] = []
@@ -81,8 +96,9 @@ export default async function Home() {
     favoritedIds = fav || []
   }
 
-  const CATEGORY_SLUGS: Record<number, string> = { 3: 'auto', 2: 'imobiliare', 1: 'joburi', 4: 'servicii' }
-  const dbMapped = (dbListings ?? []).map((l: any) => ({
+  const CATEGORY_SLUGS: Record<number, string> = { 1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii', 5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport', 9: 'animale', 10: 'mama-copilul' }
+
+  const mapListing = (l: any) => ({
     id: l.id,
     title: l.title,
     description: l.description ?? undefined,
@@ -95,9 +111,17 @@ export default async function Home() {
     category: CATEGORY_SLUGS[l.category_id] ?? undefined,
     metadata: l.metadata ?? null,
     created_at: l.created_at,
-  }))
-  // Folosește doar anunțuri reale din DB — mock-urile cauzau 404 la click
-  const listings = dbMapped.length > 0 ? dbMapped : []
+    bidding_end_time: l.bidding_end_time ?? undefined,
+    current_highest_bid: l.current_highest_bid ?? undefined,
+  })
+
+  const activeListings = (dbListings ?? []).map(mapListing)
+  const soldMapped = soldListings.map(mapListing)
+
+  // Merge: active + sold (fără duplicate), sortat după created_at desc
+  const activeIds = new Set(activeListings.map((l: any) => l.id))
+  const uniqueSold = soldMapped.filter((l: any) => !activeIds.has(l.id))
+  const listings = [...uniqueSold, ...activeListings].slice(0, 20)
 
   return (
     <>
