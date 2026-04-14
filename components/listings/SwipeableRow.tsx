@@ -21,6 +21,7 @@ interface Listing {
   images: string[]
   category?: string
   metadata?: AutoMeta | null
+  status?: string
 }
 
 interface SwipeableRowProps {
@@ -119,9 +120,17 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                 {/* Image */}
                 <div className="relative h-36 overflow-hidden bg-gradient-to-br from-purple-700 to-blue-600 flex items-center justify-center">
                   {listing.images?.[0] ? (
-                    <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
+                    <img src={listing.images[0]} alt={listing.title} className={`w-full h-full object-cover${listing.status === 'vandut' ? ' brightness-50' : ''}`} />
                   ) : (
                     <span className="text-white text-3xl opacity-50">📦</span>
+                  )}
+                  {listing.status === 'vandut' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="px-3 py-1.5 rounded-xl text-white font-black text-sm tracking-widest rotate-[-15deg]"
+                        style={{ background: 'rgba(220,38,38,0.92)', border: '2px solid rgba(255,255,255,0.3)' }}>
+                        VÂNDUT
+                      </div>
+                    </div>
                   )}
                   <FavoriteButton
                     listingId={listing.id}
