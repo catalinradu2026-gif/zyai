@@ -193,7 +193,10 @@ User: "ce parere ai despre Dacia Logan 2015"
 
     try {
       const cleanJson = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      parsed = JSON.parse(cleanJson)
+      // Extrage obiectul JSON chiar dacă modelul adaugă text înainte/după
+      const jsonMatch = cleanJson.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error('no JSON found')
+      parsed = JSON.parse(jsonMatch[0])
     } catch {
       return Response.json({
         type: 'chat',

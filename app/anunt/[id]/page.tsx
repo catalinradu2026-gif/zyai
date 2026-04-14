@@ -12,6 +12,7 @@ import ShareButtons from '@/components/listings/ShareButtons'
 import PhoneRevealButton from '@/components/listings/PhoneRevealButton'
 import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
+import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -204,6 +205,18 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* ── Sidebar ── */}
           <div>
             <div className="sticky top-24 space-y-4">
+
+              {/* AI Verdict */}
+              <AIVerdictPanel listing={{
+                title: listing.title,
+                price: listing.price,
+                currency: listing.currency || 'RON',
+                price_type: listing.price_type || '',
+                city: listing.city || '',
+                description: listing.description || '',
+                category_id: listing.category_id,
+                metadata: (listing.metadata as any) || {},
+              }} />
 
               {/* Favorite */}
               <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
