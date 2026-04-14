@@ -132,11 +132,13 @@ export default function ChatWidget() {
   const [history, setHistory] = useState<HistoryMessage[]>([])
   const [voiceOn, setVoiceOn] = useState(true)
   const [speaking, setSpeaking] = useState(false)
+  const [listening, setListening] = useState(false)
   const [userInteracted, setUserInteracted] = useState(false)
   const [showGuide, setShowGuide] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<any>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -210,6 +212,32 @@ export default function ChatWidget() {
     if (voiceOn) window.speechSynthesis?.cancel()
     setVoiceOn(v => !v)
     setSpeaking(false)
+  }
+
+  function startListening() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) return
+    if (listening) {
+      recognitionRef.current?.stop()
+      return
+    }
+    window.speechSynthesis?.cancel()
+    const rec = new SR()
+    rec.lang = 'ro-RO'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+    recognitionRef.current = rec
+    setListening(true)
+    rec.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript
+      setInput(transcript)
+      setListening(false)
+      // Trimite automat după voce
+      setTimeout(() => sendMessage(transcript), 100)
+    }
+    rec.onerror = () => setListening(false)
+    rec.onend = () => setListening(false)
+    rec.start()
   }
 
   // Image analysis flow
@@ -534,6 +562,19 @@ export default function ChatWidget() {
                 disabled={loading}
                 className="flex-1 px-4 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
               />
+              <button
+                type="button"
+                onClick={startListening}
+                disabled={loading}
+                title={listening ? 'Ascult...' : 'Vorbește'}
+                className={`px-3 py-2.5 border rounded-full transition disabled:opacity-50 ${
+                  listening
+                    ? 'bg-red-500 border-red-500 text-white animate-pulse'
+                    : 'border-gray-300 text-gray-500 hover:text-blue-600 hover:border-blue-400'
+                }`}
+              >
+                🎤
+              </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
