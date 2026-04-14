@@ -65,45 +65,14 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  // Query 2: anunțuri vandute — admin client bypass RLS (anon nu vede status=vandut)
-  const admin = createSupabaseAdmin()
-  const { data: allSold } = await admin
-    .from('listings')
-    .select(`id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`)
-    .eq('status', 'vandut')
-    .order('created_at', { ascending: false })
-    .limit(50)
-
-  const h72ago = Date.now() - 72 * 60 * 60 * 1000
-  const soldRecent = (allSold || []).filter((l: any) => {
-    const soldAt = l.metadata?.sold_at
-    if (!soldAt) return true // fără sold_at → arată oricum (a fost marcat sold recent)
-    return new Date(soldAt).getTime() >= h72ago
-  })
-
-  const activeIds = new Set((data || []).map((l: any) => l.id))
-  const uniqueSold = soldRecent.filter((l: any) => !activeIds.has(l.id))
-
-  // Mixăm vandutele cu activele, sortat după data vânzării / publicării
-  const merged = [...(data || []), ...uniqueSold]
-    .sort((a: any, b: any) => {
-      const aTime = a.status === 'vandut' && a.metadata?.sold_at
-        ? new Date(a.metadata.sold_at).getTime()
-        : new Date(a.created_at).getTime()
-      const bTime = b.status === 'vandut' && b.metadata?.sold_at
-        ? new Date(b.metadata.sold_at).getTime()
-        : new Date(b.created_at).getTime()
-      return bTime - aTime
-    })
-    .slice(0, PAGE_SIZE)
-
-  return { data: merged, error: null, count: (count || 0) + uniqueSold.length }
+  return { data: data ?? [], error: null, count: count || 0 }
 }
 
 export async function getListing(id: string) {
-  const supabase = await createSupabaseServerClient()
+  // Use admin client to bypass RLS — sold listings must be readable too
+  const admin = createSupabaseAdmin()
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('listings')
     .select('id, title, description, price, price_type, currency, city, county, images, status, views, created_at, user_id, category_id, metadata, profiles(full_name, phone, avatar_url, city)')
     .eq('id', id)
@@ -114,11 +83,13 @@ export async function getListing(id: string) {
     return { data: null, error }
   }
 
-  // Increment views
-  await supabase
-    .from('listings')
-    .update({ views: (data?.views ?? 0) + 1 })
-    .eq('id', id)
+  // Increment views (only for active listings)
+  if (data?.status === 'activ') {
+    await admin
+      .from('listings')
+      .update({ views: (data?.views ?? 0) + 1 })
+      .eq('id', id)
+  }
 
   return { data, error: null }
 }
