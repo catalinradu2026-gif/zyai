@@ -29,11 +29,30 @@ const BARS = [0.5, 1, 0.65, 1, 0.4, 0.9, 1, 0.55]
 
 function prepareForSpeech(text: string): string {
   return text
+    // Emojis
     .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
     .replace(/[\u{2600}-\u{27FF}]/gu, '')
     .replace(/[\u{FE00}-\u{FEFF}]/gu, '')
     .replace(/[*_~`#]/g, '')
-    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1 la $2')
+    // Consum: "8/5 L/100km" → "8 litri în oraș, 5 litri pe drum"
+    .replace(/(\d+)\s*\/\s*(\d+)\s*[Ll]\/100\s*km/g, '$1 litri în oraș, $2 litri pe drum')
+    // "X/10" → "X din zece"
+    .replace(/(\d+)\s*\/\s*10/g, '$1 din zece')
+    // "120.000 km" sau "120000 km" → "o sută douăzeci de mii de kilometri" e greu, păstrăm simplu
+    .replace(/(\d{1,3}(?:[.,]\d{3})+)\s*km/g, (_, n) => n.replace(/[.,]/g, '') + ' kilometri')
+    .replace(/(\d+)\s*km/g, '$1 kilometri')
+    // "4.500 EUR" / "4500 EUR"
+    .replace(/(\d{1,3}(?:[.,]\d{3})+)\s*(EUR|RON|€)/gi, (_, n, cur) => n.replace(/[.,]/g, '') + ' ' + (cur === '€' || cur.toUpperCase() === 'EUR' ? 'euro' : 'lei'))
+    .replace(/(\d+)\s*€/g, '$1 euro')
+    .replace(/(\d+)\s*EUR/gi, '$1 euro')
+    .replace(/(\d+)\s*RON/gi, '$1 lei')
+    // "CP" → "cai putere"
+    .replace(/(\d+)\s*CP/g, '$1 cai putere')
+    // "L/100km" rămas
+    .replace(/[Ll]\/100\s*km/g, 'litri la sută')
+    // Slash generic rămas
+    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1 din $2')
+    // Liniuțe între cuvinte
     .replace(/(\w)-(\w)/g, '$1 $2')
     .trim()
 }
