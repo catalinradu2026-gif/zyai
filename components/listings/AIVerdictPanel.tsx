@@ -35,7 +35,7 @@ function prepareForSpeech(text: string): string {
     .replace(/[\u{FE00}-\u{FEFF}]/gu, '')
     .replace(/[*_~`#]/g, '')
     // Consum: "8/5 L/100km" → "8 litri în oraș, 5 litri pe drum"
-    .replace(/(\d+)\s*\/\s*(\d+)\s*[Ll]\/100\s*km/g, '$1 litri în oraș, $2 litri pe drum')
+    .replace(/(\d+)\s*\/\s*(\d+)\s*[Ll]\/100\s*km/g, '$1 litri în oraș, $2 litri exterior')
     // "X/10" → "X din zece"
     .replace(/(\d+)\s*\/\s*10/g, '$1 din zece')
     // "120.000 km" sau "120000 km" → "o sută douăzeci de mii de kilometri" e greu, păstrăm simplu
