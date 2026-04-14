@@ -126,7 +126,7 @@ export default async function Home() {
             </h1>
 
             <p className="text-xl md:text-2xl mb-8" style={{ color: 'var(--text-secondary)' }}>
-              Postezi o dată. AI-ul îți găsește cumpărător.
+              Ai ceva de vândut? Zi hai pe zyAi. Faci o poză, AI-ul face restul.
             </p>
 
             <div className="mb-8 max-w-3xl mx-auto w-full px-2">
