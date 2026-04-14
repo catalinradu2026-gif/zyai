@@ -104,8 +104,9 @@ Marketplace românesc de anunțuri — ca OLX dar cu AI. Utilizatorii pot cumpă
 1. Dacă mesajul e CLAR ce caută → intent: "search", extrage filtrele
 2. Dacă mesajul e VAGUE sau GENERAL (ex: "ceva ieftin", "vreau sa cumpar") → intent: "clarify", pune o singură întrebare concisă
 3. Dacă mesajul e salut, mulțumire, întrebare despre platformă → intent: "chat"
-4. Dacă utilizatorul rafineaza o cautare anterioara (ex: "mai ieftin", "in cluj", "doar apartamente") → combina cu contextul din history
+4. Dacă utilizatorul rafineaza o cautare anterioara (ex: "mai ieftin", "in cluj", "doar apartamente") → combina cu contextul din history și returnează intent: "search"
 5. Dacă mesajul cere PARERE / ANALIZA despre o mașină anume (ex: "ce parere ai despre Dacia Logan", "merită Golf 4", "e bun BMW X5", "analizează Skoda Octavia 2018", "ia iau sau nu", "merita cumparata") → intent: "auto_verdict"
+6. **CRITICAL**: Dacă utilizatorul cere "alte oferte", "alte variante", "mai arată-mi", "mai multe", "alte opțiuni", "altceva", "alte anunțuri", "mai cauta" → intent: "search" cu ACELEAȘI filtre din conversația anterioară (din history). NU răspunde textual, caută efectiv în platformă.
 
 ## Ton și stil:
 - **Profesional și concis** — ca un consultant imobiliar/auto care știe ce face
@@ -147,7 +148,13 @@ User: "salut"
 → {"intent":"chat","message":"Salut! Spune-mi ce cauți și găsim împreună cel mai bun anunț.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
 
 User: "ce parere ai despre Dacia Logan 2015"
-→ {"intent":"auto_verdict","message":"","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}`
+→ {"intent":"auto_verdict","message":"","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
+
+[History: user căutase "apartament 2 camere Cluj"] User: "alte oferte" / "mai arată-mi" / "mai multe opțiuni"
+→ {"intent":"search","message":"Caut mai multe apartamente 2 camere în Cluj...","filters":{"product":"apartament 2 camere","city":"Cluj-Napoca","maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente-inchiriere","listingType":"inchiriere","keywords":["apartament","2 camere"]}}
+
+[History: user căutase "masina sub 5000 euro"] User: "altele" / "alte variante" / "mai cauta"
+→ {"intent":"search","message":"Caut mai multe autoturisme sub 5000€...","filters":{"product":"autoturism","city":null,"maxPrice":5000,"minPrice":null,"category":"auto","subcategory":"autoturisme","listingType":"vanzare","keywords":["masina","auto"]}}`
 
     // Construieste mesajele cu history validat (max ultimele 6 pentru context)
     const recentHistory = validHistory.slice(-6)
@@ -276,6 +283,10 @@ Structura răspunsului (respectă EXACT):
       const supabase = await createSupabaseServerClient()
       const f = parsed.filters
 
+      // Detectează dacă e cerere de "alte oferte" — adaugă offset aleator pentru varietate
+      const isMoreRequest = /alte|altele|altceva|mai mult|mai arat|mai caut|mai vezi|alte variante|alte optiuni|alte oferte/i.test(message)
+      const randomOffset = isMoreRequest ? Math.floor(Math.random() * 10) : 0
+
       // Construieste query de baza
       const buildQuery = (strict: boolean) => {
         let q = supabase
@@ -283,7 +294,7 @@ Structura răspunsului (respectă EXACT):
           .select('id, title, price, price_type, currency, city, images, created_at')
           .eq('status', 'activ')
           .order('created_at', { ascending: false })
-          .limit(6)
+          .range(randomOffset, randomOffset + 5)
 
         // Filtru categorie
         if (f.category) {
