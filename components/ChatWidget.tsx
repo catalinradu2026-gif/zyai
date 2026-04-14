@@ -43,6 +43,8 @@ function prepareForSpeech(text: string): string {
     .replace(/(\w)\/(\w)/g, '$1 $2')
     // Emojis si markdown
     .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+    .replace(/[\u{2600}-\u{27FF}]/gu, '')
+    .replace(/[\u{FE00}-\u{FEFF}]/gu, '')
     .replace(/[*_~`#]/g, '')
     .trim()
 }

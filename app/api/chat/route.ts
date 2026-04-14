@@ -105,6 +105,7 @@ Marketplace românesc de anunțuri — ca OLX dar cu AI. Utilizatorii pot cumpă
 2. Dacă mesajul e VAGUE sau GENERAL (ex: "ceva ieftin", "vreau sa cumpar") → intent: "clarify", pune o singură întrebare concisă
 3. Dacă mesajul e salut, mulțumire, întrebare despre platformă → intent: "chat"
 4. Dacă utilizatorul rafineaza o cautare anterioara (ex: "mai ieftin", "in cluj", "doar apartamente") → combina cu contextul din history
+5. Dacă mesajul cere PARERE / ANALIZA despre o mașină anume (ex: "ce parere ai despre Dacia Logan", "merită Golf 4", "e bun BMW X5", "analizează Skoda Octavia 2018", "ia iau sau nu", "merita cumparata") → intent: "auto_verdict"
 
 ## Ton și stil:
 - **Profesional și concis** — ca un consultant imobiliar/auto care știe ce face
@@ -118,7 +119,7 @@ Marketplace românesc de anunțuri — ca OLX dar cu AI. Utilizatorii pot cumpă
 
 ## Format răspuns (JSON strict, fără markdown):
 {
-  "intent": "search" | "chat" | "clarify",
+  "intent": "search" | "chat" | "clarify" | "auto_verdict",
   "message": "răspuns în română, scurt și direct",
   "filters": {
     "product": "ce cauta exact (null dacă chat/clarify)",
@@ -143,7 +144,10 @@ User: "ceva ieftin"
 → {"intent":"clarify","message":"Ce anume cauți? (apartament, mașină, job, telefon...)","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
 
 User: "salut"
-→ {"intent":"chat","message":"Salut! Spune-mi ce cauți și găsim împreună cel mai bun anunț.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}`
+→ {"intent":"chat","message":"Salut! Spune-mi ce cauți și găsim împreună cel mai bun anunț.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
+
+User: "ce parere ai despre Dacia Logan 2015"
+→ {"intent":"auto_verdict","message":"","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}`
 
     // Construieste mesajele cu history validat (max ultimele 6 pentru context)
     const recentHistory = validHistory.slice(-6)
@@ -173,7 +177,7 @@ User: "salut"
 
     // Parseaza raspunsul JSON de la Groq
     let parsed: {
-      intent: 'search' | 'chat' | 'clarify'
+      intent: 'search' | 'chat' | 'clarify' | 'auto_verdict'
       message: string
       filters: {
         product: string | null
@@ -194,6 +198,65 @@ User: "salut"
       return Response.json({
         type: 'chat',
         message: 'Sunt aici să te ajut! Spune-mi ce cauți — apartament, mașină, job, telefon...',
+      } satisfies ChatResponse)
+    }
+
+    // Intent "auto_verdict" — analiză expert mașină
+    if (parsed.intent === 'auto_verdict') {
+      const autoExpertPrompt = `Ești un expert auto profesionist, obiectiv și sincer, specializat pe piața românească second-hand.
+
+Rolul tău este să analizezi mașini și să oferi un "AI VERDICT" clar, scurt și util.
+
+Reguli stricte:
+- Fii SPECIFIC la problemele REALE ale modelului respectiv (nu generic)
+- Ține cont de piața românească: service, disponibilitate piese, prețuri uzuale OLX/autovit
+- Dacă sunt mai mulți ani/versiuni cu diferențe importante, menționează-le scurt
+- Maxim 280 cuvinte total
+- Vorbești DOAR în română, fără markdown, fără bold, fără asteriscuri
+- Folosește EXACT structura de mai jos, cu emoji-urile indicate
+
+Structura răspunsului (respectă EXACT):
+
+🔎 ANALIZĂ RAPIDĂ:
+- Tip mașină: [sedan/suv/break/hatchback/monovolum]
+- Puncte forte: [max 3, concret]
+- Probleme cunoscute: [max 3, specific acestui model]
+
+💸 COSTURI:
+- Consum: [oraș/drum ex: 9/6 L/100km]
+- Întreținere: [ieftină/medie/scumpă + motiv scurt]
+- Piese: [ușor de găsit și ieftine / medii / scumpe și rare]
+
+⚠️ RISCURI:
+- [2-3 riscuri specifice, concrete]
+
+🧠 AI VERDICT: [EXACT unul din: 🔥 MERITĂ / ⚖️ DEPINDE / ❌ NU MERITĂ]
+
+📊 SCOR FINAL: [număr]/10
+
+🗣 RECOMANDARE:
+[2-3 propoziții directe, ca pentru un prieten care vrea să cumpere această mașină în România]`
+
+      let verdictText = ''
+      try {
+        const verdictCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: autoExpertPrompt },
+            { role: 'user', content: message },
+          ],
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.3,
+          max_tokens: 700,
+        })
+        verdictText = verdictCompletion.choices[0].message.content || ''
+      } catch (e) {
+        console.error('auto_verdict groq error:', e)
+        verdictText = 'Nu am putut analiza mașina în acest moment. Încearcă din nou.'
+      }
+
+      return Response.json({
+        type: 'chat',
+        message: verdictText,
       } satisfies ChatResponse)
     }
 
