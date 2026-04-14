@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
+import ReactivateButton from '@/components/listings/ReactivateButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -182,6 +183,10 @@ export default async function MyListingsPage() {
                     categoryId={listing.category_id}
                     currentStatus={listing.status}
                   />
+
+                  {listing.status === 'vandut' && (
+                    <ReactivateButton listingId={listing.id} />
+                  )}
 
                   <DeleteListingButton id={listing.id} />
                 </div>
