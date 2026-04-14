@@ -64,7 +64,38 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  return { data: data ?? [], error: null, count: count || 0 }
+  // Query 2: anunțuri vandute din ultimele 24h — apar în feed cu badge SOLD
+  const { data: allSold } = await supabase
+    .from('listings')
+    .select(`id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`)
+    .eq('status', 'vandut')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const h24ago = Date.now() - 24 * 60 * 60 * 1000
+  const soldRecent = (allSold || []).filter((l: any) => {
+    const soldAt = l.metadata?.sold_at
+    if (!soldAt) return false
+    return new Date(soldAt).getTime() >= h24ago
+  })
+
+  const activeIds = new Set((data || []).map((l: any) => l.id))
+  const uniqueSold = soldRecent.filter((l: any) => !activeIds.has(l.id))
+
+  // Mixăm vandutele cu activele, sortat după data vânzării / publicării
+  const merged = [...(data || []), ...uniqueSold]
+    .sort((a: any, b: any) => {
+      const aTime = a.status === 'vandut' && a.metadata?.sold_at
+        ? new Date(a.metadata.sold_at).getTime()
+        : new Date(a.created_at).getTime()
+      const bTime = b.status === 'vandut' && b.metadata?.sold_at
+        ? new Date(b.metadata.sold_at).getTime()
+        : new Date(b.created_at).getTime()
+      return bTime - aTime
+    })
+    .slice(0, PAGE_SIZE)
+
+  return { data: merged, error: null, count: (count || 0) + uniqueSold.length }
 }
 
 export async function getListing(id: string) {
