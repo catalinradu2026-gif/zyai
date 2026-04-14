@@ -221,6 +221,8 @@ export default function ChatWidget() {
       recognitionRef.current?.stop()
       return
     }
+    // Gesture user activ — permite speech synthesis după
+    setUserInteracted(true)
     window.speechSynthesis?.cancel()
     const rec = new SR()
     rec.lang = 'ro-RO'
@@ -232,7 +234,6 @@ export default function ChatWidget() {
       const transcript = e.results[0][0].transcript
       setInput(transcript)
       setListening(false)
-      // Trimite automat după voce
       setTimeout(() => sendMessage(transcript), 100)
     }
     rec.onerror = () => setListening(false)
@@ -367,7 +368,23 @@ export default function ChatWidget() {
 
       setMessages((prev) => [...prev, botMessage])
       setHistory((prev) => [...prev, { role: 'user', content: userQuery }, { role: 'assistant', content: data.message }])
-      speakText(data.message)
+
+      // Răspuns vocal natural
+      if (data.type === 'search' && data.listings && data.listings.length > 0) {
+        const n = data.listings.length
+        const first = data.listings[0]
+        const price = first.price
+          ? `${first.price.toLocaleString('ro-RO')} ${first.currency}`
+          : 'preț negociabil'
+        const phrases = [
+          `Am găsit ${n} oferte pentru tine. Prima opțiune este ${first.title}, la ${price}, în ${first.city}. Apasă pe card pentru detalii.`,
+          `Bună alegere! Am ${n} anunțuri potrivite. Îți recomand în special ${first.title} la ${price}. Hai să analizăm împreună.`,
+          `Am căutat pentru tine și am găsit ${n} oferte. Cea mai bună opțiune pare să fie ${first.title} din ${first.city}.`,
+        ]
+        speakText(phrases[Math.floor(Math.random() * phrases.length)])
+      } else {
+        speakText(data.message)
+      }
     } catch (error) {
       console.error('Error:', error)
       setMessages((prev) => [...prev, {
