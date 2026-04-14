@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createListing } from '@/lib/actions/listings'
+import { createListing, updateListing } from '@/lib/actions/listings'
 import {
   AUTO_BRANDS, AUTO_MODELS, CAROSERIE_TYPES, YEARS,
   TRUCK_BRANDS, TRUCK_BODY_TYPES, UTILITY_BRANDS,
@@ -188,12 +188,28 @@ function ChipsField({ label, val, set, options }: { label: string; val: string; 
   )
 }
 
+// ─── Category reverse map ─────────────────────────────────────
+const CAT_SLUG_BY_ID: Record<number, string> = {
+  1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii',
+  5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport',
+  9: 'animale', 10: 'mama-copilul',
+}
+
+interface ListingFormProps {
+  initialData?: any // existing listing for edit mode
+}
+
 // ════════════════════════════════════════════════════════════════
-export default function ListingForm() {
-  const [step, setStep] = useState(0)
+export default function ListingForm({ initialData }: ListingFormProps = {}) {
+  const isEditMode = !!initialData?.id
+  const initMeta = initialData?.metadata || {}
+  const initMainCat = initialData ? (CAT_SLUG_BY_ID[initialData.category_id] || '') : ''
+  const initSubCat = initMeta.subcategory || ''
+
+  const [step, setStep] = useState(isEditMode ? 1 : 0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<string[]>(initialData?.images || [])
 
   // AI Image Analysis
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
@@ -212,97 +228,97 @@ export default function ListingForm() {
   } | null>(null)
 
   // Category
-  const [mainCat, setMainCat] = useState('')
-  const [subCat, setSubCat] = useState('')
+  const [mainCat, setMainCat] = useState(initMainCat)
+  const [subCat, setSubCat] = useState(initSubCat)
 
   // Common
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [city, setCity] = useState('')
-  const [price, setPrice] = useState('')
-  const [priceType, setPriceType] = useState('fix')
-  const [currency, setCurrency] = useState('EUR')
+  const [title, setTitle] = useState(initialData?.title || '')
+  const [description, setDescription] = useState(initialData?.description || '')
+  const [city, setCity] = useState(initialData?.city || '')
+  const [price, setPrice] = useState(initialData?.price ? String(initialData.price) : '')
+  const [priceType, setPriceType] = useState(initialData?.price_type || 'fix')
+  const [currency, setCurrency] = useState(initialData?.currency || 'EUR')
 
   // AUTO - common
-  const [brand, setBrand] = useState('')
-  const [model, setModel] = useState('')
-  const [fuel, setFuel] = useState('')
-  const [year, setYear] = useState('')
-  const [km, setKm] = useState('')
-  const [bodyType, setBodyType] = useState('')
-  const [sellerType, setSellerType] = useState('')
-  const [leasing, setLeasing] = useState(false)
-  const [engineSize, setEngineSize] = useState('')
-  const [power, setPower] = useState('')
-  const [gearbox, setGearbox] = useState('')
-  const [color, setColor] = useState('')
-  const [doorsNr, setDoorsNr] = useState('')
-  const [condition, setCondition] = useState('')
+  const [brand, setBrand] = useState(initMeta.brand || '')
+  const [model, setModel] = useState(initMeta.model || '')
+  const [fuel, setFuel] = useState(initMeta.fuelType || '')
+  const [year, setYear] = useState(initMeta.year || '')
+  const [km, setKm] = useState(initMeta.mileage || '')
+  const [bodyType, setBodyType] = useState(initMeta.bodyType || '')
+  const [sellerType, setSellerType] = useState(initMeta.sellerType || '')
+  const [leasing, setLeasing] = useState(initMeta.leasing || false)
+  const [engineSize, setEngineSize] = useState(initMeta.engineSize || '')
+  const [power, setPower] = useState(initMeta.power || '')
+  const [gearbox, setGearbox] = useState(initMeta.gearbox || '')
+  const [color, setColor] = useState(initMeta.color || '')
+  const [doorsNr, setDoorsNr] = useState(initMeta.doorsNr || '')
+  const [condition, setCondition] = useState(initMeta.condition || '')
   // AUTO - autoutilitare
-  const [maxMass, setMaxMass] = useState('')
-  const [cargo, setCargo] = useState('')
-  const [seatsNr, setSeatsNr] = useState('')
+  const [maxMass, setMaxMass] = useState(initMeta.maxMass || '')
+  const [cargo, setCargo] = useState(initMeta.cargo || '')
+  const [seatsNr, setSeatsNr] = useState(initMeta.seatsNr || '')
   // AUTO - piese
-  const [pieseCategory, setPieseCategory] = useState('')
-  const [pieseStare, setPieseStare] = useState('')
+  const [pieseCategory, setPieseCategory] = useState(initMeta.pieseCategory || '')
+  const [pieseStare, setPieseStare] = useState(initMeta.pieseStare || '')
   // AUTO - agricole
-  const [agricolType, setAgricolType] = useState('')
-  const [agricolBrand, setAgricolBrand] = useState('')
-  const [hp, setHp] = useState('')
-  const [workHours, setWorkHours] = useState('')
+  const [agricolType, setAgricolType] = useState(initMeta.agricolType || '')
+  const [agricolBrand, setAgricolBrand] = useState(initMeta.agricolBrand || '')
+  const [hp, setHp] = useState(initMeta.hp || '')
+  const [workHours, setWorkHours] = useState(initMeta.workHours || '')
   // AUTO - remorci
-  const [remorcaType, setRemorcaType] = useState('')
-  const [remorcaCapacity, setRemorcaCapacity] = useState('')
+  const [remorcaType, setRemorcaType] = useState(initMeta.remorcaType || '')
+  const [remorcaCapacity, setRemorcaCapacity] = useState(initMeta.remorcaCapacity || '')
   // AUTO - camioane
-  const [truckBrand, setTruckBrand] = useState('')
-  const [truckModel, setTruckModel] = useState('')
-  const [truckBody, setTruckBody] = useState('')
-  const [truckTone, setTruckTone] = useState('')
-  const [truckOsii, setTruckOsii] = useState('')
+  const [truckBrand, setTruckBrand] = useState(initMeta.truckBrand || '')
+  const [truckModel, setTruckModel] = useState(initMeta.truckModel || '')
+  const [truckBody, setTruckBody] = useState(initMeta.truckBody || '')
+  const [truckTone, setTruckTone] = useState(initMeta.truckTone || '')
+  const [truckOsii, setTruckOsii] = useState(initMeta.truckOsii || '')
   // AUTO - utilaje constructii
-  const [utilajType, setUtilajType] = useState('')
-  const [utilajBrand, setUtilajBrand] = useState('')
+  const [utilajType, setUtilajType] = useState(initMeta.utilajType || '')
+  const [utilajBrand, setUtilajBrand] = useState(initMeta.utilajBrand || '')
   // MOTO
-  const [motoBrand, setMotoBrand] = useState('')
-  const [motoType, setMotoType] = useState('')
-  const [motoCC, setMotoCC] = useState('')
+  const [motoBrand, setMotoBrand] = useState(initMeta.motoBrand || '')
+  const [motoType, setMotoType] = useState(initMeta.motoType || '')
+  const [motoCC, setMotoCC] = useState(initMeta.motoCC || '')
 
   // IMOBILIARE
-  const [tipTranzactie, setTipTranzactie] = useState('')
-  const [tipApartament, setTipApartament] = useState('')
-  const [compartimentare, setCompartimentare] = useState('')
-  const [etaj, setEtaj] = useState('')
-  const [suprafata, setSuprafata] = useState('')
-  const [suprafataTeren, setSuprafataTeren] = useState('')
-  const [stareImob, setStareImob] = useState('')
-  const [anConstructie, setAnConstructie] = useState('')
-  const [tipCasa, setTipCasa] = useState('')
-  const [nrCamere, setNrCamere] = useState('')
-  const [nrBai, setNrBai] = useState('')
-  const [tipTeren, setTipTeren] = useState('')
-  const [tipSpatiu, setTipSpatiu] = useState('')
-  const [facilitati, setFacilitati] = useState<string[]>([])
+  const [tipTranzactie, setTipTranzactie] = useState(initMeta.tipTranzactie || '')
+  const [tipApartament, setTipApartament] = useState(initMeta.tipApartament || '')
+  const [compartimentare, setCompartimentare] = useState(initMeta.compartimentare || '')
+  const [etaj, setEtaj] = useState(initMeta.etaj || '')
+  const [suprafata, setSuprafata] = useState(initMeta.suprafata || '')
+  const [suprafataTeren, setSuprafataTeren] = useState(initMeta.suprafataTeren || '')
+  const [stareImob, setStareImob] = useState(initMeta.stareImob || '')
+  const [anConstructie, setAnConstructie] = useState(initMeta.anConstructie || '')
+  const [tipCasa, setTipCasa] = useState(initMeta.tipCasa || '')
+  const [nrCamere, setNrCamere] = useState(initMeta.nrCamere || '')
+  const [nrBai, setNrBai] = useState(initMeta.nrBai || '')
+  const [tipTeren, setTipTeren] = useState(initMeta.tipTeren || '')
+  const [tipSpatiu, setTipSpatiu] = useState(initMeta.tipSpatiu || '')
+  const [facilitati, setFacilitati] = useState<string[]>(initMeta.facilitati || [])
 
   // JOBURI
-  const [jobDomeniu, setJobDomeniu] = useState('')
-  const [jobCompanie, setJobCompanie] = useState('')
-  const [tipContract, setTipContract] = useState('')
-  const [regimMunca, setRegimMunca] = useState('')
-  const [nivelExperienta, setNivelExperienta] = useState('')
-  const [nivelStudii, setNivelStudii] = useState('')
-  const [salariuFrom, setSalariuFrom] = useState('')
-  const [salariuTo, setSalariuTo] = useState('')
-  const [beneficii, setBeneficii] = useState<string[]>([])
-  const [itStack, setItStack] = useState<string[]>([])
+  const [jobDomeniu, setJobDomeniu] = useState(initMeta.jobDomeniu || '')
+  const [jobCompanie, setJobCompanie] = useState(initMeta.jobCompanie || '')
+  const [tipContract, setTipContract] = useState(initMeta.tipContract || '')
+  const [regimMunca, setRegimMunca] = useState(initMeta.regimMunca || '')
+  const [nivelExperienta, setNivelExperienta] = useState(initMeta.nivelExperienta || '')
+  const [nivelStudii, setNivelStudii] = useState(initMeta.nivelStudii || '')
+  const [salariuFrom, setSalariuFrom] = useState(initMeta.salariuFrom || '')
+  const [salariuTo, setSalariuTo] = useState(initMeta.salariuTo || '')
+  const [beneficii, setBeneficii] = useState<string[]>(initMeta.beneficii || [])
+  const [itStack, setItStack] = useState<string[]>(initMeta.itStack || [])
 
   // SERVICII
-  const [serviciiCategorie, setServiciiCategorie] = useState('')
-  const [disponibilitate, setDisponibilitate] = useState('')
-  const [zona, setZona] = useState('')
-  const [experienta, setExperienta] = useState('')
+  const [serviciiCategorie, setServiciiCategorie] = useState(initMeta.serviciiCategorie || '')
+  const [disponibilitate, setDisponibilitate] = useState(initMeta.disponibilitate || '')
+  const [zona, setZona] = useState(initMeta.zona || '')
+  const [experienta, setExperienta] = useState(initMeta.experienta || '')
 
   // Contact
-  const [contactPhone, setContactPhone] = useState('')
+  const [contactPhone, setContactPhone] = useState(initMeta.contactPhone || '')
 
   const availableModels = brand && AUTO_MODELS[brand] ? AUTO_MODELS[brand] : []
   const subs = SUBS[mainCat] || []
@@ -404,7 +420,7 @@ export default function ListingForm() {
     if (step === 0) {
       setStep(1); return
     }
-    if (step === 1) {
+    if (step === 1 && !isEditMode) {
       if (!mainCat) { setError('Alege o categorie'); return }
       if (!title || !description) { setError('Completează titlul și descrierea'); return }
       setError(''); setStep(2); return
@@ -412,31 +428,122 @@ export default function ListingForm() {
 
     setLoading(true); setError('')
     try {
-      const result = await createListing({
-        title, description,
-        categorySlug: subCat || mainCat,
-        categoryName: subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name || mainCat,
-        city, county: city,
-        price: price ? Number(price) : undefined,
-        priceType, currency, images,
-        brand: brand || truckBrand || motoBrand || undefined,
-        model: model || truckModel || undefined,
-        fuelType: fuel || undefined,
-        year: year || undefined,
-        mileage: km || undefined,
-        bodyType: bodyType || truckBody || undefined,
-        sellerType: sellerType || undefined,
-        leasing,
-        gearbox: gearbox || undefined,
-        power: power || undefined,
-        condition: condition || undefined,
-        contactPhone: contactPhone || undefined,
-      })
-      if (result?.error) {
-        setError(result.error)
-        setLoading(false)
-      } else if (result?.id) {
-        window.location.href = `/anunt/${result.id}`
+      if (isEditMode) {
+        // Build full metadata for edit
+        const isAuto = mainCat === 'auto'
+        const metadata: Record<string, any> = {}
+        if (subCat) metadata.subcategory = subCat
+        if (isAuto) {
+          if (brand || truckBrand || motoBrand) metadata.brand = brand || truckBrand || motoBrand
+          if (model || truckModel) metadata.model = model || truckModel
+          if (fuel) metadata.fuelType = fuel
+          if (year) metadata.year = year
+          if (km) metadata.mileage = km
+          if (gearbox) metadata.gearbox = gearbox
+          if (power) metadata.power = power
+          if (condition) metadata.condition = condition
+          if (bodyType || truckBody) metadata.bodyType = bodyType || truckBody
+          if (sellerType) metadata.sellerType = sellerType
+          if (leasing) metadata.leasing = leasing
+          if (engineSize) metadata.engineSize = engineSize
+          if (color) metadata.color = color
+          if (doorsNr) metadata.doorsNr = doorsNr
+          if (maxMass) metadata.maxMass = maxMass
+          if (cargo) metadata.cargo = cargo
+          if (seatsNr) metadata.seatsNr = seatsNr
+          if (pieseCategory) metadata.pieseCategory = pieseCategory
+          if (pieseStare) metadata.pieseStare = pieseStare
+          if (agricolType) metadata.agricolType = agricolType
+          if (agricolBrand) metadata.agricolBrand = agricolBrand
+          if (hp) metadata.hp = hp
+          if (workHours) metadata.workHours = workHours
+          if (remorcaType) metadata.remorcaType = remorcaType
+          if (remorcaCapacity) metadata.remorcaCapacity = remorcaCapacity
+          if (truckTone) metadata.truckTone = truckTone
+          if (truckOsii) metadata.truckOsii = truckOsii
+          if (utilajType) metadata.utilajType = utilajType
+          if (utilajBrand) metadata.utilajBrand = utilajBrand
+          if (motoBrand) metadata.motoBrand = motoBrand
+          if (motoType) metadata.motoType = motoType
+          if (motoCC) metadata.motoCC = motoCC
+        }
+        if (mainCat === 'imobiliare') {
+          if (tipTranzactie) metadata.tipTranzactie = tipTranzactie
+          if (tipApartament) metadata.tipApartament = tipApartament
+          if (compartimentare) metadata.compartimentare = compartimentare
+          if (etaj) metadata.etaj = etaj
+          if (suprafata) metadata.suprafata = suprafata
+          if (suprafataTeren) metadata.suprafataTeren = suprafataTeren
+          if (stareImob) metadata.stareImob = stareImob
+          if (anConstructie) metadata.anConstructie = anConstructie
+          if (tipCasa) metadata.tipCasa = tipCasa
+          if (nrCamere) metadata.nrCamere = nrCamere
+          if (nrBai) metadata.nrBai = nrBai
+          if (tipTeren) metadata.tipTeren = tipTeren
+          if (tipSpatiu) metadata.tipSpatiu = tipSpatiu
+          if (facilitati.length) metadata.facilitati = facilitati
+        }
+        if (mainCat === 'joburi') {
+          if (jobDomeniu) metadata.jobDomeniu = jobDomeniu
+          if (jobCompanie) metadata.jobCompanie = jobCompanie
+          if (tipContract) metadata.tipContract = tipContract
+          if (regimMunca) metadata.regimMunca = regimMunca
+          if (nivelExperienta) metadata.nivelExperienta = nivelExperienta
+          if (nivelStudii) metadata.nivelStudii = nivelStudii
+          if (salariuFrom) metadata.salariuFrom = salariuFrom
+          if (salariuTo) metadata.salariuTo = salariuTo
+          if (beneficii.length) metadata.beneficii = beneficii
+          if (itStack.length) metadata.itStack = itStack
+        }
+        if (mainCat === 'servicii') {
+          if (serviciiCategorie) metadata.serviciiCategorie = serviciiCategorie
+          if (disponibilitate) metadata.disponibilitate = disponibilitate
+          if (zona) metadata.zona = zona
+          if (experienta) metadata.experienta = experienta
+        }
+        if (contactPhone) metadata.contactPhone = contactPhone
+        // Preserve sold_at if listing was vandut (shouldn't happen from edit but just in case)
+        if (initialData?.metadata?.sold_at) metadata.sold_at = initialData.metadata.sold_at
+
+        const result = await updateListing(initialData.id, {
+          title, description, city, county: city,
+          price: price ? Number(price) : undefined,
+          priceType, currency, images, metadata,
+          categorySlug: subCat || mainCat,
+        })
+        if (result?.error) {
+          setError(result.error)
+          setLoading(false)
+        } else if (result?.id) {
+          window.location.href = `/anunt/${initialData.id}`
+        }
+      } else {
+        const result = await createListing({
+          title, description,
+          categorySlug: subCat || mainCat,
+          categoryName: subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name || mainCat,
+          city, county: city,
+          price: price ? Number(price) : undefined,
+          priceType, currency, images,
+          brand: brand || truckBrand || motoBrand || undefined,
+          model: model || truckModel || undefined,
+          fuelType: fuel || undefined,
+          year: year || undefined,
+          mileage: km || undefined,
+          bodyType: bodyType || truckBody || undefined,
+          sellerType: sellerType || undefined,
+          leasing,
+          gearbox: gearbox || undefined,
+          power: power || undefined,
+          condition: condition || undefined,
+          contactPhone: contactPhone || undefined,
+        })
+        if (result?.error) {
+          setError(result.error)
+          setLoading(false)
+        } else if (result?.id) {
+          window.location.href = `/anunt/${result.id}`
+        }
       }
     } catch (err: any) {
       setError('Eroare la postare. Încearcă din nou.')
@@ -770,20 +877,24 @@ export default function ListingForm() {
     <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-6">
-          <h1 className="gradient-main-text" style={{ fontSize: '28px', fontWeight: 700 }}>Postează un anunț</h1>
+          <h1 className="gradient-main-text" style={{ fontSize: '28px', fontWeight: 700 }}>
+            {isEditMode ? 'Editează anunț' : 'Postează un anunț'}
+          </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
-            {step === 0 ? '✨ AI analizează poza ta automat' : `Pasul ${step} din 2`}
+            {isEditMode ? 'Modifică orice detaliu al anunțului tău' : step === 0 ? '✨ AI analizează poza ta automat' : `Pasul ${step} din 2`}
           </p>
         </div>
 
         {/* Progress */}
-        <div className="flex gap-2 mb-6">
-          {[0, 1, 2].map(s => (
-            <div key={s} className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
-              <div className="h-full transition-all duration-500 gradient-main" style={{ width: s <= step ? '100%' : '0%' }} />
-            </div>
-          ))}
-        </div>
+        {!isEditMode && (
+          <div className="flex gap-2 mb-6">
+            {[0, 1, 2].map(s => (
+              <div key={s} className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+                <div className="h-full transition-all duration-500 gradient-main" style={{ width: s <= step ? '100%' : '0%' }} />
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="rounded-2xl p-6 mb-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -1078,6 +1189,24 @@ export default function ListingForm() {
                       className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                   </div>
                 )}
+
+                {/* Imagini — doar în edit mode (step 2 le are în new mode) */}
+                {isEditMode && mainCat && (
+                  <div>
+                    {lbl('📷 Imagini (max 8)')}
+                    <ImageUploader onImagesChange={setImages} initialImages={images} />
+                  </div>
+                )}
+
+                {/* Contact — doar în edit mode */}
+                {isEditMode && mainCat && (
+                  <div>
+                    {lbl('📞 Telefon contact (opțional)')}
+                    <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
+                      placeholder="+40 723 123 456" style={ss} className={ic} />
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Dacă nu completezi, se folosește numărul din profil</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1113,7 +1242,13 @@ export default function ListingForm() {
 
             {/* Butoane */}
             <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-              {step > 0 && (
+              {isEditMode ? (
+                <a href={`/anunt/${initialData.id}`}
+                  className="px-6 py-2.5 rounded-xl font-semibold transition hover:scale-105"
+                  style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-card-hover)' }}>
+                  ← Anulare
+                </a>
+              ) : step > 0 && (
                 <button type="button" onClick={() => setStep(step - 1)}
                   className="px-6 py-2.5 rounded-xl font-semibold transition hover:scale-105"
                   style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-card-hover)' }}>
@@ -1129,12 +1264,19 @@ export default function ListingForm() {
                   {aiAnalyzing ? '⏳ Analizez...' : images.length > 0 ? 'Continuă →' : 'Sari peste →'}
                 </button>
               )}
-              {step === 1 && (
+              {step === 1 && !isEditMode && (
                 <button type="submit"
                   disabled={!mainCat || !title || !description}
                   className="flex-1 md:flex-none md:px-8 py-2.5 gradient-main text-white font-bold rounded-xl transition hover:scale-105 disabled:opacity-40"
                   style={{ boxShadow: 'var(--glow-purple)' }}>
                   Continuă →
+                </button>
+              )}
+              {step === 1 && isEditMode && (
+                <button type="submit" disabled={loading || !mainCat || !title || !description}
+                  className="flex-1 md:flex-none md:px-8 py-2.5 text-white font-bold rounded-xl transition hover:scale-105 disabled:opacity-40"
+                  style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
+                  {loading ? '⏳ Se salvează...' : '✓ Salvează modificări'}
                 </button>
               )}
               {step === 2 && (

@@ -119,6 +119,8 @@ export async function updateListing(
     priceType: string
     currency: string
     images: string[]
+    metadata?: Record<string, any>
+    categorySlug?: string
   }
 ) {
   try {
@@ -126,18 +128,22 @@ export async function updateListing(
     if (!user) return { error: 'Neautorizat' }
 
     const supabase = await createSupabaseServerClient()
+    const updateData: any = {
+      title: formData.title,
+      description: formData.description,
+      city: formData.city,
+      county: formData.county || formData.city,
+      price: formData.price || null,
+      price_type: formData.priceType,
+      currency: formData.currency,
+      images: formData.images,
+    }
+    if (formData.metadata) updateData.metadata = formData.metadata
+    if (formData.categorySlug) updateData.category_id = getCatId(formData.categorySlug)
+
     const { error } = await supabase
       .from('listings')
-      .update({
-        title: formData.title,
-        description: formData.description,
-        city: formData.city,
-        county: formData.county || formData.city,
-        price: formData.price || null,
-        price_type: formData.priceType,
-        currency: formData.currency,
-        images: formData.images,
-      })
+      .update(updateData)
       .eq('id', id)
       .eq('user_id', user.id)
 
