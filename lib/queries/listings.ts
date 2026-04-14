@@ -64,21 +64,26 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  // Query 2: anunțuri vandute recent (ultimele 7 zile) — se afișează cu badge SOLD
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: soldRecent } = await supabase
+  // Query 2: anunțuri vandute — filtru client-side după sold_at din metadata (7 zile)
+  const { data: allSold } = await supabase
     .from('listings')
     .select(
       `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`
     )
     .eq('status', 'vandut')
-    .gte('created_at', sevenDaysAgo)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(100)
+
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const soldRecent = (allSold || []).filter((l: any) => {
+    const soldAt = l.metadata?.sold_at
+    if (!soldAt) return true // dacă nu are sold_at, arată oricum (sold recent)
+    return new Date(soldAt).getTime() >= sevenDaysAgo
+  })
 
   // Merge: vandute recente + active, re-sort, păstrăm PAGE_SIZE
   const activeIds = new Set((data || []).map((l: any) => l.id))
-  const uniqueSold = (soldRecent || []).filter((l: any) => !activeIds.has(l.id))
+  const uniqueSold = soldRecent.filter((l: any) => !activeIds.has(l.id))
   const merged = [...(data || []), ...uniqueSold]
     .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, PAGE_SIZE)
