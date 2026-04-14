@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export type ListingFilters = {
   category?: string
@@ -72,11 +73,11 @@ export async function getListings(filters: ListingFilters = {}) {
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const h24ago = Date.now() - 24 * 60 * 60 * 1000
+  const h72ago = Date.now() - 72 * 60 * 60 * 1000
   const soldRecent = (allSold || []).filter((l: any) => {
     const soldAt = l.metadata?.sold_at
-    if (!soldAt) return false
-    return new Date(soldAt).getTime() >= h24ago
+    if (!soldAt) return true // fără sold_at → arată oricum (a fost marcat sold recent)
+    return new Date(soldAt).getTime() >= h72ago
   })
 
   const activeIds = new Set((data || []).map((l: any) => l.id))
@@ -122,9 +123,10 @@ export async function getListing(id: string) {
 }
 
 export async function getUserListings(userId: string) {
-  const supabase = await createSupabaseServerClient()
+  // Folosim admin client pentru a bypassa RLS și vedea toate statusurile (activ, vandut, inactiv)
+  const admin = createSupabaseAdmin()
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('listings')
     .select('*')
     .eq('user_id', userId)
