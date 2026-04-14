@@ -64,14 +64,15 @@ export async function getListings(filters: ListingFilters = {}) {
     return { data: null, error, count: 0 }
   }
 
-  // Query 2: anunțuri vandute recent (ultimele 24h) — se afișează cu badge SOLD
+  // Query 2: anunțuri vandute recent (ultimele 7 zile) — se afișează cu badge SOLD
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const { data: soldRecent } = await supabase
     .from('listings')
     .select(
       `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`
     )
     .eq('status', 'vandut')
-    .gte('metadata->>sold_at', oneDayAgo)
+    .gte('created_at', sevenDaysAgo)
     .order('created_at', { ascending: false })
     .limit(20)
 
