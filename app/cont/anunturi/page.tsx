@@ -164,31 +164,32 @@ export default async function MyListingsPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons — row on mobile, column on desktop */}
+                {/* Action Buttons */}
                 <div className="flex flex-row gap-2 mt-3 lg:mt-0 lg:flex-col lg:flex-shrink-0 lg:justify-start">
                   <Link href={`/anunt/${listing.id}`} className="flex-1 lg:flex-none lg:w-full">
-                    <Button variant="secondary" size="md" fullWidth>
-                      👁️ Vezi
-                    </Button>
+                    <Button variant="secondary" size="md" fullWidth>👁️ Vezi</Button>
                   </Link>
 
-                  <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
-                    <Button variant="secondary" size="md" fullWidth>
-                      ✏️ Editează
-                    </Button>
-                  </Link>
-
-                  <MarkAsSoldButton
-                    listingId={listing.id}
-                    categoryId={listing.category_id}
-                    currentStatus={listing.status}
-                  />
-
-                  {listing.status === 'vandut' && (
-                    <ReactivateButton listingId={listing.id} />
+                  {listing.status === 'vandut' ? (
+                    // SOLD — doar Reactivează + Șterge
+                    <>
+                      <ReactivateButton listingId={listing.id} />
+                      <DeleteListingButton id={listing.id} />
+                    </>
+                  ) : (
+                    // ACTIV — Edit + SOLD + Șterge
+                    <>
+                      <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
+                        <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
+                      </Link>
+                      <MarkAsSoldButton
+                        listingId={listing.id}
+                        categoryId={listing.category_id}
+                        currentStatus={listing.status}
+                      />
+                      <DeleteListingButton id={listing.id} />
+                    </>
                   )}
-
-                  <DeleteListingButton id={listing.id} />
                 </div>
               </div>
             )
