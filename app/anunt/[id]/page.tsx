@@ -16,7 +16,10 @@ import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
+import BidTimer from '@/components/listings/BidTimer'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
+
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -133,6 +136,39 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* ── Main Content ── */}
           <div className="lg:col-span-2 space-y-6">
 
+            {/* Bidding banner — visible on all devices ABOVE images */}
+            {listing.status === 'bidding' && m.bidding_end_time && (
+              <div className="rounded-2xl overflow-hidden"
+                style={{ border: '2px solid rgba(251,146,60,0.6)', boxShadow: '0 0 24px rgba(251,146,60,0.2)' }}>
+                <div className="px-5 py-3 flex items-center gap-3"
+                  style={{ background: 'linear-gradient(135deg, #ea580c, #f97316)' }}>
+                  <span className="text-white text-xl">🔥</span>
+                  <div>
+                    <p className="text-white font-black text-sm tracking-wide">LICITAȚIE FINALĂ ÎN CURS</p>
+                    <p className="text-white/80 text-xs">Vânzătorul a acceptat o ofertă — poți depăși cu mai mult</p>
+                  </div>
+                </div>
+                <div className="px-5 py-4 flex flex-wrap items-center gap-4"
+                  style={{ background: 'rgba(251,146,60,0.08)' }}>
+                  <div>
+                    <p className="text-xs uppercase font-semibold mb-0.5" style={{ color: '#fb923c' }}>Ofertă acceptată</p>
+                    <p className="text-2xl font-black" style={{ color: '#f97316' }}>
+                      {(m.current_highest_bid || listing.price || 0).toLocaleString('ro-RO')} {listing.currency}
+                    </p>
+                  </div>
+                  <div className="flex-1 text-right">
+                    <p className="text-xs uppercase font-semibold mb-0.5" style={{ color: 'var(--text-secondary)' }}>Timp rămas</p>
+                    <BidTimer endTime={m.bidding_end_time} />
+                  </div>
+                  <a href="#bid-panel"
+                    className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl font-bold text-sm text-white transition hover:scale-105"
+                    style={{ background: 'linear-gradient(135deg, #ea580c, #f97316)' }}>
+                    🔥 Oferă mai mult ↓
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* Image Gallery */}
             <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
               <div className="p-4">
@@ -235,7 +271,7 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
 
               {/* Contact Card */}
-              <div className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+              <div id="bid-panel" className="rounded-2xl p-6 space-y-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                 {/* Seller */}
                 <div className="pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <p className="text-xs uppercase font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Vânzător</p>
