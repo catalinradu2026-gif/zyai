@@ -3,7 +3,11 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import FavoriteButton from './FavoriteButton'
+import CompareButton from '@/components/compare/CompareButton'
+import ShareButton from './ShareButton'
 import BidTimer from './BidTimer'
+import { CompareProvider } from '@/components/compare/CompareContext'
+import CompareBar from '@/components/compare/CompareBar'
 
 interface AutoMeta {
   year?: string | null
@@ -47,164 +51,192 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
   if (!listings.length) return null
 
   return (
-    <section className="max-w-6xl mx-auto mb-16 px-4">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-          {subtitle && <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => scroll('left')}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-            aria-label="Stânga"
-          >
-            ←
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-            aria-label="Dreapta"
-          >
-            →
-          </button>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-3"
-        style={{
-          scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {listings.map((listing) => {
-          const displayPrice = listing.status === 'bidding' && listing.current_highest_bid
-            ? listing.current_highest_bid
-            : listing.price
-          const formattedPrice = displayPrice
-            ? `${displayPrice.toLocaleString('ro-RO')} ${listing.currency}`
-            : 'Negociabil'
-
-          const isAuto = listing.category === 'auto' || listing.category?.startsWith('auto')
-          const meta = listing.metadata as AutoMeta | null | undefined
-          const chips: { icon: string; label: string }[] = []
-          if (isAuto && meta) {
-            if (meta.year) chips.push({ icon: '📅', label: meta.year })
-            if (meta.mileage) chips.push({ icon: '🛣️', label: `${Number(meta.mileage).toLocaleString('ro-RO')} km` })
-            if (meta.fuelType) chips.push({ icon: '⛽', label: meta.fuelType })
-            if (meta.gearbox) chips.push({ icon: '⚙️', label: meta.gearbox })
-          }
-
-          return (
-            <Link
-              key={listing.id}
-              href={`/anunt/${listing.id}`}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0, width: '220px' }}
-              className="block"
+    <CompareProvider>
+      <section className="max-w-6xl mx-auto mb-16 px-4">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+            {subtitle && <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => scroll('left')}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
+              aria-label="Stânga"
             >
-              <div
-                className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer h-full"
-                style={{
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-subtle)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = 'var(--glow-blue)'
-                  e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none'
-                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
-                }}
+              ←
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
+              aria-label="Dreapta"
+            >
+              →
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-3"
+          style={{
+            scrollSnapType: 'x mandatory',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {listings.map((listing) => {
+            const displayPrice = listing.status === 'bidding' && listing.current_highest_bid
+              ? listing.current_highest_bid
+              : listing.price
+            const formattedPrice = displayPrice
+              ? `${displayPrice.toLocaleString('ro-RO')} ${listing.currency}`
+              : 'Negociabil'
+
+            const isAuto = listing.category === 'auto' || listing.category?.startsWith('auto')
+            const meta = listing.metadata as AutoMeta | null | undefined
+            const chips: { icon: string; label: string }[] = []
+            if (isAuto && meta) {
+              if (meta.year) chips.push({ icon: '📅', label: meta.year })
+              if (meta.mileage) chips.push({ icon: '🛣️', label: `${Number(meta.mileage).toLocaleString('ro-RO')} km` })
+              if (meta.fuelType) chips.push({ icon: '⛽', label: meta.fuelType })
+              if (meta.gearbox) chips.push({ icon: '⚙️', label: meta.gearbox })
+            }
+
+            const compareItem = {
+              id: listing.id,
+              title: listing.title,
+              price: listing.price,
+              priceType: 'fix',
+              currency: listing.currency,
+              city: listing.city,
+              image: listing.images?.[0],
+              category: listing.category,
+            }
+
+            return (
+              <Link
+                key={listing.id}
+                href={`/anunt/${listing.id}`}
+                style={{ scrollSnapAlign: 'start', flexShrink: 0, width: '220px' }}
+                className="block"
               >
-                {/* Image */}
-                <div className="relative h-36 overflow-hidden bg-gradient-to-br from-purple-700 to-blue-600 flex items-center justify-center">
-                  {listing.images?.[0] ? (
-                    <img src={listing.images[0]} alt={listing.title} className={`w-full h-full object-cover${listing.status === 'vandut' ? ' brightness-50' : ''}`} />
-                  ) : (
-                    <span className="text-white text-3xl opacity-50">📦</span>
-                  )}
-                  {listing.status === 'vandut' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="px-3 py-1.5 rounded-xl text-white font-black text-sm tracking-widest rotate-[-15deg]"
-                        style={{ background: 'rgba(220,38,38,0.92)', border: '2px solid rgba(255,255,255,0.3)' }}>
-                        VÂNDUT
-                      </div>
-                    </div>
-                  )}
-                  {listing.status === 'bidding' && (
-                    <div className="absolute top-2 left-2 flex flex-col gap-1 max-w-[calc(100%-16px)]">
-                      <div className="px-2 py-0.5 rounded-lg text-white font-black text-xs"
-                        style={{ background: 'rgba(234,88,12,0.92)', border: '1px solid rgba(255,255,255,0.3)' }}>
-                        🔥 LICITAȚIE
-                      </div>
-                      {listing.bidding_end_time && (
-                        <div className="px-2 py-0.5 rounded-lg text-xs font-bold"
-                          style={{ background: 'rgba(0,0,0,0.7)', color: '#fb923c' }}>
-                          <BidTimer endTime={listing.bidding_end_time} />
+                <div
+                  className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer h-full"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = 'var(--glow-blue)'
+                    e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none'
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                  }}
+                >
+                  {/* Image */}
+                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-purple-700 to-blue-600 flex items-center justify-center">
+                    {listing.images?.[0] ? (
+                      <img src={listing.images[0]} alt={listing.title} className={`w-full h-full object-cover${listing.status === 'vandut' ? ' brightness-50' : ''}`} />
+                    ) : (
+                      <span className="text-white text-3xl opacity-50">📦</span>
+                    )}
+                    {listing.status === 'vandut' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="px-3 py-1.5 rounded-xl text-white font-black text-sm tracking-widest rotate-[-15deg]"
+                          style={{ background: 'rgba(220,38,38,0.92)', border: '2px solid rgba(255,255,255,0.3)' }}>
+                          VÂNDUT
                         </div>
-                      )}
-                      {displayPrice && (
-                        <div className="px-2 py-0.5 rounded-lg text-xs font-bold truncate"
-                          style={{ background: 'rgba(0,0,0,0.75)', color: '#fde68a' }}>
-                          Vândut la {displayPrice.toLocaleString('ro-RO')} {listing.currency}
+                      </div>
+                    )}
+                    {listing.status === 'bidding' && (
+                      <div className="absolute top-2 left-2 flex flex-col gap-1 max-w-[calc(100%-16px)]">
+                        <div className="px-2 py-0.5 rounded-lg text-white font-black text-xs"
+                          style={{ background: 'rgba(234,88,12,0.92)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                          🔥 LICITAȚIE
                         </div>
-                      )}
+                        {listing.bidding_end_time && (
+                          <div className="px-2 py-0.5 rounded-lg text-xs font-bold"
+                            style={{ background: 'rgba(0,0,0,0.7)', color: '#fb923c' }}>
+                            <BidTimer endTime={listing.bidding_end_time} />
+                          </div>
+                        )}
+                        {displayPrice && (
+                          <div className="px-2 py-0.5 rounded-lg text-xs font-bold truncate"
+                            style={{ background: 'rgba(0,0,0,0.75)', color: '#fde68a' }}>
+                            Vândut la {displayPrice.toLocaleString('ro-RO')} {listing.currency}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Favorite — top right */}
+                    <span onClick={e => e.preventDefault()}>
+                      <FavoriteButton
+                        listingId={listing.id}
+                        userId={userId}
+                        initialFavorited={favoritedIds.includes(listing.id)}
+                        top="8px"
+                        bottom={undefined}
+                      />
+                    </span>
+
+                    {/* Compare — bottom left */}
+                    <div className="absolute bottom-2 left-2" onClick={e => e.preventDefault()}>
+                      <CompareButton item={compareItem} />
                     </div>
-                  )}
-                  <FavoriteButton
-                    listingId={listing.id}
-                    userId={userId}
-                    initialFavorited={favoritedIds.includes(listing.id)}
-                  />
-                </div>
 
-                {/* Content */}
-                <div className="p-3 flex flex-col gap-1.5">
-                  <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-blue-light transition-colors" style={{ color: 'var(--text-primary)' }}>
-                    {listing.title}
-                  </h3>
+                    {/* Share — bottom right */}
+                    <ShareButton url={`/anunt/${listing.id}`} title={listing.title} />
+                  </div>
 
-                  {listing.description && (
-                    <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                      {listing.description}
-                    </p>
-                  )}
+                  {/* Content */}
+                  <div className="p-3 flex flex-col gap-1.5">
+                    <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-blue-light transition-colors" style={{ color: 'var(--text-primary)' }}>
+                      {listing.title}
+                    </h3>
 
-                  {chips.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {chips.slice(0, 2).map((chip) => (
-                        <span
-                          key={chip.label}
-                          className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded"
-                          style={{
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
-                          {chip.icon} {chip.label}
-                        </span>
-                      ))}
+                    {listing.description && (
+                      <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                        {listing.description}
+                      </p>
+                    )}
+
+                    {chips.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {chips.slice(0, 2).map((chip) => (
+                          <span
+                            key={chip.label}
+                            className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded"
+                            style={{
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid var(--border-subtle)',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            {chip.icon} {chip.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-baseline justify-between gap-1">
+                      <span className="text-base font-black price-text">{formattedPrice}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{listing.city}</span>
                     </div>
-                  )}
-
-                  <div className="flex items-baseline justify-between gap-1">
-                    <span className="text-base font-black price-text">{formattedPrice}</span>
-                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{listing.city}</span>
                   </div>
                 </div>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
-    </section>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+      <CompareBar />
+    </CompareProvider>
   )
 }
