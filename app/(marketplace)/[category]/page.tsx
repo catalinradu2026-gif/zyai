@@ -1,7 +1,8 @@
 import { getListings } from '@/lib/queries/listings'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
-import { getCategoryBySlug } from '@/lib/constants/categories'
+import { getCategoryBySlug, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -48,10 +49,31 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     error = err
   }
 
+  // Fetch recent sold listings for same category (social proof — admin bypasses RLS)
+  let soldListings: any[] = []
+  if (!error) {
+    try {
+      const admin = createSupabaseAdmin()
+      const catId = getCategoryIdBySlug(category)
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+      let soldQ: any = admin
+        .from('listings')
+        .select('id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata')
+        .eq('status', 'vandut')
+        .gte('metadata->>sold_at', cutoff)
+      if (catId) soldQ = soldQ.eq('category_id', catId)
+      const { data } = await soldQ.order('created_at', { ascending: false }).limit(5)
+      soldListings = data ?? []
+    } catch { /* ignore */ }
+  }
+
   const subs = SUBCATEGORIES[category] || []
 
   const CATEGORY_SLUGS: Record<number, string> = { 1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii', 5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport', 9: 'animale', 10: 'mama-copilul' }
-  const mappedListings = listings.map((l: any) => ({
+  const activeIds = new Set(listings.map((l: any) => l.id))
+  const uniqueSold = soldListings.filter((l: any) => !activeIds.has(l.id))
+  const allListings = [...listings, ...uniqueSold]
+  const mappedListings = allListings.map((l: any) => ({
     ...l,
     category: l.category ?? CATEGORY_SLUGS[l.category_id] ?? undefined,
     metadata: l.metadata ?? null,

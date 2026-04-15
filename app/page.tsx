@@ -69,14 +69,16 @@ export default async function Home() {
       return data?.map((l: any) => l.title as string) ?? []
     })(),
     getListings({ page: 1 }),
-    // Anunțuri vandute recente — admin client bypass RLS (fără filtru updated_at)
+    // Anunțuri vandute recent (72h) — admin client bypass RLS, filtrat după sold_at din metadata
     (async () => {
       const admin = createSupabaseAdmin()
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
       const { data } = await admin
         .from('listings')
         .select('id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata')
         .eq('status', 'vandut')
-        .order('created_at', { ascending: false })
+        .gte('metadata->>sold_at', cutoff)
+        .order('metadata->>sold_at', { ascending: false })
         .limit(10)
       return data ?? []
     })(),
