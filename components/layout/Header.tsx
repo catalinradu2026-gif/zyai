@@ -30,11 +30,11 @@ export default async function Header() {
 
           <Link
             href="/anunt/nou"
-            className="flex items-center gap-1.5 px-4 py-2 font-semibold whitespace-nowrap transition-all duration-200 transform hover:scale-105 active:scale-95 gradient-main text-white text-sm"
+            className="flex items-center gap-1.5 px-4 py-2.5 font-semibold whitespace-nowrap transition-all duration-200 transform hover:scale-105 active:scale-95 gradient-main text-white text-sm"
             style={{ borderRadius: '100px', boxShadow: '0 0 20px rgba(139,92,246,0.4)' }}
           >
             <span>⚡</span>
-            <span className="hidden sm:inline">Postează</span>
+            <span>Postează</span>
           </Link>
 
           {/* Cont dropdown */}
