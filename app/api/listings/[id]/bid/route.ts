@@ -33,10 +33,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const admin = createSupabaseAdmin()
 
-    // Lock: re-read listing with current state
+    // Re-citim listing cu date complete
     const { data: listing } = await admin
       .from('listings')
-      .select('id, user_id, status, price, metadata')
+      .select('id, user_id, status, price, currency, title, metadata')
       .eq('id', id)
       .single()
 
@@ -45,7 +45,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (listing.status !== 'bidding') return Response.json({ error: 'Licitația nu este activă' }, { status: 400 })
 
     const meta = (listing.metadata as any) || {}
-    // Check timer
     const endTime = new Date(meta.bidding_end_time)
     if (Date.now() >= endTime.getTime()) {
       await finalizeBidding(admin, id)
@@ -57,13 +56,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return Response.json({ error: `Oferta minimă este ${minBid}` }, { status: 400 })
     }
 
-    // Get user name
+    // Profil cumpărător
     const { data: profile } = await admin
       .from('profiles')
-      .select('full_name')
+      .select('full_name, phone')
       .eq('id', user.id)
       .single()
     const userName = (profile as any)?.full_name || 'Utilizator'
+    const buyerPhone = (profile as any)?.phone || null
 
     // Insert bid
     const { error: bidErr } = await admin
@@ -72,13 +72,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (bidErr) return Response.json({ error: bidErr.message }, { status: 500 })
 
-    // Update listing current_highest_bid in metadata
+    // Update highest bid în metadata
     const { error: updateErr } = await admin
       .from('listings')
       .update({ metadata: { ...meta, current_highest_bid: Number(amount), bidding_winner_id: user.id } })
       .eq('id', id)
 
     if (updateErr) return Response.json({ error: updateErr.message }, { status: 500 })
+
+    // Notificare vânzător prin mesaj intern
+    const currency = (listing as any).currency || 'RON'
+    const title = (listing as any).title || 'anunțul tău'
+    const amountFormatted = Number(amount).toLocaleString('ro-RO')
+    const phoneText = buyerPhone ? ` Numărul lui: ${buyerPhone}.` : ''
+
+    const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".\n\nSună-l pentru o vizionare și decide dacă accepți prețul final.${phoneText}\n\n⚠️ Nu vinde fără vizionare — prețul final se stabilește față în față.`
+
+    await admin
+      .from('messages')
+      .insert({
+        listing_id: id,
+        sender_id: user.id,
+        receiver_id: listing.user_id,
+        content: sellerMessage,
+        read: false,
+      })
 
     return Response.json({ ok: true, amount: Number(amount) })
   } catch (err) {

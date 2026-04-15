@@ -81,7 +81,7 @@ export default function BidPanel({
       })
       const data = await res.json()
       if (data.ok) {
-        setSuccess(`Oferta de ${bidAmount.toLocaleString('ro-RO')} ${currency} a fost plasată! Vânzătorul va fi notificat.`)
+        setSuccess(`✅ Oferta de ${bidAmount.toLocaleString('ro-RO')} ${currency} a fost plasată! Vânzătorul a primit un mesaj — verificați secțiunea Mesaje pentru a vorbi direct cu el și a stabili vizionarea.`)
         setTopBid(bidAmount)
         setAmount('')
         fetchBids()
