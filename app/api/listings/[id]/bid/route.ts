@@ -110,13 +110,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".${phoneText}${emailText}\n\nSună-l pentru o vizionare și decide dacă accepți prețul final.\n\n⚠️ Prețul final se stabilește față în față, după vizionare.`
 
     // Trimite mesaj — ignorăm eroarea dacă FK-ul eșuează (bid-ul e deja salvat)
-    await admin.from('messages').insert({
-      listing_id: id,
-      sender_id: user.id,
-      receiver_id: listing.user_id,
-      content: sellerMessage,
-      read: false,
-    }).then(() => {}).catch(() => {})
+    try {
+      await admin.from('messages').insert({
+        listing_id: id,
+        sender_id: user.id,
+        receiver_id: listing.user_id,
+        content: sellerMessage,
+        read: false,
+      })
+    } catch { /* mesajul e opțional, bid-ul e deja salvat */ }
 
     return Response.json({ ok: true, amount: Number(amount) })
   } catch (err) {
