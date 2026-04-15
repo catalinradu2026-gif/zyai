@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { activateBidding } from '@/lib/actions/listings'
 
 interface Props {
   listingId: string
@@ -12,7 +12,6 @@ interface Props {
 const NO_BIDDING_CATEGORIES = [4] // Servicii
 
 export default function ActivateBiddingButton({ listingId, categoryId, fromSold = false }: Props) {
-  const router = useRouter()
   const [step, setStep] = useState<'idle' | 'select' | 'loading'>('idle')
   const [hours, setHours] = useState(2)
   const [errorMsg, setErrorMsg] = useState('')
@@ -22,21 +21,11 @@ export default function ActivateBiddingButton({ listingId, categoryId, fromSold 
   async function activate() {
     setStep('loading')
     setErrorMsg('')
-    try {
-      const res = await fetch('/api/listings/activate-bidding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId, durationHours: hours }),
-      })
-      const data = await res.json()
-      if (data.ok) {
-        window.location.href = `/anunt/${listingId}`
-      } else {
-        setErrorMsg(data.error || 'Eroare necunoscută')
-        setStep('select')
-      }
-    } catch (e) {
-      setErrorMsg('Eroare de conexiune')
+    const result = await activateBidding(listingId, hours)
+    if (result.ok) {
+      window.location.href = `/anunt/${listingId}`
+    } else {
+      setErrorMsg(result.error || 'Eroare necunoscută')
       setStep('select')
     }
   }

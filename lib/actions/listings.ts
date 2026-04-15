@@ -179,3 +179,54 @@ export async function deleteListing(id: string) {
     return { error: err?.message || 'Eroare neașteptată' }
   }
 }
+
+export async function activateBidding(listingId: string, durationHours: number) {
+  try {
+    const user = await getUser()
+    if (!user) return { error: 'Neautorizat' }
+
+    const hours = Math.min(Math.max(Number(durationHours), 1), 6)
+    const admin = createSupabaseAdmin()
+
+    const { data: listing } = await admin
+      .from('listings')
+      .select('id, user_id, status, price, metadata')
+      .eq('id', listingId)
+      .single()
+
+    if (!listing || listing.user_id !== user.id) return { error: 'Nu ai permisiunea' }
+
+    if (listing.status === 'bidding') {
+      const existingMeta = (listing.metadata as any) || {}
+      const endTime = new Date(existingMeta.bidding_end_time || 0)
+      if (Date.now() < endTime.getTime()) {
+        return { error: 'Licitația e deja activă' }
+      }
+    }
+
+    const biddingEndTime = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+    const currentMeta = (listing.metadata as any) || {}
+
+    const { error } = await admin
+      .from('listings')
+      .update({
+        status: 'bidding',
+        metadata: {
+          ...currentMeta,
+          bidding_activated_at: new Date().toISOString(),
+          bidding_end_time: biddingEndTime,
+          current_highest_bid: listing.price || 0,
+        },
+      })
+      .eq('id', listingId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath(`/anunt/${listingId}`)
+    revalidatePath('/cont/anunturi')
+    return { ok: true, biddingEndTime }
+  } catch (err: any) {
+    console.error('activateBidding error:', err)
+    return { error: err?.message || 'Eroare neașteptată' }
+  }
+}
