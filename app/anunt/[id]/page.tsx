@@ -293,15 +293,42 @@ export default async function ListingDetailPage({ params }: Props) {
 
                 {/* Actions */}
                 {listing.status === 'bidding' ? (
-                  // LICITAȚIE — BidPanel pentru toți
-                  <BidPanel
-                    listingId={id}
-                    currentHighestBid={m.current_highest_bid || listing.price || 0}
-                    biddingEndTime={m.bidding_end_time}
-                    currency={listing.currency ?? 'EUR'}
-                    isOwner={!!isOwner}
-                    userId={user?.id}
-                  />
+                  // LICITAȚIE — BidPanel + contact vânzător pentru cumpărători
+                  <div className="space-y-3">
+                    <BidPanel
+                      listingId={id}
+                      currentHighestBid={m.current_highest_bid || listing.price || 0}
+                      biddingEndTime={m.bidding_end_time}
+                      currency={listing.currency ?? 'EUR'}
+                      isOwner={!!isOwner}
+                      userId={user?.id}
+                    />
+                    {!isOwner && (
+                      <div className="pt-2 space-y-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <p className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Contact vânzător</p>
+                        {canContact && (
+                          <>
+                            <Link href={`/cont/mesaje/${listing.id}?user=${listing.user_id}`} className="w-full block">
+                              <Button variant="primary" size="lg" fullWidth icon="💬">Trimite mesaj</Button>
+                            </Link>
+                            {contactPhone && (
+                              <a href={`https://wa.me/${contactPhone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
+                                target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition hover:scale-105"
+                                style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ADE80' }}>
+                                📱 WhatsApp
+                              </a>
+                            )}
+                            {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
+                          </>
+                        )}
+                        {needsLogin && (
+                          <Link href={`/login?next=/anunt/${id}`} className="w-full block">
+                            <Button variant="primary" size="lg" fullWidth>Conectare pentru contact</Button>
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 ) : listing.status === 'vandut' && !isOwner ? (
                   // VÂNDUT — cumpărătorul vede datele de contact normale ale vânzătorului
                   <div className="space-y-2">
