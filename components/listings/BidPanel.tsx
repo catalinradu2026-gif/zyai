@@ -8,6 +8,7 @@ interface Bid {
   id: string
   amount: number
   user_name: string
+  user_id: string
   created_at: string
 }
 
@@ -234,21 +235,55 @@ export default function BidPanel({
           </a>
         )}
 
-        {/* Owner message */}
+        {/* Owner view — cine a licitat + contact direct */}
         {isOwner && showBidding && (
-          <div className="rounded-xl px-4 py-3 text-center"
-            style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
-            <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
-              Ești proprietarul acestui anunț
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-              Câștigătorul cu oferta cea mai mare va fi contactat la final.
-            </p>
+          <div className="space-y-2">
+            <div className="rounded-xl px-4 py-3"
+              style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+              <p className="text-sm font-bold mb-1" style={{ color: '#A78BFA' }}>
+                👤 Licitatori — contactează-i pentru vizionare
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Prețul final îl stabilești tu față în față, după vizionare.
+              </p>
+            </div>
+            {bids.length > 0 && (
+              <div className="space-y-1.5">
+                {bids.map((bid, i) => (
+                  <div key={bid.id} className="flex items-center justify-between gap-2 py-2 px-3 rounded-xl"
+                    style={{
+                      background: i === 0 ? 'rgba(251,146,60,0.1)' : 'var(--bg-card-hover)',
+                      border: `1px solid ${i === 0 ? 'rgba(251,146,60,0.4)' : 'var(--border-subtle)'}`,
+                    }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate" style={{ color: i === 0 ? '#fb923c' : 'var(--text-primary)' }}>
+                        {i === 0 ? '🥇 ' : `#${i + 1} `}{bid.user_name}
+                      </p>
+                      <p className="text-sm font-black" style={{ color: i === 0 ? '#f97316' : 'var(--text-primary)' }}>
+                        {bid.amount.toLocaleString('ro-RO')} {currency}
+                      </p>
+                    </div>
+                    <a
+                      href={`/cont/mesaje/${listingId}?user=${bid.user_id}`}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-white flex-shrink-0 transition hover:scale-105"
+                      style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+                    >
+                      💬 Scrie
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+            {bids.length === 0 && (
+              <p className="text-xs text-center py-2" style={{ color: 'var(--text-secondary)' }}>
+                Nicio ofertă încă — licitația e activă
+              </p>
+            )}
           </div>
         )}
 
-        {/* Bids history */}
-        {bids.length > 0 && (
+        {/* Bids history — doar pentru cumpărători */}
+        {!isOwner && bids.length > 0 && (
           <div>
             <p className="text-xs uppercase font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Istoricul ofertelor</p>
             <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">

@@ -8,7 +8,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const { data: bids, error } = await admin
     .from('bids')
-    .select('id, amount, user_name, created_at')
+    .select('id, amount, user_name, user_id, created_at')
     .eq('listing_id', id)
     .order('amount', { ascending: false })
     .limit(20)
