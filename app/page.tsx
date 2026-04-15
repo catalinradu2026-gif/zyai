@@ -111,8 +111,8 @@ export default async function Home() {
     category: CATEGORY_SLUGS[l.category_id] ?? undefined,
     metadata: l.metadata ?? null,
     created_at: l.created_at,
-    bidding_end_time: l.bidding_end_time ?? undefined,
-    current_highest_bid: l.current_highest_bid ?? undefined,
+    bidding_end_time: l.metadata?.bidding_end_time ?? l.bidding_end_time ?? undefined,
+    current_highest_bid: l.metadata?.current_highest_bid ?? l.current_highest_bid ?? undefined,
   })
 
   const activeListings = (dbListings ?? []).map(mapListing)

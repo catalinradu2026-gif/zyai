@@ -5,6 +5,7 @@ import Image from 'next/image'
 import FavoriteButton from './FavoriteButton'
 import CompareButton from '@/components/compare/CompareButton'
 import ShareButton from './ShareButton'
+import BidTimer from './BidTimer'
 
 interface AutoMeta {
   year?: string | null
@@ -30,6 +31,8 @@ interface ListingCardProps {
   userId?: string
   isFavorited?: boolean
   status?: string
+  biddingEndTime?: string
+  currentHighestBid?: number
 }
 
 export default function ListingCard({
@@ -47,12 +50,16 @@ export default function ListingCard({
   userId,
   isFavorited = false,
   status,
+  biddingEndTime,
+  currentHighestBid,
 }: ListingCardProps) {
   const isSold = status === 'vandut'
+  const isBidding = status === 'bidding'
   const firstImage = images?.[0]
+  const displayPrice = isBidding && currentHighestBid ? currentHighestBid : price
   const formattedPrice =
-    price && priceType !== 'gratuit'
-      ? `${price.toLocaleString('ro-RO')} ${currency}`
+    displayPrice && priceType !== 'gratuit'
+      ? `${displayPrice.toLocaleString('ro-RO')} ${currency}`
       : priceType === 'negociabil'
         ? 'Preț negociabil'
         : 'Gratuit'
@@ -123,8 +130,24 @@ export default function ListingCard({
             </div>
           )}
 
+          {/* Bidding badge + timer — top left */}
+          {status === 'bidding' && (
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              <div className="px-2 py-0.5 rounded-lg text-white font-black text-xs"
+                style={{ background: 'rgba(234,88,12,0.92)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                🔥 LICITAȚIE
+              </div>
+              {biddingEndTime && (
+                <div className="px-2 py-0.5 rounded-lg text-xs font-bold"
+                  style={{ background: 'rgba(0,0,0,0.7)', color: '#fb923c' }}>
+                  <BidTimer endTime={biddingEndTime} />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* New badge — top left */}
-          {isNew && !isSold && (
+          {isNew && !isSold && status !== 'bidding' && (
             <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
               Nou
             </div>

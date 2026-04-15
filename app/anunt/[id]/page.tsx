@@ -260,8 +260,8 @@ export default async function ListingDetailPage({ params }: Props) {
                   // LICITAȚIE — BidPanel pentru toți
                   <BidPanel
                     listingId={id}
-                    currentHighestBid={(l as any).current_highest_bid || listing.price || 0}
-                    biddingEndTime={(l as any).bidding_end_time}
+                    currentHighestBid={m.current_highest_bid || listing.price || 0}
+                    biddingEndTime={m.bidding_end_time}
                     currency={listing.currency ?? 'EUR'}
                     isOwner={!!isOwner}
                     userId={user?.id}

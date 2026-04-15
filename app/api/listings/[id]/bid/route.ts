@@ -36,7 +36,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Lock: re-read listing with current state
     const { data: listing } = await admin
       .from('listings')
-      .select('id, user_id, status, price, current_highest_bid, bidding_end_time')
+      .select('id, user_id, status, price, metadata')
       .eq('id', id)
       .single()
 
@@ -44,15 +44,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (listing.user_id === user.id) return Response.json({ error: 'Nu poți licita pe propriul anunț' }, { status: 400 })
     if (listing.status !== 'bidding') return Response.json({ error: 'Licitația nu este activă' }, { status: 400 })
 
+    const meta = (listing.metadata as any) || {}
     // Check timer
-    const endTime = new Date((listing as any).bidding_end_time)
+    const endTime = new Date(meta.bidding_end_time)
     if (Date.now() >= endTime.getTime()) {
-      // Auto-finalize
       await finalizeBidding(admin, id)
       return Response.json({ error: 'Licitația s-a încheiat' }, { status: 400 })
     }
 
-    const minBid = ((listing as any).current_highest_bid || listing.price || 0) + 1
+    const minBid = (meta.current_highest_bid || listing.price || 0) + 1
     if (Number(amount) < minBid) {
       return Response.json({ error: `Oferta minimă este ${minBid}` }, { status: 400 })
     }
@@ -72,10 +72,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (bidErr) return Response.json({ error: bidErr.message }, { status: 500 })
 
-    // Update listing current_highest_bid + winner
+    // Update listing current_highest_bid in metadata
     const { error: updateErr } = await admin
       .from('listings')
-      .update({ current_highest_bid: Number(amount), bidding_winner_id: user.id } as any)
+      .update({ metadata: { ...meta, current_highest_bid: Number(amount), bidding_winner_id: user.id } })
       .eq('id', id)
 
     if (updateErr) return Response.json({ error: updateErr.message }, { status: 500 })
@@ -90,7 +90,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 async function finalizeBidding(admin: any, listingId: string) {
   const { data: listing } = await admin
     .from('listings')
-    .select('status, bidding_winner_id, current_highest_bid, metadata')
+    .select('status, metadata')
     .eq('id', listingId)
     .single()
 
@@ -105,8 +105,8 @@ async function finalizeBidding(admin: any, listingId: string) {
         ...currentMeta,
         sold_at: new Date().toISOString(),
         sold_via: 'bidding',
-        winning_bid: listing.current_highest_bid,
-        winner_id: listing.bidding_winner_id,
+        winning_bid: currentMeta.current_highest_bid,
+        winner_id: currentMeta.bidding_winner_id,
       },
     })
     .eq('id', listingId)

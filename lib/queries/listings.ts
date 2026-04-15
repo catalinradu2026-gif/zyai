@@ -84,20 +84,20 @@ export async function getListing(id: string) {
   }
 
   // Auto-finalize expired bidding listings
-  if (data?.status === 'bidding' && (data as any).bidding_end_time) {
-    const endTime = new Date((data as any).bidding_end_time)
+  const meta = (data as any)?.metadata || {}
+  if (data?.status === 'bidding' && meta.bidding_end_time) {
+    const endTime = new Date(meta.bidding_end_time)
     if (Date.now() >= endTime.getTime()) {
-      const currentMeta = (data as any).metadata || {}
       await admin.from('listings').update({
         status: 'vandut',
         metadata: {
-          ...currentMeta,
+          ...meta,
           sold_at: new Date().toISOString(),
           sold_via: 'bidding',
-          winning_bid: (data as any).current_highest_bid,
-          winner_id: (data as any).bidding_winner_id,
+          winning_bid: meta.current_highest_bid,
+          winner_id: meta.bidding_winner_id,
         },
-      } as any).eq('id', id)
+      }).eq('id', id)
       // Return updated data
       const { data: updated } = await admin
         .from('listings')

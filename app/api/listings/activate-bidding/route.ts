@@ -35,10 +35,13 @@ export async function POST(req: Request) {
       .from('listings')
       .update({
         status: 'bidding',
-        bidding_end_time: biddingEndTime,
-        current_highest_bid: listing.price || 0,
-        metadata: { ...currentMeta, bidding_activated_at: new Date().toISOString() },
-      } as any)
+        metadata: {
+          ...currentMeta,
+          bidding_activated_at: new Date().toISOString(),
+          bidding_end_time: biddingEndTime,
+          current_highest_bid: listing.price || 0,
+        },
+      })
       .eq('id', listingId)
 
     if (error) return Response.json({ error: error.message }, { status: 500 })

@@ -15,6 +15,8 @@ interface Listing {
   category?: string
   metadata?: Record<string, any> | null
   status?: string
+  biddingEndTime?: string
+  currentHighestBid?: number
 }
 
 interface ListingGridProps {
@@ -63,6 +65,8 @@ export default function ListingGrid({ listings, loading, userId, favoritedIds = 
             userId={userId}
             isFavorited={favoritedIds.includes(listing.id)}
             status={listing.status}
+            biddingEndTime={listing.biddingEndTime ?? listing.metadata?.bidding_end_time}
+            currentHighestBid={listing.currentHighestBid ?? listing.metadata?.current_highest_bid}
           />
         ))}
       </div>
