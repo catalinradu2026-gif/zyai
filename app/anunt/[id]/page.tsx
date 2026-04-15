@@ -297,7 +297,7 @@ export default async function ListingDetailPage({ params }: Props) {
                     </div>
                     {listing.status === 'vandut' ? (
                       <>
-                        <MarkAsSoldButton listingId={id} categoryId={listing.category_id} currentStatus="vandut" />
+                        <ActivateBiddingButton listingId={id} categoryId={listing.category_id} fromSold />
                         <div className="flex gap-2">
                           <ReactivateButton listingId={id} />
                           <DeleteListingButton id={id} />

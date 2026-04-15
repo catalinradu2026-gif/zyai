@@ -24,8 +24,8 @@ export async function POST(req: Request) {
     if (!listing || listing.user_id !== user.id) {
       return Response.json({ error: 'Not allowed' }, { status: 403 })
     }
-    if (listing.status !== 'activ') {
-      return Response.json({ error: 'Listing not active' }, { status: 400 })
+    if (listing.status === 'bidding') {
+      return Response.json({ error: 'Licitația e deja activă' }, { status: 400 })
     }
 
     const biddingEndTime = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()

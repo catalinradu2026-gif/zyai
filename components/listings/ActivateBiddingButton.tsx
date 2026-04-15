@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation'
 interface Props {
   listingId: string
   categoryId: number
+  fromSold?: boolean
 }
 
 const NO_BIDDING_CATEGORIES = [4] // Servicii
 
-export default function ActivateBiddingButton({ listingId, categoryId }: Props) {
+export default function ActivateBiddingButton({ listingId, categoryId, fromSold = false }: Props) {
   const router = useRouter()
   const [step, setStep] = useState<'idle' | 'select' | 'loading'>('idle')
   const [hours, setHours] = useState(2)
@@ -78,7 +79,7 @@ export default function ActivateBiddingButton({ listingId, categoryId }: Props) 
     <button onClick={() => setStep('select')}
       className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition hover:scale-105 active:scale-95 w-full"
       style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.4)', color: '#fb923c' }}>
-      🔥 SOLD cu licitație
+      🔥 {fromSold ? 'Redeschide cu licitație' : 'SOLD cu licitație'}
     </button>
   )
 }
