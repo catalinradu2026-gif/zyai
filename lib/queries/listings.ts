@@ -1,4 +1,3 @@
-import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export type ListingFilters = {
@@ -12,14 +11,12 @@ export type ListingFilters = {
 }
 
 export async function getListings(filters: ListingFilters = {}) {
-  const supabase = await createSupabaseServerClient()
+  const admin = createSupabaseAdmin()
   const PAGE_SIZE = 20
   const page = filters.page ?? 1
 
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-
-  // Query 1: anunțuri active + în licitație
-  let q = supabase
+  // Query 1: anunțuri active + în licitație — admin client bypass RLS (bidding listings must be visible)
+  let q = admin
     .from('listings')
     .select(
       `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`,
