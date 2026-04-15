@@ -15,11 +15,13 @@ export default function ActivateBiddingButton({ listingId, categoryId, fromSold 
   const router = useRouter()
   const [step, setStep] = useState<'idle' | 'select' | 'loading'>('idle')
   const [hours, setHours] = useState(2)
+  const [errorMsg, setErrorMsg] = useState('')
 
   if (NO_BIDDING_CATEGORIES.includes(categoryId)) return null
 
   async function activate() {
     setStep('loading')
+    setErrorMsg('')
     try {
       const res = await fetch('/api/listings/activate-bidding', {
         method: 'POST',
@@ -28,10 +30,15 @@ export default function ActivateBiddingButton({ listingId, categoryId, fromSold 
       })
       const data = await res.json()
       if (data.ok) {
-        router.refresh()
+        router.push(`/anunt/${listingId}`)
+      } else {
+        setErrorMsg(data.error || 'Eroare necunoscută')
+        setStep('select')
       }
-    } catch { /* ignore */ }
-    finally { setStep('idle') }
+    } catch (e) {
+      setErrorMsg('Eroare de conexiune')
+      setStep('select')
+    }
   }
 
   if (step === 'select') {
@@ -57,12 +64,15 @@ export default function ActivateBiddingButton({ listingId, categoryId, fromSold 
             style={{ background: 'linear-gradient(135deg, #ea580c, #f97316)' }}>
             🔥 Activează {hours}h
           </button>
-          <button onClick={() => setStep('idle')}
+          <button onClick={() => { setStep('idle'); setErrorMsg('') }}
             className="px-3 py-2 rounded-xl text-xs transition"
             style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}>
             ✕
           </button>
         </div>
+        {errorMsg && (
+          <p className="text-xs font-semibold" style={{ color: '#f87171' }}>❌ {errorMsg}</p>
+        )}
       </div>
     )
   }
