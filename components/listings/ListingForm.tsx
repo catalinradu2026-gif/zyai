@@ -868,7 +868,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
         {entries.filter(([, v]) => v).map(([k, v]) => (
           <p key={k}><span className="font-semibold">{k}:</span> {v}</p>
         ))}
-        <p><span className="font-semibold">Imagini:</span> {images.length}/8</p>
+        <p><span className="font-semibold">Imagini:</span> {images.length}/1</p>
       </div>
     )
   }
@@ -1229,7 +1229,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                 {/* Adaugă mai multe imagini dacă doresc */}
                 <div>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>
-                    {images.length > 0 ? `📸 Ai ${images.length} imagine(i). Poți adăuga până la 8.` : 'Adaugă imagini pentru a atrage mai mulți cumpărători.'}
+                    {images.length > 0 ? `📸 Ai ${images.length} imagine (plan gratuit: 1 poză).` : 'Adaugă o imagine pentru a atrage mai mulți cumpărători.'}
                   </p>
                   <ImageUploader onImagesChange={setImages} initialImages={images} />
                 </div>
