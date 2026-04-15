@@ -39,16 +39,16 @@ export async function GET(request: NextRequest) {
   }
 
   if (data.user) {
-    // Creează profil dacă nu există (useri noi OAuth)
     try {
       const admin = createSupabaseAdmin()
       const { data: existingProfile } = await admin
         .from('profiles')
-        .select('id')
+        .select('id, phone')
         .eq('id', data.user.id)
         .single()
 
       if (!existingProfile) {
+        // User nou — creează profil și trimite la setup
         const fullName =
           data.user.user_metadata?.full_name ||
           data.user.user_metadata?.name ||
@@ -60,9 +60,20 @@ export async function GET(request: NextRequest) {
           phone: '',
           city: '',
         })
+        const setupUrl = new URL('/setup-profile', requestUrl.origin)
+        if (next !== '/') setupUrl.searchParams.set('next', next)
+        return NextResponse.redirect(setupUrl)
+      }
+
+      // User existent fără telefon — îl trimitem la setup-profile
+      const phone = (existingProfile as any)?.phone
+      if (!phone || phone.trim() === '') {
+        const setupUrl = new URL('/setup-profile', requestUrl.origin)
+        if (next !== '/') setupUrl.searchParams.set('next', next)
+        return NextResponse.redirect(setupUrl)
       }
     } catch (e) {
-      console.error('[auth/callback] profile creation error:', e)
+      console.error('[auth/callback] profile error:', e)
     }
   }
 
