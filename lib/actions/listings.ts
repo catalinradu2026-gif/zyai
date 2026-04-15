@@ -232,3 +232,63 @@ export async function activateBidding(listingId: string, durationHours: number) 
     return { error: err?.message || 'Eroare neașteptată' }
   }
 }
+
+export async function stopBidding(listingId: string) {
+  'use server'
+  const user = await getUser()
+  if (!user) return { error: 'Neautentificat' }
+
+  const admin = createSupabaseAdmin()
+
+  // Verifică că e anunțul vânzătorului
+  const { data: listing } = await admin
+    .from('listings')
+    .select('id, user_id, status, metadata')
+    .eq('id', listingId)
+    .single()
+
+  if (!listing) return { error: 'Anunț negăsit' }
+  if (listing.user_id !== user.id) return { error: 'Nu ești proprietarul' }
+  if (listing.status !== 'bidding') return { error: 'Licitația nu e activă' }
+
+  const meta = (listing.metadata as any) || {}
+
+  // Dacă există oferte, marchează sold cu câștigătorul curent
+  // Dacă nu există oferte, întoarce la activ
+  const hasWinner = !!meta.bidding_winner_id
+
+  if (hasWinner) {
+    // Finalizează cu câștigătorul curent
+    const { error } = await admin.from('listings').update({
+      status: 'vandut',
+      metadata: {
+        ...meta,
+        sold_at: new Date().toISOString(),
+        sold_via: 'bidding_manual_stop',
+        winning_bid: meta.current_highest_bid,
+        winner_id: meta.bidding_winner_id,
+        winner_name: meta.bidding_winner_name,
+        winner_phone: meta.bidding_winner_phone,
+        winner_email: meta.bidding_winner_email,
+      }
+    }).eq('id', listingId)
+    if (error) return { error: error.message }
+  } else {
+    // Fără oferte — întoarce la activ
+    const { error } = await admin.from('listings').update({
+      status: 'activ',
+      metadata: {
+        ...meta,
+        bidding_end_time: null,
+        bidding_stopped_at: new Date().toISOString(),
+      }
+    }).eq('id', listingId)
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath(`/anunt/${listingId}`)
+  revalidatePath('/cont/anunturi')
+  revalidatePath('/')
+
+  return { ok: true, soldWithWinner: hasWinner }
+}

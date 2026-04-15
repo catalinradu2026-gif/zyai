@@ -9,6 +9,7 @@ import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
+import StopBiddingButton from '@/components/listings/StopBiddingButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -62,7 +63,7 @@ export default async function MyListingsPage() {
           <div>
             <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>📝 Anunțurile mele</h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} active
+              {listings?.length || 0} anunț{listings && listings.length !== 1 ? 'uri' : ''} publicate
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
@@ -180,11 +181,13 @@ export default async function MyListingsPage() {
                       <DeleteListingButton id={listing.id} />
                     </>
                   ) : listing.status === 'bidding' ? (
-                    // LICITAȚIE ACTIVĂ — doar link la anunț + Șterge
+                    // LICITAȚIE ACTIVĂ — link la anunț + Oprire licitație + MarkSold + Șterge
                     <>
                       <Link href={`/anunt/${listing.id}`} className="flex-1 lg:flex-none lg:w-full">
-                        <Button variant="primary" size="md" fullWidth>🔥 Vezi licitația</Button>
+                        <Button variant="secondary" size="sm" fullWidth>🔥 Vezi licitația</Button>
                       </Link>
+                      <StopBiddingButton listingId={listing.id} />
+                      <MarkAsSoldButton listingId={listing.id} categoryId={listing.category_id} currentStatus={listing.status} />
                       <DeleteListingButton id={listing.id} />
                     </>
                   ) : (

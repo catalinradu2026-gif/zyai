@@ -28,12 +28,29 @@ export async function POST(req: Request) {
     }
 
     // Salvează sold_at în metadata pentru filtrul de 24h
-    const currentMeta = (listing as any).metadata || {}
+    const meta = (listing as any).metadata || {}
+    const isBidding = listing.status === 'bidding'
+
+    const metadataUpdate = isBidding ? {
+      ...meta,
+      sold_at: new Date().toISOString(),
+      sold_via: 'bidding_manual',
+      winning_bid: meta.current_highest_bid,
+      winner_id: meta.bidding_winner_id,
+      winner_name: meta.bidding_winner_name,
+      winner_phone: meta.bidding_winner_phone,
+      winner_email: meta.bidding_winner_email,
+    } : {
+      ...meta,
+      sold_at: new Date().toISOString(),
+      sold_via: 'direct',
+    }
+
     const { error } = await admin
       .from('listings')
       .update({
         status: 'vandut',
-        metadata: { ...currentMeta, sold_at: new Date().toISOString() },
+        metadata: metadataUpdate,
       })
       .eq('id', listingId)
 

@@ -35,6 +35,7 @@ export default function MessageThread({
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -74,21 +75,22 @@ export default function MessageThread({
     if (!content.trim() || sending) return
 
     setSending(true)
+    setErrorMsg('')
     const result = await sendMessage(listingId, otherUserId, content)
 
     if (result.success && result.data) {
       setMessages((prev) => [...prev, result.data])
       setContent('')
     } else if (result.error) {
-      alert('Eroare: ' + result.error)
+      setErrorMsg('Eroare: ' + result.error)
     }
     setSending(false)
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg flex flex-col h-screen max-h-[600px]">
+    <div className="rounded-lg shadow-lg flex flex-col h-screen max-h-[600px]" style={{ background: 'var(--bg-card)' }}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center gap-3">
+      <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
         {otherUserAvatar && (
           <Image
             src={otherUserAvatar}
@@ -99,15 +101,15 @@ export default function MessageThread({
           />
         )}
         <div>
-          <h3 className="font-semibold text-gray-900">{otherUserName}</h3>
-          <p className="text-xs text-gray-500">Online</p>
+          <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{otherUserName}</h3>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Activ recent</p>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8" style={{ color: 'var(--text-secondary)' }}>
             <p>Niciun mesaj încă. Fii primul!</p>
           </div>
         ) : (
@@ -122,14 +124,14 @@ export default function MessageThread({
                   className={`max-w-xs px-4 py-2 rounded-lg ${
                     isOwn
                       ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                      : 'rounded-bl-none'
                   }`}
+                  style={isOwn ? undefined : { background: 'var(--bg-card-hover)', color: 'var(--text-primary)' }}
                 >
                   <p className="text-sm">{msg.content}</p>
                   <p
-                    className={`text-xs mt-1 ${
-                      isOwn ? 'text-blue-100' : 'text-gray-500'
-                    }`}
+                    className={`text-xs mt-1`}
+                    style={isOwn ? { color: 'rgba(255,255,255,0.7)' } : { color: 'var(--text-secondary)' }}
                   >
                     {new Date(msg.created_at).toLocaleTimeString('ro-RO', {
                       hour: '2-digit',
@@ -145,7 +147,10 @@ export default function MessageThread({
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+        {errorMsg && (
+          <p className="text-xs mb-2" style={{ color: '#f87171' }}>❌ {errorMsg}</p>
+        )}
         <form onSubmit={handleSend} className="flex gap-2">
           <input
             type="text"
@@ -153,7 +158,8 @@ export default function MessageThread({
             onChange={(e) => setContent(e.target.value)}
             placeholder="Scrie mesaj..."
             disabled={sending}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
           />
           <button
             type="submit"

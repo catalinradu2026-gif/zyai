@@ -18,6 +18,7 @@ import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
 import BidTimer from '@/components/listings/BidTimer'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
+import StopBiddingButton from '@/components/listings/StopBiddingButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,6 +102,12 @@ export default async function ListingDetailPage({ params }: Props) {
     { icon: '🏷️', label: 'Marcă/Model', value: m.brand ? `${m.brand}${m.model ? ' ' + m.model : ''}` : N },
   ] : []
 
+  const CATEGORY_SLUGS_MAP: Record<number, string> = {
+    1: 'joburi', 2: 'imobiliare', 3: 'auto', 4: 'servicii',
+    5: 'electronice', 6: 'moda', 7: 'casa-gradina', 8: 'sport',
+    9: 'animale', 10: 'mama-copilul'
+  }
+
   const CATEGORY_NAMES: Record<number, string> = {
     1: 'Joburi', 2: 'Imobiliare', 3: 'Auto', 4: 'Servicii',
     5: 'Electronice', 6: 'Modă', 7: 'Casă & Grădină', 8: 'Sport',
@@ -121,7 +128,7 @@ export default async function ListingDetailPage({ params }: Props) {
             Acasă
           </Link>
           <span style={{ color: 'var(--border-light)' }}>›</span>
-          <Link href={`/marketplace/${l.category_id === 3 ? 'auto' : l.category_id === 2 ? 'imobiliare' : 'electronice'}`}
+          <Link href={'/marketplace/' + (CATEGORY_SLUGS_MAP[l.category_id] || 'electronice')}
             className="transition-colors" style={{ color: 'var(--text-secondary)' }}>
             {categoryName}
           </Link>
@@ -303,6 +310,12 @@ export default async function ListingDetailPage({ params }: Props) {
                       isOwner={!!isOwner}
                       userId={user?.id}
                     />
+                    {isOwner && (
+                      <div className="pt-2 space-y-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <StopBiddingButton listingId={id} />
+                        <MarkAsSoldButton listingId={id} categoryId={listing.category_id} currentStatus={listing.status} />
+                      </div>
+                    )}
                     {!isOwner && (
                       <div className="pt-2 space-y-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                         <p className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Contact vânzător</p>
