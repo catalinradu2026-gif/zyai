@@ -104,10 +104,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const currency = (listing as any).currency || 'RON'
     const title = (listing as any).title || 'anunțul tău'
     const amountFormatted = Number(amount).toLocaleString('ro-RO')
-    const phoneText = buyerPhone ? `\n📞 Telefon: ${buyerPhone}` : ''
-    const emailText = buyerEmail ? `\n📧 Email: ${buyerEmail}` : ''
+    const contactText = buyerPhone
+      ? `\n📞 Telefon: ${buyerPhone}`
+      : buyerEmail ? `\n📧 Email: ${buyerEmail} (nu are telefon adăugat în profil)` : ''
 
-    const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".${phoneText}${emailText}\n\nSună-l pentru o vizionare și decide dacă accepți prețul final.\n\n⚠️ Prețul final se stabilește față în față, după vizionare.`
+    const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".${contactText}\n\nContactează-l pentru o vizionare și decide dacă accepți prețul final.\n\n⚠️ Prețul final se stabilește față în față, după vizionare.`
 
     // Trimite mesaj — ignorăm eroarea dacă FK-ul eșuează (bid-ul e deja salvat)
     try {

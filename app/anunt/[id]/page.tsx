@@ -303,11 +303,31 @@ export default async function ListingDetailPage({ params }: Props) {
                     userId={user?.id}
                   />
                 ) : listing.status === 'vandut' && !isOwner ? (
-                  // VÂNDUT — vizitator nu poate contacta
-                  <div className="rounded-xl p-5 text-center space-y-2" style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)' }}>
-                    <p className="text-2xl">🔴</p>
-                    <p className="font-bold text-base" style={{ color: '#f87171' }}>Acest produs a fost vândut</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Contactul cu vânzătorul nu mai este disponibil</p>
+                  // VÂNDUT — cumpărătorul vede datele de contact normale ale vânzătorului
+                  <div className="space-y-2">
+                    <div className="rounded-xl px-4 py-2 text-center" style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)' }}>
+                      <p className="text-sm font-bold" style={{ color: '#f87171' }}>🔴 Produs vândut — vânzătorul poate accepta alte oferte</p>
+                    </div>
+                    {canContact && (
+                      <>
+                        <Link href={`/cont/mesaje/${listing.id}?user=${listing.user_id}`} className="w-full block">
+                          <Button variant="primary" size="lg" fullWidth icon="💬">Trimite mesaj</Button>
+                        </Link>
+                        {contactPhone && (
+                          <a href={`https://wa.me/${contactPhone.replace(/\D/g, '')}?text=Sunt%20interesat%20de:%20${encodeURIComponent(listing.title)}`}
+                            target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition hover:scale-105"
+                            style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ADE80' }}>
+                            📱 WhatsApp
+                          </a>
+                        )}
+                        {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
+                      </>
+                    )}
+                    {needsLogin && (
+                      <Link href={`/login?next=/anunt/${id}`} className="w-full block">
+                        <Button variant="primary" size="lg" fullWidth>Conectare pentru contact</Button>
+                      </Link>
+                    )}
                   </div>
                 ) : isOwner ? (
                   <div className="space-y-3">
