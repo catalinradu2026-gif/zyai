@@ -14,6 +14,21 @@ import {
   JOB_DOMENII, JOB_TIP_CONTRACT, JOB_NIVEL_EXPERIENTA,
   JOB_REGIM_MUNCA, JOB_NIVEL_STUDII, JOB_BENEFICII, JOB_IT_STACK,
   SERVICII_CATEGORII, SERVICII_DISPONIBILITATE, SERVICII_ZONA, SERVICII_EXPERIENTA,
+  ELECTRO_STARE, TELEFON_BRANDS, TELEFON_STOCARE, TELEFON_RAM,
+  LAPTOP_BRANDS, LAPTOP_RAM, LAPTOP_STOCARE, LAPTOP_DIAGONALA, LAPTOP_OS, LAPTOP_PROCESOR,
+  TV_DIAGONALA, TV_REZOLUTIE, TV_TIP, AUDIO_TIP,
+  GAMING_PLATFORMA, GAMING_TIP,
+  FOTO_TIP, FOTO_BRANDS, TABLETA_STOCARE, TABLETA_CONECTIVITATE,
+  MODA_STARE, MODA_GEN, MODA_MARIMI_ADULTI, MODA_MARIMI_PANTOFI, MODA_MARIMI_COPII,
+  MODA_MATERIAL, BIJUTERII_TIP, BIJUTERII_MATERIAL, GENTI_TIP,
+  CASA_STARE, MOBILA_TIP, MOBILA_MATERIAL, ELECTROCASNICE_TIP, ELECTROCASNICE_BRANDS,
+  GRADINA_TIP, DECORARE_TIP, ILUMINAT_TIP, BRICOLAJ_TIP,
+  SPORT_STARE, SPORT_TIP, BICICLETA_TIP, BICICLETA_BRANDS, BICICLETA_CADRU,
+  FITNESS_TIP, OUTDOOR_TIP, SPORTURI_APA_TIP, SPORTURI_IARNA_TIP,
+  ANIMALE_VARSTA, ANIMALE_SEX, CAINI_RASE, PISICI_RASE, ACCESORII_ANIMALE_TIP,
+  MAMA_STARE, MAMA_VARSTA_COPIL, MAMA_GEN_COPIL,
+  JUCARII_VARSTA, JUCARII_TIP, CARUCIOR_TIP, CARUCIOR_BRANDS,
+  MOBILIER_COPII_TIP, INGRIJIRE_TIP,
 } from '@/lib/constants/subcategories'
 import { ROMANIAN_CITIES } from '@/lib/constants/cities'
 import ImageUploader from './ImageUploader'
@@ -24,82 +39,130 @@ const SUBS: Record<string, { slug: string; name: string; icon: string }[]> = {
   auto: [
     { slug: 'autoturisme', name: 'Autoturisme', icon: '🚗' },
     { slug: 'autoutilitare', name: 'Autoutilitare', icon: '🚐' },
-    { slug: 'piese', name: 'Piese auto', icon: '🔩' },
-    { slug: 'agricole', name: 'Agricole', icon: '🚜' },
-    { slug: 'remorci', name: 'Remorci', icon: '🔗' },
     { slug: 'camioane', name: 'Camioane', icon: '🚛' },
-    { slug: 'constructii', name: 'Constructii utilaje', icon: '🏗️' },
-    { slug: 'motociclete', name: 'Motociclete', icon: '🏍️' },
+    { slug: 'microbuze', name: 'Microbuze/Autobuze', icon: '🚌' },
+    { slug: 'rulote', name: 'Rulote/Autorulote', icon: '🏕️' },
+    { slug: 'motociclete', name: 'Moto/Scutere/ATV', icon: '🏍️' },
+    { slug: 'remorci', name: 'Remorci', icon: '🔗' },
+    { slug: 'piese', name: 'Piese & Accesorii Auto', icon: '🔩' },
+    { slug: 'agricole', name: 'Utilaje Agricole', icon: '🚜' },
+    { slug: 'constructii', name: 'Utilaje Construcții', icon: '🏗️' },
+    { slug: 'barci', name: 'Bărci/Ambarcațiuni', icon: '⛵' },
   ],
   imobiliare: [
     { slug: 'apartamente', name: 'Apartamente', icon: '🏢' },
     { slug: 'case', name: 'Case & Vile', icon: '🏠' },
     { slug: 'terenuri', name: 'Terenuri', icon: '🌿' },
-    { slug: 'spatii-comerciale', name: 'Spații comerciale', icon: '🏪' },
-    { slug: 'garaje', name: 'Garaje', icon: '🅿️' },
+    { slug: 'spatii-comerciale', name: 'Spații Comerciale', icon: '🏪' },
+    { slug: 'birouri', name: 'Birouri', icon: '🏢' },
+    { slug: 'garaje', name: 'Garaje & Parcări', icon: '🅿️' },
+    { slug: 'cazare', name: 'Cazare/Turism', icon: '🏨' },
   ],
   joburi: [
-    { slug: 'it', name: 'IT & Tech', icon: '💻' },
+    { slug: 'it', name: 'IT & Software', icon: '💻' },
+    { slug: 'marketing', name: 'Marketing/PR', icon: '📢' },
     { slug: 'vanzari', name: 'Vânzări', icon: '📊' },
+    { slug: 'contabilitate', name: 'Finanțe/Contabilitate', icon: '💰' },
+    { slug: 'juridic', name: 'Juridic', icon: '⚖️' },
+    { slug: 'hr', name: 'HR/Resurse Umane', icon: '👥' },
+    { slug: 'inginerie', name: 'Inginerie/Tehnic', icon: '⚙️' },
+    { slug: 'constructii', name: 'Construcții', icon: '🔨' },
+    { slug: 'transport', name: 'Transport/Logistică', icon: '🚚' },
     { slug: 'horeca', name: 'HoReCa', icon: '🍽️' },
-    { slug: 'constructii-job', name: 'Construcții', icon: '🔨' },
-    { slug: 'transport', name: 'Transport', icon: '🚚' },
-    { slug: 'medical', name: 'Medical', icon: '🏥' },
+    { slug: 'medical', name: 'Sănătate/Farmacie', icon: '🏥' },
+    { slug: 'educatie', name: 'Educație', icon: '🎓' },
+    { slug: 'administrativ', name: 'Administrativ/Secretariat', icon: '📋' },
+    { slug: 'muncitori', name: 'Muncitori Calificați', icon: '🔧' },
+    { slug: 'necalificati', name: 'Necalificați', icon: '👷' },
+    { slug: 'alte-joburi', name: 'Altele', icon: '💼' },
   ],
   servicii: [
-    { slug: 'reparatii', name: 'Reparații', icon: '🔧' },
+    { slug: 'reparatii', name: 'Construcții & Renovări', icon: '🏗️' },
     { slug: 'curatenie', name: 'Curățenie', icon: '🧹' },
-    { slug: 'transport-serviciu', name: 'Transport', icon: '🚚' },
-    { slug: 'it-serviciu', name: 'IT & Web', icon: '💻' },
-    { slug: 'constructii-serviciu', name: 'Construcții', icon: '🏗️' },
-    { slug: 'frumusete', name: 'Frumusețe', icon: '💅' },
+    { slug: 'transport-serviciu', name: 'Transport & Mutări', icon: '🚚' },
+    { slug: 'it-serviciu', name: 'IT & Tehnic', icon: '💻' },
+    { slug: 'auto-service', name: 'Auto Service', icon: '🔧' },
+    { slug: 'frumusete', name: 'Frumusețe & Wellness', icon: '💅' },
+    { slug: 'evenimente', name: 'Evenimente', icon: '🎉' },
+    { slug: 'meditatii', name: 'Educație & Meditații', icon: '📚' },
+    { slug: 'juridic-financiar', name: 'Juridic & Financiar', icon: '⚖️' },
+    { slug: 'sanatate', name: 'Sănătate', icon: '❤️' },
+    { slug: 'gradinarit', name: 'Grădină & Exterior', icon: '🌿' },
+    { slug: 'animale-servicii', name: 'Animale de companie', icon: '🐾' },
+    { slug: 'foto-video', name: 'Foto/Video', icon: '📷' },
+    { slug: 'alte-servicii', name: 'Altele', icon: '🔩' },
   ],
   electronice: [
-    { slug: 'telefoane', name: 'Telefoane', icon: '📱' },
+    { slug: 'telefoane', name: 'Telefoane Mobile', icon: '📱' },
     { slug: 'laptopuri', name: 'Laptopuri', icon: '💻' },
+    { slug: 'tablete', name: 'Tablete', icon: '📲' },
+    { slug: 'desktop', name: 'Desktop PC', icon: '🖥️' },
     { slug: 'tv-audio', name: 'TV & Audio', icon: '📺' },
-    { slug: 'gaming', name: 'Gaming', icon: '🎮' },
-    { slug: 'tablete', name: 'Tablete', icon: '📟' },
+    { slug: 'gaming', name: 'Console Gaming', icon: '🎮' },
+    { slug: 'foto-video', name: 'Camere Foto/Video', icon: '📷' },
     { slug: 'accesorii-electronice', name: 'Accesorii', icon: '🔌' },
+    { slug: 'componente-pc', name: 'Componente PC', icon: '💾' },
+    { slug: 'alte-electronice', name: 'Alte Electronice', icon: '🔋' },
   ],
   moda: [
-    { slug: 'haine-barbati', name: 'Haine bărbați', icon: '👔' },
-    { slug: 'haine-femei', name: 'Haine femei', icon: '👗' },
-    { slug: 'incaltaminte', name: 'Încălțăminte', icon: '👟' },
+    { slug: 'haine-femei', name: 'Îmbrăcăminte Femei', icon: '👗' },
+    { slug: 'haine-barbati', name: 'Îmbrăcăminte Bărbați', icon: '👔' },
+    { slug: 'haine-copii', name: 'Îmbrăcăminte Copii', icon: '🧒' },
+    { slug: 'incaltaminte-femei', name: 'Încălțăminte Femei', icon: '👠' },
+    { slug: 'incaltaminte-barbati', name: 'Încălțăminte Bărbați', icon: '👟' },
+    { slug: 'incaltaminte-copii', name: 'Încălțăminte Copii', icon: '👞' },
     { slug: 'genti-accesorii', name: 'Genți & Accesorii', icon: '👜' },
     { slug: 'bijuterii', name: 'Bijuterii & Ceasuri', icon: '💍' },
-    { slug: 'haine-copii', name: 'Haine copii', icon: '👕' },
+    { slug: 'ochelari', name: 'Ochelari', icon: '👓' },
+    { slug: 'lenjerie', name: 'Lenjerie & Costum Baie', icon: '👙' },
   ],
   'casa-gradina': [
     { slug: 'mobila', name: 'Mobilă', icon: '🛋️' },
     { slug: 'electrocasnice', name: 'Electrocasnice', icon: '🫙' },
     { slug: 'decoratiuni', name: 'Decorațiuni', icon: '🖼️' },
-    { slug: 'gradina', name: 'Grădină', icon: '🌱' },
-    { slug: 'unelte', name: 'Unelte & Bricolaj', icon: '🔨' },
+    { slug: 'iluminat', name: 'Iluminat', icon: '💡' },
+    { slug: 'gradina', name: 'Grădină & Exterior', icon: '🌿' },
+    { slug: 'unelte', name: 'Bricolaj & Unelte', icon: '🔨' },
+    { slug: 'textile', name: 'Textile Casă', icon: '🛏️' },
+    { slug: 'bucatarie', name: 'Bucătărie', icon: '🍳' },
+    { slug: 'baie', name: 'Baie', icon: '🚿' },
+    { slug: 'alte-casa', name: 'Altele', icon: '🏠' },
   ],
   sport: [
-    { slug: 'fitness', name: 'Fitness & Gym', icon: '🏋️' },
+    { slug: 'fitness', name: 'Fitness & Sală', icon: '💪' },
     { slug: 'biciclete', name: 'Biciclete', icon: '🚴' },
-    { slug: 'sporturi-echipa', name: 'Sporturi de echipă', icon: '⚽' },
-    { slug: 'sporturi-apa', name: 'Sporturi de apă', icon: '🏊' },
-    { slug: 'sporturi-iarna', name: 'Sporturi de iarnă', icon: '⛷️' },
+    { slug: 'sporturi-apa', name: 'Sporturi de Apă', icon: '🏄' },
+    { slug: 'sporturi-iarna', name: 'Sporturi de Iarnă', icon: '⛷️' },
+    { slug: 'sporturi-echipa', name: 'Fotbal & Sporturi de Echipă', icon: '⚽' },
+    { slug: 'tenis', name: 'Tenis & Sporturi cu Racheta', icon: '🎾' },
+    { slug: 'running', name: 'Running & Atletism', icon: '🏃' },
+    { slug: 'arte-martiale', name: 'Arte Marțiale', icon: '🥋' },
     { slug: 'outdoor', name: 'Outdoor & Camping', icon: '🏕️' },
+    { slug: 'extreme', name: 'Sporturi Extreme', icon: '🪂' },
+    { slug: 'echipament-sport', name: 'Echipament Sportiv General', icon: '🏅' },
   ],
   animale: [
     { slug: 'caini', name: 'Câini', icon: '🐕' },
     { slug: 'pisici', name: 'Pisici', icon: '🐈' },
+    { slug: 'pesti', name: 'Pești & Acvaristică', icon: '🐠' },
     { slug: 'pasari', name: 'Păsări', icon: '🦜' },
-    { slug: 'pesti', name: 'Pești & Acvarii', icon: '🐠' },
-    { slug: 'accesorii-animale', name: 'Accesorii animale', icon: '🦴' },
+    { slug: 'rozatoare', name: 'Rozătoare', icon: '🐹' },
+    { slug: 'reptile', name: 'Reptile & Amfibieni', icon: '🦎' },
+    { slug: 'accesorii-animale', name: 'Accesorii Animale', icon: '🦴' },
+    { slug: 'hrana', name: 'Hrană & Îngrijire', icon: '🥩' },
     { slug: 'alte-animale', name: 'Alte animale', icon: '🐾' },
   ],
   'mama-copilul': [
-    { slug: 'carucioare', name: 'Cărucioare & Scaune auto', icon: '🍼' },
-    { slug: 'jucarii', name: 'Jucării', icon: '🧸' },
-    { slug: 'haine-bebe', name: 'Haine bebeluși', icon: '👶' },
-    { slug: 'mobilier-copii', name: 'Mobilier copii', icon: '🛏️' },
-    { slug: 'ingrijire', name: 'Îngrijire & Sănătate', icon: '🩺' },
-    { slug: 'carti-educative', name: 'Cărți & Jocuri educative', icon: '📚' },
+    { slug: 'carucioare', name: 'Cărucioare & Scaune Auto', icon: '🍼' },
+    { slug: 'scaune-auto', name: 'Scaune Auto Copii', icon: '🚗' },
+    { slug: 'mobilier-copii', name: 'Mobilier Copii', icon: '🛏️' },
+    { slug: 'haine-bebe', name: 'Haine Copii', icon: '👶' },
+    { slug: 'jucarii', name: 'Jucării & Jocuri', icon: '🧸' },
+    { slug: 'alaptare', name: 'Alăptare & Hrănire', icon: '🍼' },
+    { slug: 'siguranta', name: 'Siguranță Copii', icon: '🛡️' },
+    { slug: 'ingrijire', name: 'Îngrijire Bebeluși', icon: '👶' },
+    { slug: 'carti-educative', name: 'Cărți & Educație', icon: '📚' },
+    { slug: 'alte-mama-copilul', name: 'Altele', icon: '🎀' },
   ],
 }
 
@@ -317,6 +380,83 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [zona, setZona] = useState(initMeta.zona || '')
   const [experienta, setExperienta] = useState(initMeta.experienta || '')
 
+  // ELECTRONICE
+  const [electroStare, setElectroStare] = useState(initMeta.electroStare || '')
+  const [telefonBrand, setTelefonBrand] = useState(initMeta.telefonBrand || '')
+  const [telefonStoraj, setTelefonStoraj] = useState(initMeta.telefonStoraj || '')
+  const [telefonRam, setTelefonRam] = useState(initMeta.telefonRam || '')
+  const [laptopBrand, setLaptopBrand] = useState(initMeta.laptopBrand || '')
+  const [laptopRam, setLaptopRam] = useState(initMeta.laptopRam || '')
+  const [laptopStoraj, setLaptopStoraj] = useState(initMeta.laptopStoraj || '')
+  const [laptopDiag, setLaptopDiag] = useState(initMeta.laptopDiag || '')
+  const [laptopOs, setLaptopOs] = useState(initMeta.laptopOs || '')
+  const [laptopProcesor, setLaptopProcesor] = useState(initMeta.laptopProcesor || '')
+  const [tvDiag, setTvDiag] = useState(initMeta.tvDiag || '')
+  const [tvRez, setTvRez] = useState(initMeta.tvRez || '')
+  const [tvTip, setTvTip] = useState(initMeta.tvTip || '')
+  const [audioTip, setAudioTip] = useState(initMeta.audioTip || '')
+  const [gamingPlatforma, setGamingPlatforma] = useState(initMeta.gamingPlatforma || '')
+  const [gamingTip, setGamingTip] = useState(initMeta.gamingTip || '')
+  const [fotoTip, setFotoTip] = useState(initMeta.fotoTip || '')
+  const [fotoBrand, setFotoBrand] = useState(initMeta.fotoBrand || '')
+  const [tabletaStoraj, setTabletaStoraj] = useState(initMeta.tabletaStoraj || '')
+  const [tabletaConect, setTabletaConect] = useState(initMeta.tabletaConect || '')
+
+  // MODĂ
+  const [modaStare, setModaStare] = useState(initMeta.modaStare || '')
+  const [modaGen, setModaGen] = useState(initMeta.modaGen || '')
+  const [modaMarimiAdulti, setModaMarimiAdulti] = useState(initMeta.modaMarimiAdulti || '')
+  const [modaMarimiPantofi, setModaMarimiPantofi] = useState(initMeta.modaMarimiPantofi || '')
+  const [modaMarimiCopii, setModaMarimiCopii] = useState(initMeta.modaMarimiCopii || '')
+  const [modaMaterial, setModaMaterial] = useState(initMeta.modaMaterial || '')
+  const [bijuteriiTip, setBijuteriiTip] = useState(initMeta.bijuteriiTip || '')
+  const [bijuteriiMaterial, setBijuteriiMaterial] = useState(initMeta.bijuteriiMaterial || '')
+  const [gentiTip, setGentiTip] = useState(initMeta.gentiTip || '')
+
+  // CASĂ & GRĂDINĂ
+  const [casaStare, setCasaStare] = useState(initMeta.casaStare || '')
+  const [mobilaTip, setMobilaTip] = useState(initMeta.mobilaTip || '')
+  const [mobilaMaterial, setMobilaMaterial] = useState(initMeta.mobilaMaterial || '')
+  const [electrocasniceTip, setElectrocasniceTip] = useState(initMeta.electrocasniceTip || '')
+  const [electrocasniceBrand, setElectrocasniceBrand] = useState(initMeta.electrocasniceBrand || '')
+  const [gradinaTip, setGradinaTip] = useState(initMeta.gradinaTip || '')
+  const [decorareTip, setDecoriareTip] = useState(initMeta.decorareTip || '')
+  const [iluminatTip, setIluminatTip] = useState(initMeta.iluminatTip || '')
+  const [bricolajTip, setBricolajTip] = useState(initMeta.bricolajTip || '')
+
+  // SPORT
+  const [sportStare, setSportStare] = useState(initMeta.sportStare || '')
+  const [sportTip, setSportTip] = useState(initMeta.sportTip || '')
+  const [bicicletaTip, setBicicletaTip] = useState(initMeta.bicicletaTip || '')
+  const [bicicletaBrand, setBicicletaBrand] = useState(initMeta.bicicletaBrand || '')
+  const [bicicletaCadru, setBicicletaCadru] = useState(initMeta.bicicletaCadru || '')
+  const [fitnessTip, setFitnessTip] = useState(initMeta.fitnessTip || '')
+  const [outdoorTip, setOutdoorTip] = useState(initMeta.outdoorTip || '')
+  const [sporturiApaTip, setSporturiApaTip] = useState(initMeta.sporturiApaTip || '')
+  const [sporturiIarnaTip, setSporturiIarnaTip] = useState(initMeta.sporturiIarnaTip || '')
+
+  // ANIMALE
+  const [animaleVarsta, setAnimaleVarsta] = useState(initMeta.animaleVarsta || '')
+  const [animaleSex, setAnimaleSex] = useState(initMeta.animaleSex || '')
+  const [cainRasa, setCainRasa] = useState(initMeta.cainRasa || '')
+  const [pisicaRasa, setPisicaRasa] = useState(initMeta.pisicaRasa || '')
+  const [pedigree, setPedigree] = useState(initMeta.pedigree || '')
+  const [vaccinat, setVaccinat] = useState(initMeta.vaccinat || '')
+  const [castrat, setCastrat] = useState(initMeta.castrat || '')
+  const [microcip, setMicrocip] = useState(initMeta.microcip || '')
+  const [accesoriiAnimaleTip, setAccesoriiAnimaleTip] = useState(initMeta.accesoriiAnimaleTip || '')
+
+  // MAMĂ & COPILUL
+  const [mamaStare, setMamaStare] = useState(initMeta.mamaStare || '')
+  const [mamaVarstaCopil, setMamaVarstaCopil] = useState(initMeta.mamaVarstaCopil || '')
+  const [mamaGenCopil, setMamaGenCopil] = useState(initMeta.mamaGenCopil || '')
+  const [jucariiVarsta, setJucariiVarsta] = useState(initMeta.jucariiVarsta || '')
+  const [jucariiTip, setJucariiTip] = useState(initMeta.jucariiTip || '')
+  const [caruciTip, setCaruciTip] = useState(initMeta.caruciTip || '')
+  const [caruciiBrand, setCaruciiBrand] = useState(initMeta.caruciiBrand || '')
+  const [mobilierCopiiTip, setMobilierCopiiTip] = useState(initMeta.mobilierCopiiTip || '')
+  const [ingrijireTip, setIngrijireTip] = useState(initMeta.ingrijireTip || '')
+
   // Contact
   const [contactPhone, setContactPhone] = useState(initMeta.contactPhone || '')
 
@@ -500,6 +640,83 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
           if (disponibilitate) metadata.disponibilitate = disponibilitate
           if (zona) metadata.zona = zona
           if (experienta) metadata.experienta = experienta
+        }
+        if (mainCat === 'electronice') {
+          if (electroStare) metadata.electroStare = electroStare
+          if (telefonBrand) metadata.telefonBrand = telefonBrand
+          if (telefonStoraj) metadata.telefonStoraj = telefonStoraj
+          if (telefonRam) metadata.telefonRam = telefonRam
+          if (laptopBrand) metadata.laptopBrand = laptopBrand
+          if (laptopRam) metadata.laptopRam = laptopRam
+          if (laptopStoraj) metadata.laptopStoraj = laptopStoraj
+          if (laptopDiag) metadata.laptopDiag = laptopDiag
+          if (laptopOs) metadata.laptopOs = laptopOs
+          if (laptopProcesor) metadata.laptopProcesor = laptopProcesor
+          if (tvDiag) metadata.tvDiag = tvDiag
+          if (tvRez) metadata.tvRez = tvRez
+          if (tvTip) metadata.tvTip = tvTip
+          if (audioTip) metadata.audioTip = audioTip
+          if (gamingPlatforma) metadata.gamingPlatforma = gamingPlatforma
+          if (gamingTip) metadata.gamingTip = gamingTip
+          if (fotoTip) metadata.fotoTip = fotoTip
+          if (fotoBrand) metadata.fotoBrand = fotoBrand
+          if (tabletaStoraj) metadata.tabletaStoraj = tabletaStoraj
+          if (tabletaConect) metadata.tabletaConect = tabletaConect
+        }
+        if (mainCat === 'moda') {
+          if (modaStare) metadata.modaStare = modaStare
+          if (modaGen) metadata.modaGen = modaGen
+          if (modaMarimiAdulti) metadata.modaMarimiAdulti = modaMarimiAdulti
+          if (modaMarimiPantofi) metadata.modaMarimiPantofi = modaMarimiPantofi
+          if (modaMarimiCopii) metadata.modaMarimiCopii = modaMarimiCopii
+          if (modaMaterial) metadata.modaMaterial = modaMaterial
+          if (bijuteriiTip) metadata.bijuteriiTip = bijuteriiTip
+          if (bijuteriiMaterial) metadata.bijuteriiMaterial = bijuteriiMaterial
+          if (gentiTip) metadata.gentiTip = gentiTip
+        }
+        if (mainCat === 'casa-gradina') {
+          if (casaStare) metadata.casaStare = casaStare
+          if (mobilaTip) metadata.mobilaTip = mobilaTip
+          if (mobilaMaterial) metadata.mobilaMaterial = mobilaMaterial
+          if (electrocasniceTip) metadata.electrocasniceTip = electrocasniceTip
+          if (electrocasniceBrand) metadata.electrocasniceBrand = electrocasniceBrand
+          if (gradinaTip) metadata.gradinaTip = gradinaTip
+          if (decorareTip) metadata.decorareTip = decorareTip
+          if (iluminatTip) metadata.iluminatTip = iluminatTip
+          if (bricolajTip) metadata.bricolajTip = bricolajTip
+        }
+        if (mainCat === 'sport') {
+          if (sportStare) metadata.sportStare = sportStare
+          if (sportTip) metadata.sportTip = sportTip
+          if (bicicletaTip) metadata.bicicletaTip = bicicletaTip
+          if (bicicletaBrand) metadata.bicicletaBrand = bicicletaBrand
+          if (bicicletaCadru) metadata.bicicletaCadru = bicicletaCadru
+          if (fitnessTip) metadata.fitnessTip = fitnessTip
+          if (outdoorTip) metadata.outdoorTip = outdoorTip
+          if (sporturiApaTip) metadata.sporturiApaTip = sporturiApaTip
+          if (sporturiIarnaTip) metadata.sporturiIarnaTip = sporturiIarnaTip
+        }
+        if (mainCat === 'animale') {
+          if (animaleVarsta) metadata.animaleVarsta = animaleVarsta
+          if (animaleSex) metadata.animaleSex = animaleSex
+          if (cainRasa) metadata.cainRasa = cainRasa
+          if (pisicaRasa) metadata.pisicaRasa = pisicaRasa
+          if (pedigree) metadata.pedigree = pedigree
+          if (vaccinat) metadata.vaccinat = vaccinat
+          if (castrat) metadata.castrat = castrat
+          if (microcip) metadata.microcip = microcip
+          if (accesoriiAnimaleTip) metadata.accesoriiAnimaleTip = accesoriiAnimaleTip
+        }
+        if (mainCat === 'mama-copilul') {
+          if (mamaStare) metadata.mamaStare = mamaStare
+          if (mamaVarstaCopil) metadata.mamaVarstaCopil = mamaVarstaCopil
+          if (mamaGenCopil) metadata.mamaGenCopil = mamaGenCopil
+          if (jucariiVarsta) metadata.jucariiVarsta = jucariiVarsta
+          if (jucariiTip) metadata.jucariiTip = jucariiTip
+          if (caruciTip) metadata.caruciTip = caruciTip
+          if (caruciiBrand) metadata.caruciiBrand = caruciiBrand
+          if (mobilierCopiiTip) metadata.mobilierCopiiTip = mobilierCopiiTip
+          if (ingrijireTip) metadata.ingrijireTip = ingrijireTip
         }
         if (contactPhone) metadata.contactPhone = contactPhone
         // Preserve sold_at if listing was vandut (shouldn't happen from edit but just in case)
@@ -832,11 +1049,220 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
     )
   }
 
+  function renderElectronicoFields() {
+    return (
+      <div className="space-y-4">
+        <ChipsField label="✅ Stare" val={electroStare} set={setElectroStare} options={ELECTRO_STARE} />
+        {(subCat === 'telefoane' || !subCat) && (
+          <>
+            <SelField label="📱 Marcă" val={telefonBrand} set={setTelefonBrand} options={TELEFON_BRANDS} />
+            <ChipsField label="💾 Stocare" val={telefonStoraj} set={setTelefonStoraj} options={TELEFON_STOCARE} />
+            <ChipsField label="🧠 RAM" val={telefonRam} set={setTelefonRam} options={TELEFON_RAM} />
+          </>
+        )}
+        {subCat === 'laptopuri' && (
+          <>
+            <SelField label="💻 Marcă" val={laptopBrand} set={setLaptopBrand} options={LAPTOP_BRANDS} />
+            <SelField label="⚙️ Procesor" val={laptopProcesor} set={setLaptopProcesor} options={LAPTOP_PROCESOR} />
+            <div className="grid grid-cols-2 gap-3">
+              <ChipsField label="🧠 RAM" val={laptopRam} set={setLaptopRam} options={LAPTOP_RAM} />
+              <ChipsField label="💾 Stocare" val={laptopStoraj} set={setLaptopStoraj} options={LAPTOP_STOCARE} />
+            </div>
+            <ChipsField label="🖥️ Diagonală" val={laptopDiag} set={setLaptopDiag} options={LAPTOP_DIAGONALA} />
+            <SelField label="💿 Sistem de operare" val={laptopOs} set={setLaptopOs} options={LAPTOP_OS} />
+          </>
+        )}
+        {subCat === 'tv-audio' && (
+          <>
+            <ChipsField label="📺 Tip afișaj" val={tvTip} set={setTvTip} options={TV_TIP} />
+            <ChipsField label="📐 Diagonală" val={tvDiag} set={setTvDiag} options={TV_DIAGONALA} />
+            <ChipsField label="🔍 Rezoluție" val={tvRez} set={setTvRez} options={TV_REZOLUTIE} />
+            <SelField label="🔊 Audio" val={audioTip} set={setAudioTip} options={AUDIO_TIP} />
+          </>
+        )}
+        {subCat === 'gaming' && (
+          <>
+            <ChipsField label="🎮 Platformă" val={gamingPlatforma} set={setGamingPlatforma} options={GAMING_PLATFORMA} />
+            <ChipsField label="🕹️ Tip produs" val={gamingTip} set={setGamingTip} options={GAMING_TIP} />
+          </>
+        )}
+        {subCat === 'tablete' && (
+          <>
+            <ChipsField label="💾 Stocare" val={tabletaStoraj} set={setTabletaStoraj} options={TABLETA_STOCARE} />
+            <ChipsField label="📡 Conectivitate" val={tabletaConect} set={setTabletaConect} options={TABLETA_CONECTIVITATE} />
+          </>
+        )}
+        {(subCat === 'foto-video' || subCat === 'accesorii-electronice') && (
+          <>
+            <SelField label="📷 Tip" val={fotoTip} set={setFotoTip} options={FOTO_TIP} />
+            <SelField label="🏷️ Marcă" val={fotoBrand} set={setFotoBrand} options={FOTO_BRANDS} />
+          </>
+        )}
+      </div>
+    )
+  }
+
+  function renderModaFields() {
+    return (
+      <div className="space-y-4">
+        <ChipsField label="✅ Stare" val={modaStare} set={setModaStare} options={MODA_STARE} />
+        <ChipsField label="👤 Gen" val={modaGen} set={setModaGen} options={MODA_GEN} />
+        {(subCat === 'haine-femei' || subCat === 'haine-barbati' || !subCat) && (
+          <>
+            <ChipsField label="📏 Mărime" val={modaMarimiAdulti} set={setModaMarimiAdulti} options={MODA_MARIMI_ADULTI} />
+            <SelField label="🧶 Material" val={modaMaterial} set={setModaMaterial} options={MODA_MATERIAL} />
+          </>
+        )}
+        {subCat === 'incaltaminte' && (
+          <ChipsField label="👟 Pointure" val={modaMarimiPantofi} set={setModaMarimiPantofi} options={MODA_MARIMI_PANTOFI} />
+        )}
+        {subCat === 'haine-copii' && (
+          <ChipsField label="🧒 Vârstă / Talie" val={modaMarimiCopii} set={setModaMarimiCopii} options={MODA_MARIMI_COPII} />
+        )}
+        {subCat === 'bijuterii' && (
+          <>
+            <SelField label="💍 Tip bijuterie" val={bijuteriiTip} set={setBijuteriiTip} options={BIJUTERII_TIP} />
+            <ChipsField label="⚗️ Material" val={bijuteriiMaterial} set={setBijuteriiMaterial} options={BIJUTERII_MATERIAL} />
+          </>
+        )}
+        {subCat === 'genti-accesorii' && (
+          <SelField label="👜 Tip geantă" val={gentiTip} set={setGentiTip} options={GENTI_TIP} />
+        )}
+      </div>
+    )
+  }
+
+  function renderCasaGradinaFields() {
+    return (
+      <div className="space-y-4">
+        <ChipsField label="✅ Stare" val={casaStare} set={setCasaStare} options={CASA_STARE} />
+        {(subCat === 'mobila' || !subCat) && (
+          <>
+            <SelField label="🛋️ Tip mobilă" val={mobilaTip} set={setMobilaTip} options={MOBILA_TIP} />
+            <SelField label="🪵 Material" val={mobilaMaterial} set={setMobilaMaterial} options={MOBILA_MATERIAL} />
+          </>
+        )}
+        {subCat === 'electrocasnice' && (
+          <>
+            <SelField label="🏠 Tip electrocasnic" val={electrocasniceTip} set={setElectrocasniceTip} options={ELECTROCASNICE_TIP} />
+            <SelField label="🏭 Marcă" val={electrocasniceBrand} set={setElectrocasniceBrand} options={ELECTROCASNICE_BRANDS} />
+          </>
+        )}
+        {(subCat === 'gradina' || subCat === 'decoratiuni') && (
+          <>
+            <SelField label="🌿 Tip produs grădină" val={gradinaTip} set={setGradinaTip} options={GRADINA_TIP} />
+            <SelField label="🖼️ Tip decorare" val={decorareTip} set={setDecoriareTip} options={DECORARE_TIP} />
+          </>
+        )}
+        {subCat === 'unelte' && (
+          <SelField label="🔨 Tip bricolaj" val={bricolajTip} set={setBricolajTip} options={BRICOLAJ_TIP} />
+        )}
+        {subCat === 'iluminat' && (
+          <SelField label="💡 Tip iluminat" val={iluminatTip} set={setIluminatTip} options={ILUMINAT_TIP} />
+        )}
+      </div>
+    )
+  }
+
+  function renderSportFields() {
+    return (
+      <div className="space-y-4">
+        <ChipsField label="✅ Stare" val={sportStare} set={setSportStare} options={SPORT_STARE} />
+        {(subCat === 'echipament-sport' || subCat === 'sporturi-echipa' || !subCat) && (
+          <SelField label="⚽ Sport" val={sportTip} set={setSportTip} options={SPORT_TIP} />
+        )}
+        {subCat === 'biciclete' && (
+          <>
+            <ChipsField label="🚲 Tip bicicletă" val={bicicletaTip} set={setBicicletaTip} options={BICICLETA_TIP} />
+            <SelField label="🏭 Marcă" val={bicicletaBrand} set={setBicicletaBrand} options={BICICLETA_BRANDS} />
+            <ChipsField label="📐 Mărime cadru" val={bicicletaCadru} set={setBicicletaCadru} options={BICICLETA_CADRU} />
+          </>
+        )}
+        {subCat === 'fitness' && (
+          <SelField label="💪 Tip echipament" val={fitnessTip} set={setFitnessTip} options={FITNESS_TIP} />
+        )}
+        {subCat === 'outdoor' && (
+          <SelField label="🏕️ Tip produs" val={outdoorTip} set={setOutdoorTip} options={OUTDOOR_TIP} />
+        )}
+        {subCat === 'sporturi-apa' && (
+          <SelField label="🏄 Tip sport acvatic" val={sporturiApaTip} set={setSporturiApaTip} options={SPORTURI_APA_TIP} />
+        )}
+        {subCat === 'sporturi-iarna' && (
+          <SelField label="⛷️ Tip sport de iarnă" val={sporturiIarnaTip} set={setSporturiIarnaTip} options={SPORTURI_IARNA_TIP} />
+        )}
+      </div>
+    )
+  }
+
+  function renderAnimaleFields() {
+    return (
+      <div className="space-y-4">
+        {(subCat === 'caini' || subCat === 'pisici' || !subCat) && (
+          <>
+            <SelField label="🐾 Vârstă" val={animaleVarsta} set={setAnimaleVarsta} options={ANIMALE_VARSTA} />
+            <ChipsField label="♂️ Sex" val={animaleSex} set={setAnimaleSex} options={ANIMALE_SEX} />
+            <ChipsField label="📋 Pedigree" val={pedigree} set={setPedigree} options={['Cu pedigree', 'Fără pedigree']} />
+            <ChipsField label="💉 Vaccinat" val={vaccinat} set={setVaccinat} options={['Vaccinat', 'Nevaccinat']} />
+            <ChipsField label="✂️ Castrat" val={castrat} set={setCastrat} options={['Da', 'Nu']} />
+            <ChipsField label="📟 Microcip" val={microcip} set={setMicrocip} options={['Da', 'Nu']} />
+          </>
+        )}
+        {subCat === 'caini' && (
+          <SelField label="🐕 Rasă" val={cainRasa} set={setCainRasa} options={CAINI_RASE} />
+        )}
+        {subCat === 'pisici' && (
+          <SelField label="🐈 Rasă" val={pisicaRasa} set={setPisicaRasa} options={PISICI_RASE} />
+        )}
+        {subCat === 'accesorii-animale' && (
+          <SelField label="🦴 Tip accesoriu" val={accesoriiAnimaleTip} set={setAccesoriiAnimaleTip} options={ACCESORII_ANIMALE_TIP} />
+        )}
+      </div>
+    )
+  }
+
+  function renderMamaCopilulFields() {
+    return (
+      <div className="space-y-4">
+        <ChipsField label="✅ Stare" val={mamaStare} set={setMamaStare} options={MAMA_STARE} />
+        {(subCat === 'haine-bebe' || subCat === 'haine-copii' || !subCat) && (
+          <>
+            <ChipsField label="👶 Vârstă copil" val={mamaVarstaCopil} set={setMamaVarstaCopil} options={MAMA_VARSTA_COPIL} />
+            <ChipsField label="👤 Gen" val={mamaGenCopil} set={setMamaGenCopil} options={MAMA_GEN_COPIL} />
+          </>
+        )}
+        {subCat === 'jucarii' && (
+          <>
+            <ChipsField label="🎯 Vârstă recomandată" val={jucariiVarsta} set={setJucariiVarsta} options={JUCARII_VARSTA} />
+            <SelField label="🧸 Tip jucărie" val={jucariiTip} set={setJucariiTip} options={JUCARII_TIP} />
+          </>
+        )}
+        {subCat === 'carucioare' && (
+          <>
+            <SelField label="🍼 Tip" val={caruciTip} set={setCaruciTip} options={CARUCIOR_TIP} />
+            <SelField label="🏭 Marcă" val={caruciiBrand} set={setCaruciiBrand} options={CARUCIOR_BRANDS} />
+          </>
+        )}
+        {subCat === 'mobilier-copii' && (
+          <SelField label="🛏️ Tip mobilier" val={mobilierCopiiTip} set={setMobilierCopiiTip} options={MOBILIER_COPII_TIP} />
+        )}
+        {subCat === 'ingrijire' && (
+          <SelField label="👶 Tip produs" val={ingrijireTip} set={setIngrijireTip} options={INGRIJIRE_TIP} />
+        )}
+      </div>
+    )
+  }
+
   function renderStep2Fields() {
     if (mainCat === 'auto') return renderAutoFields()
     if (mainCat === 'imobiliare') return renderImobiliareFields()
     if (mainCat === 'joburi') return renderJoburiFields()
     if (mainCat === 'servicii') return renderServiciiFields()
+    if (mainCat === 'electronice') return renderElectronicoFields()
+    if (mainCat === 'moda') return renderModaFields()
+    if (mainCat === 'casa-gradina') return renderCasaGradinaFields()
+    if (mainCat === 'sport') return renderSportFields()
+    if (mainCat === 'animale') return renderAnimaleFields()
+    if (mainCat === 'mama-copilul') return renderMamaCopilulFields()
     return null
   }
 

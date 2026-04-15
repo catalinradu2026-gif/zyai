@@ -707,15 +707,13 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
             <div>{lbl('💿 Sistem operare')}<Sel val={laptopOs} set={setLaptopOs} options={LAPTOP_OS} /></div>
           </>
         )}
-        {activeSub === 'tv' && (
+        {(activeSub === 'tv' || activeSub === 'tv-audio') && (
           <>
             <div>{lbl('📺 Tip afișaj')}<Chips val={tvTip} set={setTvTip} options={TV_TIP} /></div>
             <div>{lbl('📐 Diagonală')}<Chips val={tvDiag} set={setTvDiag} options={TV_DIAGONALA} /></div>
             <div>{lbl('🔍 Rezoluție')}<Chips val={tvRez} set={setTvRez} options={TV_REZOLUTIE} /></div>
+            <div>{lbl('🔊 Audio')}<Sel val={audioTip} set={setAudioTip} options={AUDIO_TIP} /></div>
           </>
-        )}
-        {activeSub === 'tv' && (
-          <div>{lbl('🔊 Audio')}<Sel val={audioTip} set={setAudioTip} options={AUDIO_TIP} /></div>
         )}
         {activeSub === 'gaming' && (
           <>
@@ -753,10 +751,10 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
             <div>{lbl('🧶 Material')}<Sel val={modaMaterial} set={setModaMaterial} options={MODA_MATERIAL} /></div>
           </>
         )}
-        {activeSub === 'incaltaminte' && (
+        {(activeSub === 'incaltaminte' || activeSub === 'incaltaminte-femei' || activeSub === 'incaltaminte-barbati') && (
           <div>{lbl('👟 Pointure')}<Chips val={modaMarimiPantofi} set={setModaMarimiPantofi} options={MODA_MARIMI_PANTOFI} /></div>
         )}
-        {activeSub === 'haine-copii' && (
+        {(activeSub === 'haine-copii' || activeSub === 'incaltaminte-copii') && (
           <div>{lbl('🧒 Vârstă / Talie')}<Chips val={modaMarimiCopii} set={setModaMarimiCopii} options={MODA_MARIMI_COPII} /></div>
         )}
         {activeSub === 'bijuterii' && (
@@ -886,7 +884,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
             <div>{lbl('🧸 Tip jucărie')}<Sel val={jucariiTip} set={setJucariiTip} options={JUCARII_TIP} /></div>
           </>
         )}
-        {activeSub === 'carucior' && (
+        {(activeSub === 'carucior' || activeSub === 'carucioare' || activeSub === 'scaune-auto') && (
           <>
             <div>{lbl('🍼 Tip')}<Sel val={caruciTip} set={setCaruciTip} options={CARUCIOR_TIP} /></div>
             <div>{lbl('🏭 Marcă')}<Sel val={caruciiBrand} set={setCaruciiBrand} options={CARUCIOR_BRANDS} /></div>
@@ -895,7 +893,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
         {activeSub === 'mobilier-copii' && (
           <div>{lbl('🛏️ Tip mobilier')}<Sel val={mobilierCopiiTip} set={setMobilierCopiiTip} options={MOBILIER_COPII_TIP} /></div>
         )}
-        {activeSub === 'ingrijire-bebelusi' && (
+        {(activeSub === 'ingrijire-bebelusi' || activeSub === 'ingrijire') && (
           <div>{lbl('👶 Tip produs')}<Sel val={ingrijireTip} set={setIngrijireTip} options={INGRIJIRE_TIP} /></div>
         )}
       </>
