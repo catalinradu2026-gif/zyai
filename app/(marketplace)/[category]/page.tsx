@@ -41,6 +41,43 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
       query: sp.q,
       page: sp.pagina ? Number(sp.pagina) : 1,
+      // AUTO
+      brand: sp.brand,
+      model: sp.model,
+      fuel: sp.fuel,
+      gearbox: sp.gearbox,
+      yearFrom: sp.yearFrom,
+      yearTo: sp.yearTo,
+      kmFrom: sp.kmFrom,
+      kmTo: sp.kmTo,
+      caroserie: sp.caroserie,
+      seller: sp.seller,
+      stare: sp.stare,
+      // IMOBILIARE
+      tipTranzactie: sp.tipTranzactie,
+      tipApartament: sp.tipApartament,
+      tipCasa: sp.tipCasa,
+      tipTeren: sp.tipTeren,
+      tipSpatiu: sp.tipSpatiu,
+      compartimentare: sp.compartimentare,
+      stareImob: sp.stareImob,
+      nrCamere: sp.nrCamere,
+      etaj: sp.etaj,
+      anConstructie: sp.anConstructie,
+      suprafataFrom: sp.suprafataFrom,
+      suprafataTo: sp.suprafataTo,
+      // JOBURI
+      jobDomeniu: sp.jobDomeniu,
+      tipContract: sp.tipContract,
+      regimMunca: sp.regimMunca,
+      nivelExperienta: sp.nivelExperienta,
+      // ELECTRONICE
+      electroStare: sp.electroStare,
+      telefonBrand: sp.telefonBrand,
+      laptopBrand: sp.laptopBrand,
+      // MODĂ
+      modaStare: sp.modaStare,
+      modaGen: sp.modaGen,
     })
     listings = result.data || []
     count = result.count || 0

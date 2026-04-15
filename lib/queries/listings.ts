@@ -8,6 +8,45 @@ export type ListingFilters = {
   maxPrice?: number
   query?: string
   page?: number
+  // AUTO
+  brand?: string
+  model?: string
+  fuel?: string
+  yearFrom?: string
+  yearTo?: string
+  kmFrom?: string
+  kmTo?: string
+  caroserie?: string
+  seller?: string
+  stare?: string
+  gearbox?: string
+  // IMOBILIARE
+  tipTranzactie?: string
+  tipApartament?: string
+  tipCasa?: string
+  tipTeren?: string
+  tipSpatiu?: string
+  compartimentare?: string
+  stareImob?: string
+  nrCamere?: string
+  etaj?: string
+  anConstructie?: string
+  suprafataFrom?: string
+  suprafataTo?: string
+  // JOBURI
+  jobDomeniu?: string
+  tipContract?: string
+  regimMunca?: string
+  nivelExperienta?: string
+  // ELECTRONICE
+  electroStare?: string
+  telefonBrand?: string
+  laptopBrand?: string
+  // MODĂ
+  modaStare?: string
+  modaGen?: string
+  // GENERIC
+  [key: string]: string | number | undefined
 }
 
 export async function getListings(filters: ListingFilters = {}) {
@@ -54,6 +93,50 @@ export async function getListings(filters: ListingFilters = {}) {
   if (filters.subcategory) {
     q = q.eq('metadata->>subcategory', filters.subcategory)
   }
+
+  // ── Filtre metadata AUTO ──────────────────────────────────────
+  if (filters.brand) q = q.eq('metadata->>brand', filters.brand)
+  if (filters.model) q = q.ilike('metadata->>model', `%${filters.model}%`)
+  if (filters.fuel) q = q.eq('metadata->>fuelType', filters.fuel)
+  if (filters.gearbox) q = q.eq('metadata->>gearbox', filters.gearbox)
+  if (filters.caroserie) q = q.eq('metadata->>caroserie', filters.caroserie)
+  if (filters.seller) q = q.ilike('metadata->>sellerType', `%${filters.seller}%`)
+  if (filters.stare) q = q.eq('metadata->>condition', filters.stare)
+  // An fabricatie — string comparison pe 4 cifre funcționează corect
+  if (filters.yearFrom) q = q.gte('metadata->>year', filters.yearFrom)
+  if (filters.yearTo) q = q.lte('metadata->>year', filters.yearTo)
+  // Kilometraj — string comparison (aproximativ, poate fi inexact pt numere diferite ca lungime)
+  if (filters.kmFrom) q = q.gte('metadata->>mileage', filters.kmFrom.padStart(8, '0'))
+  if (filters.kmTo) q = q.lte('metadata->>mileage', filters.kmTo.padStart(8, '0'))
+
+  // ── Filtre metadata IMOBILIARE ────────────────────────────────
+  if (filters.tipTranzactie) q = q.eq('metadata->>tipTranzactie', filters.tipTranzactie)
+  if (filters.tipApartament) q = q.eq('metadata->>tipApartament', filters.tipApartament)
+  if (filters.tipCasa) q = q.eq('metadata->>tipCasa', filters.tipCasa)
+  if (filters.tipTeren) q = q.eq('metadata->>tipTeren', filters.tipTeren)
+  if (filters.tipSpatiu) q = q.eq('metadata->>tipSpatiu', filters.tipSpatiu)
+  if (filters.compartimentare) q = q.eq('metadata->>compartimentare', filters.compartimentare)
+  if (filters.stareImob) q = q.eq('metadata->>stareImob', filters.stareImob)
+  if (filters.nrCamere) q = q.eq('metadata->>nrCamere', filters.nrCamere)
+  if (filters.etaj) q = q.eq('metadata->>etaj', filters.etaj)
+  if (filters.anConstructie) q = q.eq('metadata->>anConstructie', filters.anConstructie)
+  if (filters.suprafataFrom) q = q.gte('metadata->>suprafata', filters.suprafataFrom)
+  if (filters.suprafataTo) q = q.lte('metadata->>suprafata', filters.suprafataTo)
+
+  // ── Filtre metadata JOBURI ────────────────────────────────────
+  if (filters.jobDomeniu) q = q.eq('metadata->>jobDomeniu', filters.jobDomeniu)
+  if (filters.tipContract) q = q.eq('metadata->>tipContract', filters.tipContract)
+  if (filters.regimMunca) q = q.eq('metadata->>regimMunca', filters.regimMunca)
+  if (filters.nivelExperienta) q = q.eq('metadata->>nivelExperienta', filters.nivelExperienta)
+
+  // ── Filtre metadata ELECTRONICE ───────────────────────────────
+  if (filters.electroStare) q = q.eq('metadata->>electroStare', filters.electroStare)
+  if (filters.telefonBrand) q = q.eq('metadata->>telefonBrand', filters.telefonBrand)
+  if (filters.laptopBrand) q = q.eq('metadata->>laptopBrand', filters.laptopBrand)
+
+  // ── Filtre metadata MODĂ ──────────────────────────────────────
+  if (filters.modaStare) q = q.eq('metadata->>modaStare', filters.modaStare)
+  if (filters.modaGen) q = q.eq('metadata->>modaGen', filters.modaGen)
 
   const { data, error, count } = await q
 
