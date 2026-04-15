@@ -139,7 +139,7 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                     </div>
                   )}
                   {listing.status === 'bidding' && (
-                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    <div className="absolute top-2 left-2 flex flex-col gap-1 max-w-[calc(100%-16px)]">
                       <div className="px-2 py-0.5 rounded-lg text-white font-black text-xs"
                         style={{ background: 'rgba(234,88,12,0.92)', border: '1px solid rgba(255,255,255,0.3)' }}>
                         🔥 LICITAȚIE
@@ -148,6 +148,12 @@ export default function SwipeableRow({ listings, title, subtitle, userId, favori
                         <div className="px-2 py-0.5 rounded-lg text-xs font-bold"
                           style={{ background: 'rgba(0,0,0,0.7)', color: '#fb923c' }}>
                           <BidTimer endTime={listing.bidding_end_time} />
+                        </div>
+                      )}
+                      {displayPrice && (
+                        <div className="px-2 py-0.5 rounded-lg text-xs font-bold truncate"
+                          style={{ background: 'rgba(0,0,0,0.75)', color: '#fde68a' }}>
+                          Vândut la {displayPrice.toLocaleString('ro-RO')} {listing.currency}
                         </div>
                       )}
                     </div>
