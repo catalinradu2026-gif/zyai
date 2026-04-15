@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import DeleteListingButton from '@/components/listings/DeleteListingButton'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
+import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -171,13 +172,14 @@ export default async function MyListingsPage() {
                   </Link>
 
                   {listing.status === 'vandut' ? (
-                    // SOLD — doar Reactivează + Șterge
+                    // SOLD — Licitație + Reactivează + Șterge
                     <>
+                      <ActivateBiddingButton listingId={listing.id} categoryId={listing.category_id} fromSold />
                       <ReactivateButton listingId={listing.id} />
                       <DeleteListingButton id={listing.id} />
                     </>
                   ) : (
-                    // ACTIV — Edit + SOLD + Șterge
+                    // ACTIV/BIDDING — Edit + SOLD + Licitație + Șterge
                     <>
                       <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
                         <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
@@ -187,6 +189,7 @@ export default async function MyListingsPage() {
                         categoryId={listing.category_id}
                         currentStatus={listing.status}
                       />
+                      <ActivateBiddingButton listingId={listing.id} categoryId={listing.category_id} />
                       <DeleteListingButton id={listing.id} />
                     </>
                   )}
