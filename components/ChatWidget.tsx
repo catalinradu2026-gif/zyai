@@ -139,6 +139,9 @@ export default function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
+  // Ref-uri pentru funcții — evită stale closure în event listeners
+  const sendMessageRef = useRef<(q: string) => Promise<void>>(async () => {})
+  const voiceOnRef = useRef(true)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -167,25 +170,23 @@ export default function ChatWidget() {
     if (!open && typeof window !== 'undefined') window.speechSynthesis?.cancel()
   }, [open])
 
-  // Listen for hero search query
+  // Ține refs la zi după fiecare render
+  useEffect(() => { voiceOnRef.current = voiceOn }, [voiceOn])
+
+  // Listen for hero search query — folosim ref ca să evităm stale closure
   useEffect(() => {
     function handleOpenChat(e: Event) {
       const customEvent = e as CustomEvent<string>
       const query = customEvent.detail
       setOpen(true)
-
-      // Send message directly
-      setTimeout(() => {
-        sendMessage(query)
-      }, 300)
+      setTimeout(() => sendMessageRef.current(query), 300)
     }
-
     window.addEventListener('openChatWithQuery', handleOpenChat)
     return () => window.removeEventListener('openChatWithQuery', handleOpenChat)
   }, [])
 
   function speakText(text: string) {
-    if (!voiceOn) return
+    if (!voiceOnRef.current) return
     setSpeaking(true)
     const trySpeak = () => {
       speak(text)
@@ -369,19 +370,20 @@ export default function ChatWidget() {
       setMessages((prev) => [...prev, botMessage])
       setHistory((prev) => [...prev, { role: 'user', content: userQuery }, { role: 'assistant', content: data.message }])
 
-      // Răspuns vocal natural
+      // Răspuns vocal natural și detaliat
       if (data.type === 'search' && data.listings && data.listings.length > 0) {
         const n = data.listings.length
         const first = data.listings[0]
         const price = first.price
           ? `${first.price.toLocaleString('ro-RO')} ${first.currency}`
           : 'preț negociabil'
-        const phrases = [
-          `Am găsit ${n} oferte pentru tine. Prima opțiune este ${first.title}, la ${price}, în ${first.city}. Apasă pe card pentru detalii.`,
-          `Bună alegere! Am ${n} anunțuri potrivite. Îți recomand în special ${first.title} la ${price}. Hai să analizăm împreună.`,
-          `Am căutat pentru tine și am găsit ${n} oferte. Cea mai bună opțiune pare să fie ${first.title} din ${first.city}.`,
-        ]
-        speakText(phrases[Math.floor(Math.random() * phrases.length)])
+        const city = first.city || ''
+        const speechText = n === 1
+          ? `Am găsit un singur anunț pentru tine: ${first.title}, la ${price}${city ? `, în ${city}` : ''}. Apasă pe card pentru detalii.`
+          : `Am găsit ${n} anunțuri. ${n > 3 ? `Îți arăt primele ${Math.min(n, 4)}.` : ''} Prima opțiune: ${first.title}, la ${price}${city ? `, în ${city}` : ''}. ${n > 1 ? `Mai sunt ${n - 1} oferte disponibile.` : ''} Apasă pe un card pentru a vedea detaliile.`
+        speakText(speechText)
+      } else if (data.type === 'search' && (!data.listings || data.listings.length === 0)) {
+        speakText('Nu am găsit anunțuri pentru această căutare. Încearcă alte cuvinte cheie sau o altă locație.')
       } else {
         speakText(data.message)
       }
@@ -397,6 +399,9 @@ export default function ChatWidget() {
       setLoading(false)
     }
   }
+
+  // Ține sendMessageRef la zi după fiecare render (fără deps = runs every render)
+  useEffect(() => { sendMessageRef.current = sendMessage })
 
   function handleSend(e: React.FormEvent) {
     e.preventDefault()
