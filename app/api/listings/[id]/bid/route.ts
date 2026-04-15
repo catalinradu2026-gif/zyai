@@ -56,14 +56,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return Response.json({ error: `Oferta minimă este ${minBid}` }, { status: 400 })
     }
 
-    // Profil cumpărător
+    // Profil cumpărător — upsert ca să existe întotdeauna (fix FK constraint)
     const { data: profile } = await admin
       .from('profiles')
       .select('full_name, phone')
       .eq('id', user.id)
       .single()
-    const userName = (profile as any)?.full_name || 'Utilizator'
+
+    const userName = (profile as any)?.full_name || user.email?.split('@')[0] || 'Utilizator'
     const buyerPhone = (profile as any)?.phone || null
+    const buyerEmail = user.email || null
+
+    // Dacă nu există profil, îl creăm pentru a permite trimiterea de mesaje
+    if (!profile) {
+      await admin.from('profiles').upsert({
+        id: user.id,
+        full_name: userName,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+    }
 
     // Insert bid
     const { error: bidErr } = await admin
@@ -72,31 +83,40 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (bidErr) return Response.json({ error: bidErr.message }, { status: 500 })
 
-    // Update highest bid în metadata
+    // Update highest bid + date contact câștigător în metadata
     const { error: updateErr } = await admin
       .from('listings')
-      .update({ metadata: { ...meta, current_highest_bid: Number(amount), bidding_winner_id: user.id } })
+      .update({
+        metadata: {
+          ...meta,
+          current_highest_bid: Number(amount),
+          bidding_winner_id: user.id,
+          bidding_winner_name: userName,
+          bidding_winner_phone: buyerPhone,
+          bidding_winner_email: buyerEmail,
+        }
+      })
       .eq('id', id)
 
     if (updateErr) return Response.json({ error: updateErr.message }, { status: 500 })
 
-    // Notificare vânzător prin mesaj intern
+    // Notificare vânzător prin mesaj intern (salvăm contactul și în mesaj)
     const currency = (listing as any).currency || 'RON'
     const title = (listing as any).title || 'anunțul tău'
     const amountFormatted = Number(amount).toLocaleString('ro-RO')
-    const phoneText = buyerPhone ? ` Numărul lui: ${buyerPhone}.` : ''
+    const phoneText = buyerPhone ? `\n📞 Telefon: ${buyerPhone}` : ''
+    const emailText = buyerEmail ? `\n📧 Email: ${buyerEmail}` : ''
 
-    const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".\n\nSună-l pentru o vizionare și decide dacă accepți prețul final.${phoneText}\n\n⚠️ Nu vinde fără vizionare — prețul final se stabilește față în față.`
+    const sellerMessage = `🔥 Ofertă nouă la licitație!\n\n${userName} a oferit ${amountFormatted} ${currency} pentru "${title}".${phoneText}${emailText}\n\nSună-l pentru o vizionare și decide dacă accepți prețul final.\n\n⚠️ Prețul final se stabilește față în față, după vizionare.`
 
-    await admin
-      .from('messages')
-      .insert({
-        listing_id: id,
-        sender_id: user.id,
-        receiver_id: listing.user_id,
-        content: sellerMessage,
-        read: false,
-      })
+    // Trimite mesaj — ignorăm eroarea dacă FK-ul eșuează (bid-ul e deja salvat)
+    await admin.from('messages').insert({
+      listing_id: id,
+      sender_id: user.id,
+      receiver_id: listing.user_id,
+      content: sellerMessage,
+      read: false,
+    }).then(() => {}).catch(() => {})
 
     return Response.json({ ok: true, amount: Number(amount) })
   } catch (err) {
@@ -125,6 +145,9 @@ async function finalizeBidding(admin: any, listingId: string) {
         sold_via: 'bidding',
         winning_bid: currentMeta.current_highest_bid,
         winner_id: currentMeta.bidding_winner_id,
+        winner_name: currentMeta.bidding_winner_name,
+        winner_phone: currentMeta.bidding_winner_phone,
+        winner_email: currentMeta.bidding_winner_email,
       },
     })
     .eq('id', listingId)

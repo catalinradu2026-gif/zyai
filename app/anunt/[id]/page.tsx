@@ -333,6 +333,43 @@ export default async function ListingDetailPage({ params }: Props) {
                     </div>
                     {listing.status === 'vandut' ? (
                       <>
+                        {/* Contact câștigător licitație */}
+                        {m.sold_via === 'bidding' && (m.winner_phone || m.winner_name || m.winner_id) && (
+                          <div className="rounded-xl p-4 space-y-3"
+                            style={{ background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.3)' }}>
+                            <p className="text-xs font-bold uppercase" style={{ color: '#fb923c' }}>
+                              🏆 Câștigător licitație
+                            </p>
+                            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                              {m.winner_name || 'Utilizator'}
+                            </p>
+                            {m.winner_phone && (
+                              <a href={`tel:${m.winner_phone}`}
+                                className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-sm text-white w-full justify-center transition hover:scale-105"
+                                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                                📞 Sună: {m.winner_phone}
+                              </a>
+                            )}
+                            {m.winner_phone && (
+                              <a href={`https://wa.me/${m.winner_phone.replace(/\D/g, '')}?text=Bună! Am văzut că ai licitat pentru anunțul meu. Hai să stabilim o vizionare.`}
+                                target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-sm w-full justify-center transition hover:scale-105"
+                                style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', color: '#4ade80' }}>
+                                💬 WhatsApp
+                              </a>
+                            )}
+                            {m.winner_id && (
+                              <a href={`/cont/mesaje/${id}?user=${m.winner_id}`}
+                                className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-sm w-full justify-center transition hover:scale-105"
+                                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#A78BFA' }}>
+                                ✉️ Mesaj în platformă
+                              </a>
+                            )}
+                            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                              Ofertă câștigătoare: <strong style={{ color: '#fb923c' }}>{(m.winning_bid || 0).toLocaleString('ro-RO')} {listing.currency}</strong>
+                            </p>
+                          </div>
+                        )}
                         <ActivateBiddingButton listingId={id} categoryId={listing.category_id} fromSold />
                         <div className="flex gap-2">
                           <ReactivateButton listingId={id} />
