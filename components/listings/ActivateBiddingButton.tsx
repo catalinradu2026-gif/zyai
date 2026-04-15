@@ -30,7 +30,7 @@ export default function ActivateBiddingButton({ listingId, categoryId, fromSold 
       })
       const data = await res.json()
       if (data.ok) {
-        router.push(`/anunt/${listingId}`)
+        window.location.href = `/anunt/${listingId}`
       } else {
         setErrorMsg(data.error || 'Eroare necunoscută')
         setStep('select')

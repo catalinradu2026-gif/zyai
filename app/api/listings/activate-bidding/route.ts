@@ -25,7 +25,13 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Not allowed' }, { status: 403 })
     }
     if (listing.status === 'bidding') {
-      return Response.json({ error: 'Licitația e deja activă' }, { status: 400 })
+      // Allow re-activation only if timer already expired
+      const existingMeta = (listing.metadata as any) || {}
+      const endTime = new Date(existingMeta.bidding_end_time || 0)
+      if (Date.now() < endTime.getTime()) {
+        return Response.json({ error: 'Licitația e deja activă' }, { status: 400 })
+      }
+      // Timer expired — allow re-activation, fall through
     }
 
     const biddingEndTime = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()

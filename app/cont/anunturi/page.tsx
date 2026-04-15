@@ -93,12 +93,14 @@ export default async function MyListingsPage() {
 
             const statusColors: Record<string, string> = {
               activ: 'bg-green-100 text-green-700',
+              bidding: 'bg-orange-100 text-orange-700',
               vandut: 'bg-gray-100 text-gray-700',
               inactiv: 'bg-yellow-100 text-yellow-700',
             }
 
             const statusEmojis: Record<string, string> = {
               activ: '✓',
+              bidding: '🔥',
               vandut: '✓',
               inactiv: '⚠️',
             }
@@ -151,11 +153,10 @@ export default async function MyListingsPage() {
                         }`}
                       >
                         {statusEmojis[listing.status]}{' '}
-                        {listing.status === 'activ'
-                          ? 'Activ'
-                          : listing.status === 'vandut'
-                            ? 'Vândut'
-                            : 'Inactiv'}
+                        {listing.status === 'activ' ? 'Activ'
+                          : listing.status === 'bidding' ? 'Licitație activă'
+                          : listing.status === 'vandut' ? 'Vândut'
+                          : 'Inactiv'}
                       </span>
                     </div>
 
@@ -178,8 +179,16 @@ export default async function MyListingsPage() {
                       <ReactivateButton listingId={listing.id} />
                       <DeleteListingButton id={listing.id} />
                     </>
+                  ) : listing.status === 'bidding' ? (
+                    // LICITAȚIE ACTIVĂ — doar link la anunț + Șterge
+                    <>
+                      <Link href={`/anunt/${listing.id}`} className="flex-1 lg:flex-none lg:w-full">
+                        <Button variant="primary" size="md" fullWidth>🔥 Vezi licitația</Button>
+                      </Link>
+                      <DeleteListingButton id={listing.id} />
+                    </>
                   ) : (
-                    // ACTIV/BIDDING — Edit + SOLD + Licitație + Șterge
+                    // ACTIV — Edit + SOLD + Licitație + Șterge
                     <>
                       <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
                         <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
