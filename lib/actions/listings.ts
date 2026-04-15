@@ -224,6 +224,8 @@ export async function activateBidding(listingId: string, durationHours: number) 
 
     revalidatePath(`/anunt/${listingId}`)
     revalidatePath('/cont/anunturi')
+    revalidatePath('/')
+    revalidatePath('/marketplace', 'layout')
     return { ok: true, biddingEndTime }
   } catch (err: any) {
     console.error('activateBidding error:', err)

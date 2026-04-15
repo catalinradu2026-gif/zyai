@@ -13,6 +13,8 @@ import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { getUser } from '@/lib/actions/auth'
 import { getFavoritedIds } from '@/lib/queries/favorites'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'zyAI - Marketplace cu AI | Anunțuri Gratuite România',
   description: 'Ai ceva de vândut? Zi hai pe zyAi. Faci o poză, AI-ul face restul. Marketplace românesc cu AI — auto, imobiliare, joburi, servicii.',

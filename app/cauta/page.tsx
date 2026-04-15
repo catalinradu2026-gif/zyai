@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Groq from 'groq-sdk'
 import FavoriteButton from '@/components/listings/FavoriteButton'
 import SearchInline from '@/components/SearchInline'
@@ -43,18 +42,19 @@ Returnează DOAR JSON valid fără explicații: {"keyword":"...","city":"...","m
 }
 
 async function searchListings(query: string) {
-  const supabase = await createSupabaseServerClient()
+  const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
+  const admin = createSupabaseAdmin()
   const parsed = await parseQuery(query)
 
   const kw = parsed.keyword || query
   const city = parsed.city || ''
   const maxPrice = parsed.maxPrice
 
-  // Construiește filtrul OR: caută în titlu SAU descriere
-  let q = supabase
+  // Construiește filtrul OR: caută în titlu SAU descriere (activ + bidding)
+  let q = admin
     .from('listings')
-    .select('id, title, description, price, price_type, currency, city, images, category_id, metadata', { count: 'exact' })
-    .eq('status', 'activ')
+    .select('id, title, description, price, price_type, currency, city, images, category_id, metadata, status', { count: 'exact' })
+    .in('status', ['activ', 'bidding'])
     .or(`title.ilike.%${kw}%,description.ilike.%${kw}%`)
     .order('created_at', { ascending: false })
     .limit(40)
@@ -68,10 +68,10 @@ async function searchListings(query: string) {
   if (!data?.length) {
     const words = kw.split(/\s+/).filter((w: string) => w.length > 2)
     for (const word of words) {
-      const { data: d2, count: c2 } = await supabase
+      const { data: d2, count: c2 } = await admin
         .from('listings')
-        .select('id, title, description, price, price_type, currency, city, images, category_id, metadata', { count: 'exact' })
-        .eq('status', 'activ')
+        .select('id, title, description, price, price_type, currency, city, images, category_id, metadata, status', { count: 'exact' })
+        .in('status', ['activ', 'bidding'])
         .or(`title.ilike.%${word}%,description.ilike.%${word}%`)
         .order('created_at', { ascending: false })
         .limit(40)
