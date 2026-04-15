@@ -22,7 +22,7 @@ export async function getListings(filters: ListingFilters = {}) {
   let q = supabase
     .from('listings')
     .select(
-      `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata, bidding_end_time, current_highest_bid`,
+      `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`,
       { count: 'exact' }
     )
     .in('status', ['activ', 'bidding'])
