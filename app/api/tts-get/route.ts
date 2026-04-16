@@ -28,6 +28,7 @@ const PHONETICS: [RegExp, string][] = [
   // Monede / Unități
   [/\bRON\b/g, 'lei'],
   [/\bEUR\b/g, 'euro'],
+  [/\beure\b/gi, 'euro'],
   [/(\d+)\s*€/g, '$1 euro'],
   [/(\d+)\s*lei\/lună/gi, '$1 lei pe lună'],
   [/(\d+)\s*lei\/noapte/gi, '$1 lei pe noapte'],

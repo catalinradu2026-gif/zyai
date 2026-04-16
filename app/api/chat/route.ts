@@ -395,12 +395,12 @@ Structura răspunsului (respectă EXACT):
 
       const count = listings?.length ?? 0
       const cityText = f.city ? ` în ${f.city}` : ''
-      const priceText = f.maxPrice ? ` până la ${f.maxPrice}€` : ''
+      const priceText = f.maxPrice ? ` până la ${f.maxPrice} euro` : ''
 
       const resultMessage =
         count > 0
-          ? `${parsed.message || `Am găsit ${count} anunț${count !== 1 ? 'uri' : ''}${cityText}${priceText}.`} Vrei să rafinezi căutarea sau să văd alte opțiuni?`
-          : `Nu am găsit nimic pentru "${f.product || f.keywords?.[0] || 'căutarea ta'}"${cityText}. Vrei să caut fără filtru de oraș sau cu un buget diferit?`
+          ? `${parsed.message || `Am găsit ${count} anunț${count !== 1 ? 'uri' : ''}${cityText}${priceText}.`} Vrei să cauți altceva?`
+          : `Nu am găsit nimic pentru "${f.product || f.keywords?.[0] || 'căutarea ta'}"${cityText}. Vrei să cauți altceva?`
 
       return Response.json({
         type: 'search',

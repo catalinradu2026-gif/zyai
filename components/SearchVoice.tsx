@@ -17,9 +17,9 @@ function buildVoiceText(query: string, count: number, firstTitle?: string, first
     if (count === 1) {
       return `Am găsit un anunț pentru ${query}: ${firstTitle}, la ${price}${city}. Vrei să cauți altceva?`
     }
-    return `Am găsit ${count} anunțuri pentru ${query}. Cel mai bun: ${firstTitle}, la ${price}${city}. Vrei să rafinezi căutarea?`
+    return `Am găsit ${count} anunțuri pentru ${query}. Cel mai bun: ${firstTitle}, la ${price}${city}. Vrei să cauți altceva?`
   }
-  return `Nu am găsit nimic pentru ${query}. Vrei să cauți cu alte cuvinte?`
+  return `Nu am găsit nimic pentru ${query}. Vrei să cauți altceva?`
 }
 
 export default function SearchVoice({ query, count, firstTitle, firstPrice, firstCity }: Props) {
