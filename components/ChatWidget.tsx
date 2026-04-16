@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 
+// WAV silențios minim — folosit pentru a "debloca" elementul <audio> pe iOS Safari
+// iOS blochează .play() dacă nu a fost apelat anterior dintr-un user gesture
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+
 type ChatListing = {
   id: string
   title: string
@@ -21,6 +25,7 @@ type Message = {
   listings?: ChatListing[]
   type?: 'search' | 'chat'
   imageBase64?: string
+  speechText?: string  // Textul pregătit pentru speech (setat la trimitere)
 }
 
 type HistoryMessage = {
@@ -29,6 +34,10 @@ type HistoryMessage = {
 }
 
 const WELCOME = 'Salut! Sunt zyAI 👋 Spune-mi ce cauți și îți găsesc instant cele mai bune anunțuri.'
+
+// Stochează dacă speechSynthesis a fost deblocat în această sesiune de browser
+// Chrome permite speak() doar după un user gesture — odată deblocat, rămâne deblocat pe tab
+let speechUnlocked = false
 
 function prepareForSpeech(text: string): string {
   return text
@@ -49,26 +58,74 @@ function prepareForSpeech(text: string): string {
     .trim()
 }
 
-function speak(text: string) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const clean = prepareForSpeech(text)
-  const utt = new SpeechSynthesisUtterance(clean)
-  utt.lang = 'ro-RO'
-  utt.rate = 0.9
-  utt.pitch = 0.85
-  utt.volume = 1
+function getBestVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices()
-  // Prefer voce feminina romana, apoi feminina engleza, apoi orice
-  const roFem = voices.find(v => v.lang.startsWith('ro') && v.name.toLowerCase().includes('female'))
+  if (!voices.length) return null
+  return voices.find(v => v.lang.startsWith('ro') && v.name.toLowerCase().includes('female'))
     || voices.find(v => v.lang.startsWith('ro') && (v.name.includes('Ioana') || v.name.includes('Carmen') || v.name.includes('Maria')))
     || voices.find(v => v.lang.startsWith('ro'))
     || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'))
     || voices.find(v => v.lang.startsWith('en-GB'))
     || voices.find(v => ['Samantha', 'Karen', 'Moira', 'Tessa', 'Fiona', 'Victoria'].some(n => v.name.includes(n)))
     || voices[0]
-  if (roFem) utt.voice = roFem
+}
+
+function speakNow(text: string) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return
+  window.speechSynthesis.cancel()
+  const clean = prepareForSpeech(text)
+  if (!clean) return
+  const utt = new SpeechSynthesisUtterance(clean)
+  utt.lang = 'ro-RO'
+  utt.rate = 0.9
+  utt.pitch = 0.85
+  utt.volume = 1
+  const voice = getBestVoice()
+  if (voice) utt.voice = voice
   window.speechSynthesis.speak(utt)
+  // iOS Safari fix: speechSynthesis se oprește singur după ~15s fără resume()
+  window.speechSynthesis.resume()
+}
+
+// Încearcă să deblocheze speechSynthesis în contextul unui user gesture
+// Returnează true dacă a reușit (sau era deja deblocat)
+function tryUnlockSpeech(): boolean {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return false
+  if (speechUnlocked) return true
+  try {
+    // Un utterance cu spațiu (nu gol) — Chrome ignoră string-urile complet goale
+    const unlock = new SpeechSynthesisUtterance(' ')
+    unlock.volume = 0
+    unlock.rate = 10  // Cât mai rapid posibil
+    window.speechSynthesis.speak(unlock)
+    speechUnlocked = true
+    return true
+  } catch {
+    return false
+  }
+}
+
+// speak() cu fallback: dacă vocea e disponibilă imediat → vorbește, altfel așteaptă vocile
+function speak(text: string) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return
+  const voices = window.speechSynthesis.getVoices()
+  if (voices.length > 0) {
+    speakNow(text)
+  } else {
+    // Vocile nu sunt încă încărcate — așteptăm onvoiceschanged
+    const handler = () => {
+      window.speechSynthesis.onvoiceschanged = null
+      speakNow(text)
+    }
+    window.speechSynthesis.onvoiceschanged = handler
+    // Safety timeout — dacă onvoiceschanged nu vine, vorbim oricum după 500ms
+    setTimeout(() => {
+      if (window.speechSynthesis.onvoiceschanged === handler) {
+        window.speechSynthesis.onvoiceschanged = null
+        speakNow(text)
+      }
+    }, 500)
+  }
 }
 
 function WidgetListingCard({ listing }: { listing: ChatListing }) {
@@ -139,9 +196,13 @@ export default function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
-  // Ref-uri pentru funcții — evită stale closure în event listeners
   const sendMessageRef = useRef<(q: string) => Promise<void>>(async () => {})
   const voiceOnRef = useRef(true)
+  const pendingHeroQueryRef = useRef<string | null>(null)
+  const micVoiceReadyRef = useRef(false)
+  // Audio element pentru TTS real (Groq Orpheus) — funcționează pe mobile fără restricții
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUnlockedRef = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -150,6 +211,44 @@ export default function ChatWidget() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Inițializăm elementul <audio> o singură dată
+  useEffect(() => {
+    audioRef.current = new Audio()
+    audioRef.current.preload = 'auto'
+    return () => { audioRef.current?.pause() }
+  }, [])
+
+  // Deblochează elementul audio pe iOS — trebuie apelat dintr-un user gesture
+  function unlockAudio() {
+    if (audioUnlockedRef.current || !audioRef.current) return
+    audioRef.current.src = SILENT_WAV
+    audioRef.current.play().then(() => {
+      audioUnlockedRef.current = true
+    }).catch(() => {})
+  }
+
+  // Redă textul via Groq TTS — funcționează pe mobile fără restricții de autoplay
+  async function playTTS(text: string) {
+    if (!voiceOnRef.current || !audioRef.current) return
+    try {
+      setSpeaking(true)
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) { setSpeaking(false); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      audioRef.current.src = url
+      audioRef.current.onended = () => { setSpeaking(false); URL.revokeObjectURL(url) }
+      audioRef.current.onerror = () => { setSpeaking(false); URL.revokeObjectURL(url) }
+      await audioRef.current.play()
+    } catch {
+      setSpeaking(false)
+    }
+  }
 
   // Bubble apare dupa 2 secunde
   useEffect(() => {
@@ -178,28 +277,42 @@ export default function ChatWidget() {
     function handleOpenChat(e: Event) {
       const customEvent = e as CustomEvent<string>
       const query = customEvent.detail
+      // dispatchEvent() este sincron — suntem în același call stack cu form submit-ul utilizatorului
+      // Deci putem debloca speech synthesis ACUM, în contextul gestului utilizatorului
+      tryUnlockSpeech()
+      pendingHeroQueryRef.current = query
       setOpen(true)
-      setTimeout(() => sendMessageRef.current(query), 300)
+      setUserInteracted(true)
     }
     window.addEventListener('openChatWithQuery', handleOpenChat)
     return () => window.removeEventListener('openChatWithQuery', handleOpenChat)
   }, [])
 
+  // Când widgetul se deschide și există un query pending din hero search, îl trimitem
+  // Acest effect rulează după render, deci sendMessageRef e deja actualizat
+  useEffect(() => {
+    if (open && pendingHeroQueryRef.current) {
+      const query = pendingHeroQueryRef.current
+      pendingHeroQueryRef.current = null
+      // Mic delay ca să fie siguri că widgetul e vizibil și ref-ul e fresh
+      setTimeout(() => sendMessageRef.current(query), 150)
+    }
+  }, [open])
+
   function speakText(text: string) {
     if (!voiceOnRef.current) return
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
     setSpeaking(true)
-    const trySpeak = () => {
-      speak(text)
-      const interval = setInterval(() => {
-        if (!window.speechSynthesis.speaking) { setSpeaking(false); clearInterval(interval) }
-      }, 200)
-      setTimeout(() => { setSpeaking(false); clearInterval(interval) }, 15000)
-    }
-    if (window.speechSynthesis.getVoices().length > 0) {
-      trySpeak()
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => { trySpeak(); window.speechSynthesis.onvoiceschanged = null }
-    }
+    speak(text)
+    // Monitorizăm sfârșitul vorbirii
+    const interval = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        setSpeaking(false)
+        clearInterval(interval)
+      }
+    }, 200)
+    // Safety timeout 15s
+    setTimeout(() => { setSpeaking(false); clearInterval(interval) }, 15000)
   }
 
   function handleFirstInteraction() {
@@ -222,9 +335,10 @@ export default function ChatWidget() {
       recognitionRef.current?.stop()
       return
     }
-    // Gesture user activ — permite speech synthesis după
     setUserInteracted(true)
-    window.speechSynthesis?.cancel()
+    unlockAudio()  // deblocăm audio element în contextul direct al tap-ului
+    micVoiceReadyRef.current = true
+
     const rec = new SR()
     rec.lang = 'ro-RO'
     rec.interimResults = false
@@ -237,7 +351,7 @@ export default function ChatWidget() {
       setListening(false)
       setTimeout(() => sendMessage(transcript), 100)
     }
-    rec.onerror = () => setListening(false)
+    rec.onerror = () => { setListening(false); micVoiceReadyRef.current = false }
     rec.onend = () => setListening(false)
     rec.start()
   }
@@ -358,6 +472,27 @@ export default function ChatWidget() {
       const data: { type: 'search' | 'chat'; message: string; listings?: ChatListing[] } =
         await response.json()
 
+      // Text vocal natural, scurt, ca un asistent expert în marketplace
+      let voiceLine = ''
+      if (data.type === 'search' && data.listings && data.listings.length > 0) {
+        const n = data.listings.length
+        const first = data.listings[0]
+        const priceStr = first.price
+          ? `${first.price.toLocaleString('ro-RO')} ${first.currency}`
+          : 'negociabil'
+        const city = first.city ? `, în ${first.city}` : ''
+        if (n === 1) {
+          voiceLine = `Am găsit un anunț: ${first.title}, la ${priceStr}${city}.`
+        } else {
+          voiceLine = `Am găsit ${n} anunțuri. Cel mai bun: ${first.title}, la ${priceStr}${city}.`
+        }
+      } else if (data.type === 'search') {
+        voiceLine = 'Nu am găsit nimic pentru această căutare. Încearcă alte cuvinte.'
+      } else {
+        // Pentru chat, limităm la primul propoziție ca să fie scurt
+        voiceLine = data.message.split('.')[0] + '.'
+      }
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.message,
@@ -365,28 +500,14 @@ export default function ChatWidget() {
         timestamp: new Date(),
         listings: data.listings,
         type: data.type,
+        speechText: voiceLine,  // Stocat pentru butonul 🔊 fallback
       }
 
       setMessages((prev) => [...prev, botMessage])
       setHistory((prev) => [...prev, { role: 'user', content: userQuery }, { role: 'assistant', content: data.message }])
 
-      // Răspuns vocal natural și detaliat
-      if (data.type === 'search' && data.listings && data.listings.length > 0) {
-        const n = data.listings.length
-        const first = data.listings[0]
-        const price = first.price
-          ? `${first.price.toLocaleString('ro-RO')} ${first.currency}`
-          : 'preț negociabil'
-        const city = first.city || ''
-        const speechText = n === 1
-          ? `Am găsit un singur anunț pentru tine: ${first.title}, la ${price}${city ? `, în ${city}` : ''}. Apasă pe card pentru detalii.`
-          : `Am găsit ${n} anunțuri. ${n > 3 ? `Îți arăt primele ${Math.min(n, 4)}.` : ''} Prima opțiune: ${first.title}, la ${price}${city ? `, în ${city}` : ''}. ${n > 1 ? `Mai sunt ${n - 1} oferte disponibile.` : ''} Apasă pe un card pentru a vedea detaliile.`
-        speakText(speechText)
-      } else if (data.type === 'search' && (!data.listings || data.listings.length === 0)) {
-        speakText('Nu am găsit anunțuri pentru această căutare. Încearcă alte cuvinte cheie sau o altă locație.')
-      } else {
-        speakText(data.message)
-      }
+      micVoiceReadyRef.current = false
+      playTTS(voiceLine)
     } catch (error) {
       console.error('Error:', error)
       setMessages((prev) => [...prev, {
@@ -406,7 +527,7 @@ export default function ChatWidget() {
   function handleSend(e: React.FormEvent) {
     e.preventDefault()
     if (!input.trim() || loading) return
-
+    unlockAudio()
     const userQuery = input.trim()
     sendMessage(userQuery)
   }
@@ -415,7 +536,11 @@ export default function ChatWidget() {
     <>
       {/* Toggle button - fixed bottom-right */}
       <button
-        onClick={() => { setOpen(o => !o); setBubble(false) }}
+        onClick={() => {
+          unlockAudio()
+          setOpen(o => !o)
+          setBubble(false)
+        }}
         className="fixed bottom-8 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
         title="zyAI Chat"
       >
@@ -528,6 +653,31 @@ export default function ChatWidget() {
                       })}
                     </p>
                   </div>
+
+                  {/* Buton Ascultă — apare MEREU sub orice mesaj bot */}
+                  {msg.sender === 'bot' && msg.speechText && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        unlockAudio()
+                        playTTS(msg.speechText!)
+                      }}
+                      className="flex items-center gap-2 font-semibold active:scale-95"
+                      style={{
+                        background: '#2563eb',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: '10px 20px',
+                        fontSize: '15px',
+                        minHeight: '44px',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
+                      }}
+                    >
+                      🔊 Atinge pentru a asculta
+                    </button>
+                  )}
 
                   {/* Carduri listings (doar pentru mesaje bot cu listings) */}
                   {msg.listings && msg.listings.length > 0 && (
