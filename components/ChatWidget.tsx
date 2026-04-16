@@ -279,6 +279,16 @@ export default function ChatWidget() {
     return () => window.removeEventListener('unlockChatAudio', handleUnlock)
   }, [])
 
+  // Ascultă cereri de voce de pe pagina /cauta (după ce se încarcă rezultatele)
+  useEffect(() => {
+    function handleSpeak(e: Event) {
+      const text = (e as CustomEvent<string>).detail
+      if (text) playTTS(text)
+    }
+    window.addEventListener('speakSearchResult', handleSpeak)
+    return () => window.removeEventListener('speakSearchResult', handleSpeak)
+  }, [])
+
   useEffect(() => {
     function handleOpenChat(e: Event) {
       const query = (e as CustomEvent<string>).detail?.trim()

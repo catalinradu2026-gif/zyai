@@ -102,7 +102,9 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
       setListening(false)
       setInterimText('')
       if (capturedText.trim()) {
-        window.dispatchEvent(new CustomEvent('openChatWithQuery', { detail: capturedText.trim() }))
+        // Navighează la pagina de căutare (ca înainte) — vocea se aude după ce se încarcă rezultatele
+        saveSearch(capturedText.trim())
+        router.push(`/cauta?q=${encodeURIComponent(capturedText.trim())}&voice=1`)
       }
     }
 

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Groq from 'groq-sdk'
 import FavoriteButton from '@/components/listings/FavoriteButton'
 import SearchInline from '@/components/SearchInline'
+import SearchVoice from '@/components/SearchVoice'
 import { getUser } from '@/lib/actions/auth'
 import { getFavoritedIds } from '@/lib/queries/favorites'
 
@@ -107,6 +108,15 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
+      {/* Voice response — vorbește rezultatele când vine de la mic */}
+      <SearchVoice
+        query={query}
+        count={count}
+        firstTitle={listings[0]?.title}
+        firstPrice={listings[0]?.price ? `${listings[0].price.toLocaleString('ro-RO')} ${listings[0].currency}` : undefined}
+        firstCity={listings[0]?.city}
+      />
+
       {/* Search bar reîncercare */}
       <div style={{ marginBottom: '32px' }}>
         <SearchInline defaultValue={query} />
