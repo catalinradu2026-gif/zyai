@@ -84,8 +84,11 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
         setSearch(final)
         setInterimText('')
         setListening(false)
-        // Navighează automat după transcriere finală
-        setTimeout(() => navigate(final), 300)
+        // Deschide ChatWidget cu query-ul vocal — acesta răspunde și vocal cu ce a găsit
+        setTimeout(() => {
+          const event = new CustomEvent('openChatWithQuery', { detail: final.trim() })
+          window.dispatchEvent(event)
+        }, 150)
       }
     }
 

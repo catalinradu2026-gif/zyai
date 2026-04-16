@@ -277,9 +277,10 @@ export default function ChatWidget() {
     function handleOpenChat(e: Event) {
       const customEvent = e as CustomEvent<string>
       const query = customEvent.detail
-      // dispatchEvent() este sincron — suntem în același call stack cu form submit-ul utilizatorului
-      // Deci putem debloca speech synthesis ACUM, în contextul gestului utilizatorului
+      // dispatchEvent() este sincron — suntem în același call stack cu gestul utilizatorului
+      // Deci putem debloca ACUM atât speech synthesis cât și elementul audio
       tryUnlockSpeech()
+      unlockAudio()
       pendingHeroQueryRef.current = query
       setOpen(true)
       setUserInteracted(true)
