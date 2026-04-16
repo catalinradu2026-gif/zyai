@@ -273,12 +273,17 @@ export default function ChatWidget() {
   useEffect(() => { voiceOnRef.current = voiceOn }, [voiceOn])
 
   // Listen for hero search query — folosim ref ca să evităm stale closure
+  // Deblochează audio când HeroSearch mic este apăsat (sincron, în contextul gestului)
+  useEffect(() => {
+    function handleUnlock() { unlockAudio() }
+    window.addEventListener('unlockChatAudio', handleUnlock)
+    return () => window.removeEventListener('unlockChatAudio', handleUnlock)
+  }, [])
+
   useEffect(() => {
     function handleOpenChat(e: Event) {
       const customEvent = e as CustomEvent<string>
       const query = customEvent.detail
-      // dispatchEvent() este sincron — suntem în același call stack cu gestul utilizatorului
-      // Deci putem debloca ACUM atât speech synthesis cât și elementul audio
       tryUnlockSpeech()
       unlockAudio()
       pendingHeroQueryRef.current = query
@@ -483,15 +488,16 @@ export default function ChatWidget() {
           : 'negociabil'
         const city = first.city ? `, în ${first.city}` : ''
         if (n === 1) {
-          voiceLine = `Am găsit un anunț: ${first.title}, la ${priceStr}${city}.`
+          voiceLine = `Am găsit un anunț: ${first.title}, la ${priceStr}${city}. Vrei să rafinezi căutarea?`
         } else {
-          voiceLine = `Am găsit ${n} anunțuri. Cel mai bun: ${first.title}, la ${priceStr}${city}.`
+          voiceLine = `Am găsit ${n} anunțuri. Cel mai bun: ${first.title}, la ${priceStr}${city}. Vrei să rafinezi sau să văd alte opțiuni?`
         }
       } else if (data.type === 'search') {
-        voiceLine = 'Nu am găsit nimic pentru această căutare. Încearcă alte cuvinte.'
+        voiceLine = 'Nu am găsit nimic pentru această căutare. Vrei să caut cu alte cuvinte sau fără filtru de oraș?'
       } else {
-        // Pentru chat, limităm la primul propoziție ca să fie scurt
-        voiceLine = data.message.split('.')[0] + '.'
+        // Chat conversational — ia primele 2 propoziții (include și întrebarea)
+        const sentences = data.message.split(/(?<=[.?!])\s+/)
+        voiceLine = sentences.slice(0, 2).join(' ')
       }
 
       const botMessage: Message = {

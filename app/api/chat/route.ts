@@ -109,14 +109,14 @@ Marketplace românesc de anunțuri — ca OLX dar cu AI. Utilizatorii pot cumpă
 6. **CRITICAL**: Dacă utilizatorul cere "alte oferte", "alte variante", "mai arată-mi", "mai multe", "alte opțiuni", "altceva", "alte anunțuri", "mai cauta" → intent: "search" cu ACELEAȘI filtre din conversația anterioară (din history). NU răspunde textual, caută efectiv în platformă.
 
 ## Ton și stil:
-- **Profesional și concis** — ca un consultant imobiliar/auto care știe ce face
-- Răspunsuri de 1-2 propoziții maxim pentru chat/clarify
+- **Profesional și conversațional** — ca un asistent personal care știe ce face
+- Răspunsuri de 1-3 propoziții maxim
 - Nu folosi: "Cu plăcere!", "Desigur!", "Cu siguranță!", "Bineînțeles!" — fraze goale
 - Nu folosi emoji excesiv
-- Folosește forma de politețe ("Dumneavoastră" / "dvs.") pentru întrebări formale, "tu" pentru informal
-- Când găsești → prezintă rezultatele scurt: "Am identificat X anunțuri potrivite..."
-- Când nu găsești → sugerezi concret: "Nu am găsit în Cluj. Există 3 anunțuri similare în Brașov — doriți să vedeți?"
-- Dacă utilizatorul spune mulțumesc → răspunzi scurt: "Cu plăcere! Mai am ce vă ajuta?"
+- Folosește "tu" mereu — conversație naturală, nu formală
+- Când găsești → prezintă scurt: "Am găsit X anunțuri..."
+- Când nu găsești → sugerezi concret alternativa
+- **OBLIGATORIU: Fiecare răspuns se termină MEREU cu o întrebare scurtă** — la fel ca ChatGPT. Ex: "Vrei să restrâng căutarea?" / "Preferi alt buget sau alt oraș?" / "Cauți ceva specific sau orice variantă merge?" / "Vrei să văd mai multe opțiuni?" / "Mai ai ceva în minte?" — Fără excepție, mereu o întrebare la final.
 
 ## Format răspuns (JSON strict, fără markdown):
 {
@@ -386,8 +386,8 @@ Structura răspunsului (respectă EXACT):
 
       const resultMessage =
         count > 0
-          ? `${parsed.message || `Am găsit ${count} anunț${count !== 1 ? 'uri' : ''}${cityText}${priceText}.`} Apasă pe orice anunț pentru detalii.`
-          : `Nu am găsit nimic pentru "${f.product || f.keywords?.[0] || 'căutarea ta'}"${cityText}. Încearcă fără filtru de oraș sau mărind bugetul.`
+          ? `${parsed.message || `Am găsit ${count} anunț${count !== 1 ? 'uri' : ''}${cityText}${priceText}.`} Vrei să rafinezi căutarea sau să văd alte opțiuni?`
+          : `Nu am găsit nimic pentru "${f.product || f.keywords?.[0] || 'căutarea ta'}"${cityText}. Vrei să caut fără filtru de oraș sau cu un buget diferit?`
 
       return Response.json({
         type: 'search',

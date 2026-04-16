@@ -60,6 +60,9 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
       return
     }
 
+    // Deblocăm audio-ul ChatWidget sincron, în contextul gestului utilizatorului (tap pe mic)
+    window.dispatchEvent(new Event('unlockChatAudio'))
+
     const rec = new SpeechRecognition()
     rec.lang = 'ro-RO'
     rec.continuous = false
@@ -81,14 +84,11 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
       }
       if (interim) setInterimText(interim)
       if (final) {
-        setSearch(final)
         setInterimText('')
         setListening(false)
-        // Deschide ChatWidget cu query-ul vocal — acesta răspunde și vocal cu ce a găsit
-        setTimeout(() => {
-          const event = new CustomEvent('openChatWithQuery', { detail: final.trim() })
-          window.dispatchEvent(event)
-        }, 150)
+        // Auto-trimite vocal la ChatWidget — fără să mai apeși nimic
+        const event = new CustomEvent('openChatWithQuery', { detail: final.trim() })
+        window.dispatchEvent(event)
       }
     }
 
