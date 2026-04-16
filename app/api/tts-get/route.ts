@@ -4,11 +4,15 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
 const VOICE = 'ro-RO-AlinaNeural'
 
 const PHONETICS: [RegExp, string][] = [
+  // ── Consum auto: 12/8 L/100km → "12 în oraș, 8 în afară litri la sută" ──
+  [/(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*[lL]\/100\s*km/gi, '$1 în oraș, $2 în afară, litri la sută de kilometri'],
+  // Consum fără unitate explicită dar cu context (ex: "Consum: 9/6")
+  [/[Cc]onsum[:\s]+(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/g, 'consum $1 în oraș, $2 în afară'],
+
   // ── Unități tehnice / Măsurători ──
   [/(\d+)\s*km\/h\b/gi, '$1 kilometri pe oră'],
   [/(\d+)\s*km\/l\b/gi, '$1 kilometri pe litru'],
-  [/(\d+)\s*l\/100\s*km/gi, '$1 litri la sută de kilometri'],
-  [/(\d+)\s*L\/100\s*km/gi, '$1 litri la sută de kilometri'],
+  [/(\d+)\s*[lL]\/100\s*km/gi, '$1 litri la sută de kilometri'],
   [/(\d+)\s*mp\b/gi, '$1 metri pătrați'],
   [/(\d+)\s*m²/g, '$1 metri pătrați'],
   [/(\d+)\s*m³/g, '$1 metri cubi'],
