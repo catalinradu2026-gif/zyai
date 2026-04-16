@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type Props = {
   query: string
@@ -23,54 +24,69 @@ function buildVoiceText(query: string, count: number, firstTitle?: string, first
 }
 
 export default function SearchVoice({ query, count, firstTitle, firstPrice, firstCity }: Props) {
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const searchParams = useSearchParams()
+  const playedRef = useRef(false)
   const [speaking, setSpeaking] = useState(false)
 
-  function playVoice() {
-    const el = audioRef.current
-    if (!el || speaking) return
+  // Auto-play la montare dacă vine de la mic (voice=1)
+  useEffect(() => {
+    if (searchParams.get('voice') !== '1') return
+    if (playedRef.current) return
+    playedRef.current = true
 
     const text = buildVoiceText(query, count, firstTitle, firstPrice, firstCity)
-    const src = `/api/tts-get?text=${encodeURIComponent(text)}`
 
-    // Setăm src și apelăm play() SINCRON în click handler — funcționează pe iOS
-    el.src = src
+    // Folosim audio-ul global deblocat de HeroSearch la tap pe mic
+    const audio = (window as any).__zyaiAudio as HTMLAudioElement | undefined
+    if (!audio) return
+
+    const src = `/api/tts-get?text=${encodeURIComponent(text)}`
+    audio.src = src
     setSpeaking(true)
-    el.play().catch(() => setSpeaking(false))
+    audio.onended = () => setSpeaking(false)
+    audio.onerror = () => setSpeaking(false)
+    audio.play().catch(() => setSpeaking(false))
+  }, [searchParams, query, count, firstTitle, firstPrice, firstCity])
+
+  // Buton replay (dacă vrea să asculte din nou)
+  function replay() {
+    const text = buildVoiceText(query, count, firstTitle, firstPrice, firstCity)
+    let audio = (window as any).__zyaiAudio as HTMLAudioElement | undefined
+    if (!audio) {
+      audio = new Audio()
+      ;(window as any).__zyaiAudio = audio
+    }
+    const src = `/api/tts-get?text=${encodeURIComponent(text)}`
+    audio.src = src
+    setSpeaking(true)
+    audio.onended = () => setSpeaking(false)
+    audio.onerror = () => setSpeaking(false)
+    audio.play().catch(() => setSpeaking(false))
   }
 
   if (!query) return null
 
   return (
-    <>
-      <audio
-        ref={audioRef}
-        playsInline
-        onEnded={() => setSpeaking(false)}
-        onError={() => setSpeaking(false)}
-        style={{ display: 'none' }}
-      />
-      <button
-        onClick={playVoice}
-        disabled={speaking}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '8px 16px',
-          borderRadius: '999px',
-          border: 'none',
-          background: speaking ? 'linear-gradient(135deg, #8B5CF6, #3B82F6)' : 'rgba(139,92,246,0.15)',
-          color: speaking ? '#fff' : '#8B5CF6',
-          fontSize: '14px',
-          fontWeight: 600,
-          cursor: speaking ? 'default' : 'pointer',
-          transition: 'all 0.2s',
-          marginBottom: '12px',
-        }}
-      >
-        {speaking ? '🔊 Vorbesc...' : '🔊 Ascultă rezultatele'}
-      </button>
-    </>
+    <button
+      onClick={replay}
+      disabled={speaking}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '8px 16px',
+        borderRadius: '999px',
+        border: 'none',
+        background: speaking ? 'linear-gradient(135deg, #8B5CF6, #3B82F6)' : 'rgba(139,92,246,0.15)',
+        color: speaking ? '#fff' : '#8B5CF6',
+        fontSize: '14px',
+        fontWeight: 600,
+        cursor: speaking ? 'default' : 'pointer',
+        transition: 'all 0.2s',
+        marginBottom: '12px',
+      }}
+    >
+      {speaking ? '🔊 Vorbesc...' : '🔊 Ascultă din nou'}
+    </button>
   )
 }

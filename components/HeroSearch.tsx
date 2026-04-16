@@ -60,8 +60,14 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
       return
     }
 
-    // Deblocăm audio-ul ChatWidget sincron, în contextul gestului utilizatorului (tap pe mic)
-    window.dispatchEvent(new Event('unlockChatAudio'))
+    // Deblocăm un audio element global sincron la tap (user gesture) — persistă după router.push
+    const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+    if (!(window as any).__zyaiAudio) {
+      (window as any).__zyaiAudio = new Audio()
+    }
+    const audio = (window as any).__zyaiAudio as HTMLAudioElement
+    audio.src = SILENT_WAV
+    audio.play().catch(() => {})
 
     const rec = new SpeechRecognition()
     rec.lang = 'ro-RO'
