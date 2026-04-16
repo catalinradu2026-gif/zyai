@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 
+// WAV silențios minim — deblochează <audio> pe iOS Safari dintr-un user gesture
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+
 type ChatListing = {
   id: string
   title: string
@@ -65,7 +68,45 @@ export default function AIHeaderBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUnlockedRef = useRef(false)
+  const voiceOnRef = useRef(true)
   const router = useRouter()
+
+  // Inițializăm elementul <audio> o singură dată
+  useEffect(() => {
+    audioRef.current = new Audio()
+    audioRef.current.preload = 'auto'
+    return () => { audioRef.current?.pause() }
+  }, [])
+
+  // Ține voiceOnRef la zi
+  useEffect(() => { voiceOnRef.current = voiceOn }, [voiceOn])
+
+  function unlockAudio() {
+    if (audioUnlockedRef.current || !audioRef.current) return
+    audioRef.current.src = SILENT_WAV
+    audioRef.current.play().then(() => { audioUnlockedRef.current = true }).catch(() => {})
+  }
+
+  async function playTTS(text: string) {
+    if (!voiceOnRef.current || !audioRef.current) return
+    try {
+      setSpeaking(true)
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) { setSpeaking(false); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      audioRef.current.src = url
+      audioRef.current.onended = () => { setSpeaking(false); URL.revokeObjectURL(url) }
+      audioRef.current.onerror = () => { setSpeaking(false); URL.revokeObjectURL(url) }
+      await audioRef.current.play()
+    } catch { setSpeaking(false) }
+  }
 
   // Rotatie placeholder
   useEffect(() => {
@@ -116,6 +157,8 @@ export default function AIHeaderBar() {
       return
     }
 
+    unlockAudio()  // deblochează audio element în contextul direct al tap-ului
+
     const rec = new SpeechRecognition()
     rec.lang = 'ro-RO'
     rec.continuous = false
@@ -127,7 +170,7 @@ export default function AIHeaderBar() {
       const transcript = e.results[0][0].transcript
       setInput(transcript)
       setListening(false)
-      setTimeout(() => navigateToSearch(transcript), 200)
+      setTimeout(() => sendMessage(transcript), 100)
     }
     rec.onerror = () => setListening(false)
     rec.onend = () => setListening(false)
@@ -165,7 +208,24 @@ export default function AIHeaderBar() {
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: data.message, sender: 'bot', listings: data.listings }
       setMessages(prev => [...prev, botMsg])
       setHistory(prev => [...prev, { role: 'user', content: query }, { role: 'assistant', content: data.message }])
-      speakText(data.message)
+
+      // Text vocal natural și scurt
+      let voiceLine = ''
+      if (data.listings && data.listings.length > 0) {
+        const n = data.listings.length
+        const first = data.listings[0]
+        const priceStr = first.price ? `${first.price.toLocaleString('ro-RO')} ${first.currency}` : 'negociabil'
+        const city = first.city ? `, în ${first.city}` : ''
+        voiceLine = n === 1
+          ? `Am găsit un anunț: ${first.title}, la ${priceStr}${city}.`
+          : `Am găsit ${n} anunțuri. Cel mai bun: ${first.title}, la ${priceStr}${city}.`
+      } else if (data.type === 'search') {
+        voiceLine = 'Nu am găsit nimic. Încearcă alte cuvinte.'
+      } else {
+        voiceLine = data.message.split('.')[0] + '.'
+      }
+
+      playTTS(voiceLine)
     } catch {
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: 'Scuze, am o problemă temporară. Încearcă din nou.', sender: 'bot' }])
     } finally {
@@ -231,7 +291,7 @@ export default function AIHeaderBar() {
         {/* Mic button — separat, proeminent */}
         <button
           type="button"
-          onClick={() => { setOpen(true); setTimeout(() => startListening(), 350) }}
+          onClick={() => { unlockAudio(); setOpen(true); setTimeout(() => startListening(), 350) }}
           className="flex items-center justify-center flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95"
           title="Vorbește cu zyAI"
           style={{
