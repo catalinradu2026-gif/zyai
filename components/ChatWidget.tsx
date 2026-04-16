@@ -198,7 +198,6 @@ export default function ChatWidget() {
   const recognitionRef = useRef<any>(null)
   const sendMessageRef = useRef<(q: string) => Promise<void>>(async () => {})
   const voiceOnRef = useRef(true)
-  const pendingHeroQueryRef = useRef<string | null>(null)
   const micVoiceReadyRef = useRef(false)
   // Audio element pentru TTS real (Groq Orpheus) — funcționează pe mobile fără restricții
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -282,28 +281,18 @@ export default function ChatWidget() {
 
   useEffect(() => {
     function handleOpenChat(e: Event) {
-      const customEvent = e as CustomEvent<string>
-      const query = customEvent.detail
+      const query = (e as CustomEvent<string>).detail?.trim()
+      if (!query) return
       tryUnlockSpeech()
       unlockAudio()
-      pendingHeroQueryRef.current = query
       setOpen(true)
       setUserInteracted(true)
+      // Trimite direct via ref — funcționează indiferent dacă widgetul era deja deschis sau nu
+      setTimeout(() => sendMessageRef.current(query), 250)
     }
     window.addEventListener('openChatWithQuery', handleOpenChat)
     return () => window.removeEventListener('openChatWithQuery', handleOpenChat)
   }, [])
-
-  // Când widgetul se deschide și există un query pending din hero search, îl trimitem
-  // Acest effect rulează după render, deci sendMessageRef e deja actualizat
-  useEffect(() => {
-    if (open && pendingHeroQueryRef.current) {
-      const query = pendingHeroQueryRef.current
-      pendingHeroQueryRef.current = null
-      // Mic delay ca să fie siguri că widgetul e vizibil și ref-ul e fresh
-      setTimeout(() => sendMessageRef.current(query), 150)
-    }
-  }, [open])
 
   function speakText(text: string) {
     if (!voiceOnRef.current) return

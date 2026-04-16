@@ -69,41 +69,41 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
     rec.interimResults = true
     recognitionRef.current = rec
 
+    // Păstrăm ultimul text recunoscut (final SAU interim) — fallback pentru mobile
+    let capturedText = ''
+
     rec.onstart = () => {
       setListening(true)
       setInterimText('')
+      capturedText = ''
     }
 
     rec.onresult = (e: any) => {
-      let interim = ''
-      let final = ''
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) final += t
-        else interim += t
+      // Colectăm tot ce a spus utilizatorul (indiferent de isFinal)
+      let text = ''
+      for (let i = 0; i < e.results.length; i++) {
+        text += e.results[i][0].transcript
       }
-      if (interim) setInterimText(interim)
-      if (final) {
-        setInterimText('')
-        setListening(false)
-        // Auto-trimite vocal la ChatWidget — fără să mai apeși nimic
-        const event = new CustomEvent('openChatWithQuery', { detail: final.trim() })
-        window.dispatchEvent(event)
-      }
+      capturedText = text
+      setInterimText(text)
     }
 
     rec.onerror = (e: any) => {
-      console.error('Speech error:', e.error)
       setListening(false)
       setInterimText('')
+      capturedText = ''
       if (e.error === 'not-allowed') {
         alert('Accesul la microfon a fost blocat. Verifică permisiunile browserului.')
       }
     }
 
+    // onend se declanșează MEREU când recunoașterea se oprește — mai fiabil decât isFinal
     rec.onend = () => {
       setListening(false)
       setInterimText('')
+      if (capturedText.trim()) {
+        window.dispatchEvent(new CustomEvent('openChatWithQuery', { detail: capturedText.trim() }))
+      }
     }
 
     rec.start()
