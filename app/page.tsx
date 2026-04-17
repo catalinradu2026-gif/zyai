@@ -133,11 +133,7 @@ export default async function Home() {
       <AIGreetingBubble />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="min-h-screen pt-20 pb-16 px-4">
-        {/* TEST BANNER - STERGE DUPA CONFIRMARE */}
-        <div style={{ background: '#FF0000', color: '#fff', textAlign: 'center', padding: '12px', fontWeight: 900, fontSize: '20px', letterSpacing: 2 }}>
-          🔴 NOU DESIGN V2 - DACA VEZI ASTA, CODUL NOU A INCARCAT 🔴
-        </div>
-        {/* ========== HERO: 2 CARDS AI ACTIONS ========== */}
+{/* ========== HERO: 2 CARDS AI ACTIONS ========== */}
         <section className="relative mb-16 md:mb-24">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div
