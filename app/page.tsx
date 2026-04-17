@@ -2,6 +2,7 @@ import Link from 'next/link'
 import AIGreetingBubble from '@/components/AIGreetingBubble'
 import CategoriesBrowser from '@/components/CategoriesBrowser'
 import HeroSearch from '@/components/HeroSearch'
+import HeroActions from '@/components/HeroActions'
 import LiveStats from '@/components/LiveStats'
 import SwipeableRow from '@/components/listings/SwipeableRow'
 import PersonalizedSection from '@/components/listings/PersonalizedSection'
@@ -133,195 +134,39 @@ export default async function Home() {
       <AIGreetingBubble />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="min-h-screen pt-20 pb-16 px-4">
-{/* ========== HERO: 2 CARDS AI ACTIONS ========== */}
-        <section className="relative mb-16 md:mb-24">
+{/* ========== HERO ========== */}
+        <section className="relative mb-10 md:mb-14">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div
-              className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-25"
-              style={{ background: 'var(--gradient-main)' }}
-            />
-            <div
-              className="absolute -bottom-40 -right-40 w-[32rem] h-[32rem] rounded-full blur-3xl opacity-20"
-              style={{ background: 'linear-gradient(to top right, #3B82F6, #8B5CF6)' }}
-            />
+            <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: 'var(--gradient-main)' }} />
+            <div className="absolute -bottom-20 -right-40 w-96 h-96 rounded-full blur-3xl opacity-15" style={{ background: 'linear-gradient(to top right,#3B82F6,#8B5CF6)' }} />
           </div>
-
-          <div className="relative max-w-6xl mx-auto">
-            <div className="text-center mb-10">
-              <div className="inline-block mb-5 px-4 py-2 rounded-full glass">
-                <span className="text-sm font-medium">⚡ AI-Powered Marketplace 2026</span>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-black mb-3 leading-tight">
-                <span className="gradient-main-text">Zi hai pe zyAi!</span>
-                <br />
-                <span style={{ color: 'var(--text-primary)' }}>Vinzi și cumperi cu AI</span>
-              </h1>
-              <p className="text-lg md:text-xl" style={{ color: 'var(--text-secondary)' }}>
-                Fă o poză. AI generează anunțul. Găsește cu vocea.
-              </p>
+          <div className="relative max-w-2xl mx-auto text-center">
+            <div className="inline-block mb-4 px-4 py-1.5 rounded-full glass">
+              <span className="text-sm font-semibold gradient-main-text">Zi hai pe zyAi! ⚡</span>
             </div>
-
-            <div className="grid md:grid-cols-2 gap-5 md:gap-6">
-              {/* VINDE CU AI — PRIMAR */}
-              <Link
-                href="/anunt/nou"
-                className="group relative overflow-hidden rounded-3xl p-8 md:p-10 transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: 'var(--gradient-main)',
-                  boxShadow: 'var(--glow-purple)',
-                }}
-              >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: 'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.25), transparent 60%)' }}
-                />
-                <div className="relative text-white">
-                  <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-white/20 backdrop-blur">
-                    <span className="text-xs font-semibold uppercase tracking-wider">Prioritar</span>
-                  </div>
-                  <div className="text-5xl md:text-6xl mb-4">📸</div>
-                  <h2 className="text-3xl md:text-4xl font-black mb-2">Vinde rapid cu AI</h2>
-                  <p className="text-white/90 text-lg mb-6">
-                    Fă o poză și AI îți creează automat anunțul
-                  </p>
-                  <ul className="space-y-2 mb-8 text-white/90">
-                    <li className="flex items-center gap-2">
-                      <span>🧠</span> <span>Titlu și descriere generate automat</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>💰</span> <span>Preț recomandat de AI</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>🔥</span> <span>Licitație automată între cumpărători</span>
-                    </li>
-                  </ul>
-                  <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-slate-900 font-bold text-lg group-hover:gap-3 transition-all">
-                    📸 Vinde acum
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </div>
-              </Link>
-
-              {/* CUMPĂRĂ CU AI — SECUNDAR */}
-              <Link
-                href="#search-ai"
-                className="group relative overflow-hidden rounded-3xl p-8 md:p-10 glass glass-hover transition-all duration-300 hover:scale-[1.02]"
-                style={{ boxShadow: 'var(--glow-blue)' }}
-              >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: 'radial-gradient(circle at 50% 0%, rgba(59,130,246,0.2), transparent 60%)' }}
-                />
-                <div className="relative">
-                  <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full"
-                    style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#60A5FA' }}>
-                      Inteligent
-                    </span>
-                  </div>
-                  <div className="text-5xl md:text-6xl mb-4">🎤</div>
-                  <h2 className="text-3xl md:text-4xl font-black mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Găsește mai inteligent
-                  </h2>
-                  <p className="text-lg mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Spune ce cauți și AI găsește cele mai bune oferte
-                  </p>
-                  <ul className="space-y-2 mb-8" style={{ color: 'var(--text-secondary)' }}>
-                    <li className="flex items-center gap-2">
-                      <span>🎤</span> <span>Căutare vocală naturală</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>📊</span> <span>AI Verdict: bun / ok / scump</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span>⚖️</span> <span>Compară produse similare</span>
-                    </li>
-                  </ul>
-                  <div
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-lg text-white group-hover:gap-3 transition-all"
-                    style={{ background: 'linear-gradient(135deg, #3B82F6, #60A5FA)' }}
-                  >
-                    🎤 Caută acum
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </div>
-              </Link>
-            </div>
+            <h1 className="text-4xl md:text-5xl font-black mb-3 leading-tight" style={{ color: 'var(--text-primary)' }}>
+              Vinde și cumpără<br />
+              <span className="gradient-main-text">mai inteligent cu AI</span>
+            </h1>
+            <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
+              Fă o poză sau spune ce cauți. AI face restul.
+            </p>
+            <HeroActions />
           </div>
         </section>
 
-        {/* ========== SEARCH DUALĂ (AI + CLASIC) ========== */}
-        <section id="search-ai" className="max-w-4xl mx-auto mb-16 md:mb-24 scroll-mt-24">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">
-              <span className="gradient-main-text">Spune ce cauți</span>
-            </h2>
-            <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-              Vorbești natural, AI găsește pentru tine
-            </p>
-          </div>
-
-          <div className="rounded-3xl p-6 md:p-8 glass" style={{ boxShadow: 'var(--glow-blue)' }}>
-            <HeroSearch suggestions={suggestions} />
-          </div>
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            <span className="opacity-60">Încearcă:</span>
-            <span className="px-3 py-1 rounded-full glass">BMW sub 5000 euro</span>
-            <span className="px-3 py-1 rounded-full glass">iPhone bun și ieftin</span>
-            <span className="px-3 py-1 rounded-full glass">canapea modernă</span>
-          </div>
-        </section>
-
-        {/* ========== CUM FUNCȚIONEAZĂ ========== */}
-        <section className="max-w-6xl mx-auto mb-16 md:mb-24">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>
-              Cum funcționează
-            </h2>
-            <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-              Trei pași simpli. Zero bătaie de cap.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5 md:gap-6">
+        {/* ========== AI FEATURES 3 CARDURI ========== */}
+        <section className="max-w-4xl mx-auto mb-10 md:mb-14">
+          <div className="grid grid-cols-3 gap-3 md:gap-5">
             {[
-              {
-                step: '1',
-                icon: '📸',
-                title: 'AI creează anunțul',
-                text: 'Încarci o poză, AI generează automat titlu, descriere și categorie',
-                glow: 'var(--glow-purple)',
-              },
-              {
-                step: '2',
-                icon: '📊',
-                title: 'AI analizează prețul',
-                text: 'Primești verdict clar: 🟢 bun, 🟡 ok, 🔴 scump — fără ghicit',
-                glow: 'var(--glow-blue)',
-              },
-              {
-                step: '3',
-                icon: '🔥',
-                title: 'Licitație automată',
-                text: 'Dacă mai mulți vor produsul, prețul crește automat pentru tine',
-                glow: 'var(--glow-purple)',
-              },
-            ].map((s) => (
-              <div
-                key={s.step}
-                className="relative rounded-2xl p-6 md:p-8 glass glass-hover transition-all duration-300"
-                style={{ boxShadow: s.glow }}
-              >
-                <div
-                  className="absolute -top-4 -left-4 w-12 h-12 rounded-full flex items-center justify-center font-black text-lg text-white"
-                  style={{ background: 'var(--gradient-main)' }}
-                >
-                  {s.step}
-                </div>
-                <div className="text-5xl mb-4">{s.icon}</div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                  {s.title}
-                </h3>
-                <p style={{ color: 'var(--text-secondary)' }}>{s.text}</p>
+              { icon: '🤖', title: 'AI creează anunțul', text: 'Încarci o poză și AI face tot' },
+              { icon: '📊', title: 'AI Verdict', text: 'Bun, ok sau scump — instant' },
+              { icon: '🔥', title: 'Licitație automată', text: 'Mai mulți cumpărători → preț mai mare' },
+            ].map((f, i) => (
+              <div key={i} className="rounded-2xl p-4 md:p-5 text-center glass glass-hover transition-all">
+                <div className="text-3xl md:text-4xl mb-2">{f.icon}</div>
+                <p className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>{f.title}</p>
+                <p className="text-xs hidden md:block" style={{ color: 'var(--text-secondary)' }}>{f.text}</p>
               </div>
             ))}
           </div>
@@ -335,6 +180,63 @@ export default async function Home() {
 
         {/* ========== LIVE STATS (existent, funcțional) ========== */}
         <LiveStats />
+
+        {/* ========== PRODUSE SUBEVALUATE ========== */}
+        {undervalued.length > 0 && (
+          <section className="max-w-6xl mx-auto mb-16 md:mb-24">
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-full"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <span className="text-sm font-bold" style={{ color: '#F87171' }}>
+                  🔥 DETECTATE DE AI AZI
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black" style={{ color: 'var(--text-primary)' }}>
+                Produse subevaluate
+              </h2>
+              <p className="text-lg mt-2" style={{ color: 'var(--text-secondary)' }}>
+                AI a identificat aceste anunțuri ca având preț sub piață
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {undervalued.map((l: any) => (
+                <Link
+                  key={l.id}
+                  href={`/anunt/${l.id}`}
+                  className="group relative rounded-2xl overflow-hidden glass glass-hover transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={l.images[0]}
+                      alt={l.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur"
+                      style={{ background: 'rgba(239,68,68,0.85)' }}>
+                      🤖 AI: subevaluat
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-sm md:text-base line-clamp-2 mb-2"
+                      style={{ color: 'var(--text-primary)' }}>
+                      {l.title}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-black gradient-main-text">
+                        {l.price ? `${l.price.toLocaleString('ro-RO')} ${l.currency}` : 'Negociabil'}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {l.city}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
 
         {/* ========== CELE MAI NOI ANUNȚURI (existent, funcțional) ========== */}
         <SwipeableRow
@@ -432,62 +334,6 @@ export default async function Home() {
             ))}
           </div>
         </section>
-
-        {/* ========== PRODUSE SUBEVALUATE ========== */}
-        {undervalued.length > 0 && (
-          <section className="max-w-6xl mx-auto mb-16 md:mb-24">
-            <div className="mb-8">
-              <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-full"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <span className="text-sm font-bold" style={{ color: '#F87171' }}>
-                  🔥 DETECTATE DE AI AZI
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black" style={{ color: 'var(--text-primary)' }}>
-                Produse subevaluate
-              </h2>
-              <p className="text-lg mt-2" style={{ color: 'var(--text-secondary)' }}>
-                AI a identificat aceste anunțuri ca având preț sub piață
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {undervalued.map((l: any) => (
-                <Link
-                  key={l.id}
-                  href={`/anunt/${l.id}`}
-                  className="group relative rounded-2xl overflow-hidden glass glass-hover transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={l.images[0]}
-                      alt={l.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur"
-                      style={{ background: 'rgba(239,68,68,0.85)' }}>
-                      🤖 AI: subevaluat
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-sm md:text-base line-clamp-2 mb-2"
-                      style={{ color: 'var(--text-primary)' }}>
-                      {l.title}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black gradient-main-text">
-                        {l.price ? `${l.price.toLocaleString('ro-RO')} ${l.currency}` : 'Negociabil'}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {l.city}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* ========== CTA FINAL ========== */}
         <section className="max-w-4xl mx-auto mb-16">
