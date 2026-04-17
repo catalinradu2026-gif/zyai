@@ -152,9 +152,9 @@ export default async function Home() {
                 <span className="text-sm font-medium">⚡ AI-Powered Marketplace 2026</span>
               </div>
               <h1 className="text-4xl md:text-6xl font-black mb-3 leading-tight">
-                <span className="gradient-main-text">Vinzi și cumperi</span>
+                <span className="gradient-main-text">Zi hai pe zyAi!</span>
                 <br />
-                <span style={{ color: 'var(--text-primary)' }}>mai inteligent cu AI</span>
+                <span style={{ color: 'var(--text-primary)' }}>Vinzi și cumperi cu AI</span>
               </h1>
               <p className="text-lg md:text-xl" style={{ color: 'var(--text-secondary)' }}>
                 Fă o poză. AI generează anunțul. Găsește cu vocea.
