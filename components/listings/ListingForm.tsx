@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createListing, updateListing } from '@/lib/actions/listings'
 import {
   AUTO_BRANDS, AUTO_MODELS, CAROSERIE_TYPES, YEARS,
@@ -274,8 +274,15 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [error, setError] = useState('')
   const [images, setImages] = useState<string[]>(initialData?.images || [])
 
+  // Bid Popup after publish
+  const [publishedId, setPublishedId] = useState<string | null>(null)
+  const [showBidPopup, setShowBidPopup] = useState(false)
+  const [bidActivating, setBidActivating] = useState(false)
+  const [bidHours, setBidHours] = useState(3)
+
   // AI Image Analysis
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiLoadStep, setAiLoadStep] = useState(0)
   const [aiError, setAiError] = useState('')
   const [aiAnalysis, setAiAnalysis] = useState<{
     title: string; description: string; category: string; subcategory: string;
@@ -459,6 +466,14 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
 
   // Contact
   const [contactPhone, setContactPhone] = useState(initMeta.contactPhone || '')
+
+  // AI load step cycle
+  useEffect(() => {
+    if (!aiAnalyzing) { setAiLoadStep(0); return }
+    const msgs = ['AI analizează produsul...', 'Se generează titlul...', 'Se calculează prețul...']
+    const t = setInterval(() => setAiLoadStep(s => (s + 1) % msgs.length), 1500)
+    return () => clearInterval(t)
+  }, [aiAnalyzing])
 
   const availableModels = brand && AUTO_MODELS[brand] ? AUTO_MODELS[brand] : []
   const subs = SUBS[mainCat] || []
@@ -759,7 +774,9 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
           setError(result.error)
           setLoading(false)
         } else if (result?.id) {
-          window.location.href = `/anunt/${result.id}`
+          setPublishedId(result.id)
+          setShowBidPopup(true)
+          setLoading(false)
         }
       }
     } catch (err: any) {
@@ -1301,6 +1318,77 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
 
   return (
     <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--bg-primary)' }}>
+      {showBidPopup && publishedId && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', borderRadius: '24px', padding: '32px',
+            maxWidth: '420px', width: '100%', textAlign: 'center',
+            border: '1px solid rgba(139,92,246,0.4)', boxShadow: '0 0 60px rgba(139,92,246,0.3)'
+          }}>
+            <div style={{ fontSize: '56px', marginBottom: '12px' }}>✅</div>
+            <h2 style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>
+              Anunț publicat!
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+              Anunțul tău este acum live pe zyAI.
+            </p>
+
+            <div style={{
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+              borderRadius: '16px', padding: '20px', marginBottom: '20px'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
+              <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '18px', marginBottom: '6px' }}>
+                Vrei să vinzi mai scump?
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
+                Dacă sunt mai mulți cumpărători, prețul crește automat
+              </p>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+                {[1,2,3,6].map(h => (
+                  <button key={h} type="button" onClick={() => setBidHours(h)}
+                    style={{
+                      padding: '6px 16px', borderRadius: '20px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', border: '2px solid',
+                      background: bidHours === h ? 'var(--gradient-main)' : 'transparent',
+                      borderColor: bidHours === h ? 'transparent' : 'rgba(255,255,255,0.2)',
+                      color: bidHours === h ? 'white' : 'var(--text-secondary)',
+                    }}>
+                    {h}h
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={bidActivating}
+                onClick={async () => {
+                  setBidActivating(true)
+                  try {
+                    const { activateBidding } = await import('@/lib/actions/listings')
+                    await activateBidding(publishedId, bidHours)
+                  } catch {}
+                  window.location.href = `/anunt/${publishedId}`
+                }}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '12px', fontWeight: 700, fontSize: '16px',
+                  background: 'linear-gradient(135deg,#EF4444,#F97316)', color: 'white', cursor: 'pointer',
+                  border: 'none', opacity: bidActivating ? 0.7 : 1
+                }}>
+                {bidActivating ? '⏳ Se activează...' : `🔥 Activează licitația (${bidHours}h)`}
+              </button>
+            </div>
+
+            <button type="button"
+              onClick={() => { window.location.href = `/anunt/${publishedId}` }}
+              style={{ color: 'var(--text-secondary)', fontSize: '14px', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Nu acum, mergi la anunț →
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-6">
           <h1 className="gradient-main-text" style={{ fontSize: '28px', fontWeight: 700 }}>
@@ -1363,7 +1451,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                           }} />
                         ))}
                       </div>
-                      <span style={{ color: '#A78BFA', fontWeight: 700, fontSize: '15px' }}>zyAI analizează imaginea...</span>
+                      <span style={{ color: '#A78BFA', fontWeight: 700, fontSize: '15px' }}>{(['AI analizează produsul...', 'Se generează titlul...', 'Se calculează prețul...'])[aiLoadStep]}</span>
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Detectez produsul, starea și detaliile...</p>
                   </div>
