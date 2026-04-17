@@ -45,8 +45,8 @@ export default function LoginPage() {
       setError('Completează numele complet!')
       return
     }
-    if (password.length < 6) {
-      setError('Parola trebuie să aibă cel puțin 6 caractere!')
+    if (password.length < 5) {
+      setError('Parola trebuie să aibă cel puțin 5 caractere!')
       return
     }
 

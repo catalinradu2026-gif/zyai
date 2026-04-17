@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (password.length < 6) {
+    if (password.length < 5) {
       return NextResponse.json(
-        { error: 'Parola trebuie să aibă cel puțin 6 caractere!' },
+        { error: 'Parola trebuie să aibă cel puțin 5 caractere!' },
         { status: 400 }
       )
     }
