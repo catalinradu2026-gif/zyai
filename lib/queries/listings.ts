@@ -95,13 +95,14 @@ export async function getListings(filters: ListingFilters = {}) {
   }
 
   // ── Filtre metadata AUTO ──────────────────────────────────────
-  if (filters.brand) q = q.eq('metadata->>brand', filters.brand)
+  // Folosim ilike pentru case-insensitive match (user poate scrie bmw/BMW/Bmw)
+  if (filters.brand) q = q.ilike('metadata->>brand', filters.brand)
   if (filters.model) q = q.ilike('metadata->>model', `%${filters.model}%`)
-  if (filters.fuel) q = q.eq('metadata->>fuelType', filters.fuel)
-  if (filters.gearbox) q = q.eq('metadata->>gearbox', filters.gearbox)
-  if (filters.caroserie) q = q.eq('metadata->>caroserie', filters.caroserie)
+  if (filters.fuel) q = q.ilike('metadata->>fuelType', filters.fuel)
+  if (filters.gearbox) q = q.ilike('metadata->>gearbox', filters.gearbox)
+  if (filters.caroserie) q = q.ilike('metadata->>caroserie', filters.caroserie)
   if (filters.seller) q = q.ilike('metadata->>sellerType', `%${filters.seller}%`)
-  if (filters.stare) q = q.eq('metadata->>condition', filters.stare)
+  if (filters.stare) q = q.ilike('metadata->>condition', filters.stare)
   // An fabricatie — string comparison pe 4 cifre funcționează corect
   if (filters.yearFrom) q = q.gte('metadata->>year', filters.yearFrom)
   if (filters.yearTo) q = q.lte('metadata->>year', filters.yearTo)

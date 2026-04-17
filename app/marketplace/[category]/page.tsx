@@ -70,11 +70,49 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   try {
     const result = await getListings({
       category,
+      subcategory: sp.sub || undefined,
       city: sp.city,
       minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
       maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
       query: sp.q,
       page: sp.pagina ? Number(sp.pagina) : 1,
+      // AUTO filters
+      brand: sp.brand,
+      model: sp.model,
+      fuel: sp.fuel,
+      yearFrom: sp.yearFrom,
+      yearTo: sp.yearTo,
+      kmFrom: sp.kmFrom,
+      kmTo: sp.kmTo,
+      gearbox: sp.gearbox,
+      caroserie: sp.caroserie,
+      seller: sp.seller,
+      stare: sp.stare,
+      // IMOBILIARE filters
+      tipTranzactie: sp.tipTranzactie,
+      tipApartament: sp.tipApartament,
+      tipCasa: sp.tipCasa,
+      tipTeren: sp.tipTeren,
+      tipSpatiu: sp.tipSpatiu,
+      compartimentare: sp.compartimentare,
+      stareImob: sp.stareImob,
+      nrCamere: sp.nrCamere,
+      etaj: sp.etaj,
+      anConstructie: sp.anConstructie,
+      suprafataFrom: sp.suprafataFrom,
+      suprafataTo: sp.suprafataTo,
+      // JOBURI filters
+      jobDomeniu: sp.jobDomeniu,
+      tipContract: sp.tipContract,
+      regimMunca: sp.regimMunca,
+      nivelExperienta: sp.nivelExperienta,
+      // ELECTRONICE filters
+      electroStare: sp.electroStare,
+      telefonBrand: sp.telefonBrand,
+      laptopBrand: sp.laptopBrand,
+      // MODĂ filters
+      modaStare: sp.modaStare,
+      modaGen: sp.modaGen,
     })
     listings = result.data || []
     count = result.count || 0
