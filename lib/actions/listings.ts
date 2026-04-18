@@ -54,6 +54,14 @@ export async function createListing(formData: {
 
     const admin = createSupabaseAdmin()
 
+    // Ensure profile exists — prevents FK violation for OAuth users whose profile creation failed
+    await admin.from('profiles').upsert({
+      id: user.id,
+      full_name: user.full_name || user.email?.split('@')[0] || 'Utilizator',
+      phone: user.phone || '',
+      city: user.city || '',
+    }, { onConflict: 'id', ignoreDuplicates: true })
+
     const isAuto = formData.categorySlug === 'auto' || formData.categorySlug.startsWith('auto')
     const isSubcategory = CATEGORY_IDS[formData.categorySlug] === undefined
     const subcategorySlug = isSubcategory ? formData.categorySlug : null

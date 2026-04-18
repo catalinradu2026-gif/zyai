@@ -93,10 +93,22 @@ export async function updateProfile(data: {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) return { error: 'Nu ești autentificat' }
 
-    const { error } = await supabase
+    const admin = createSupabaseAdmin()
+    const fullName = data.full_name ||
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split('@')[0] ||
+      'Utilizator'
+
+    const { error } = await admin
       .from('profiles')
-      .update(data)
-      .eq('id', user.id)
+      .upsert({
+        id: user.id,
+        full_name: fullName,
+        phone: data.phone ?? '',
+        city: data.city ?? '',
+        ...data,
+      })
 
     if (error) return { error: 'Eroare la salvare. Încearcă din nou.' }
     return { success: true }

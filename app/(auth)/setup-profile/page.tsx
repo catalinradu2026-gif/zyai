@@ -5,6 +5,7 @@ import { updateProfile } from '@/lib/actions/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function SetupProfileForm() {
+  const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,10 +16,11 @@ function SetupProfileForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!fullName.trim()) { setError('Numele este obligatoriu'); return }
     if (!phone.trim()) { setError('Numărul de telefon este obligatoriu'); return }
     setLoading(true)
     setError('')
-    const result = await updateProfile({ phone: phone.trim(), city: city.trim() })
+    const result = await updateProfile({ full_name: fullName.trim(), phone: phone.trim(), city: city.trim() })
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -50,6 +52,26 @@ function SetupProfileForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Nume */}
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
+              👤 Nume complet *
+            </label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Ion Popescu"
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
+              style={{
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
           {/* Telefon */}
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -60,7 +82,6 @@ function SetupProfileForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+40 723 123 456"
-              autoFocus
               className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
               style={{
                 background: 'var(--bg-input)',
