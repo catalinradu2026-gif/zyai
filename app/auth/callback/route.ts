@@ -1,6 +1,5 @@
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -9,23 +8,29 @@ export async function GET(request: NextRequest) {
   const next = requestUrl.searchParams.get('next') ?? '/'
 
   if (!code) {
-    // Fără code — redirecționează la home (nu la error page)
     return NextResponse.redirect(new URL('/', requestUrl.origin))
   }
 
-  const cookieStore = await cookies()
+  // Build the redirect response first so we can attach cookies to it
+  const setupUrl = new URL('/setup-profile', requestUrl.origin)
+  let redirectTarget = new URL(next.startsWith('/') ? next : '/', requestUrl.origin)
+
+  const response = NextResponse.redirect(redirectTarget)
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
+        getAll() {
+          return request.cookies.getAll()
+        },
         setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {}
+          // Set cookies on both request and response so session persists on mobile
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
@@ -35,7 +40,8 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('[auth/callback] exchangeCodeForSession error:', error.message)
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin))
+    const errUrl = new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
+    return NextResponse.redirect(errUrl)
   }
 
   if (data.user) {
@@ -50,7 +56,6 @@ export async function GET(request: NextRequest) {
       const phone: string = existingProfile?.phone ?? ''
       const fullName: string = existingProfile?.full_name ?? ''
 
-      // Upsert profile — handles both new users and users created by DB triggers
       const metaName =
         data.user.user_metadata?.full_name ||
         data.user.user_metadata?.name ||
@@ -60,23 +65,28 @@ export async function GET(request: NextRequest) {
       await admin.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName || metaName,
-        phone: phone,
+        phone,
         city: existingProfile?.city ?? '',
       }, { onConflict: 'id', ignoreDuplicates: true })
 
-      // Trimite la setup-profile dacă lipsește telefon sau nume
+      // Redirect to setup-profile if phone or name missing
       if (!phone.trim() || !fullName.trim()) {
-        const setupUrl = new URL('/setup-profile', requestUrl.origin)
-        if (next !== '/') setupUrl.searchParams.set('next', next)
-        return NextResponse.redirect(setupUrl)
+        const res = NextResponse.redirect(setupUrl)
+        // Copy session cookies to setup-profile redirect
+        response.cookies.getAll().forEach(cookie => {
+          res.cookies.set(cookie.name, cookie.value, { path: '/', sameSite: 'lax', httpOnly: true })
+        })
+        return res
       }
     } catch (e) {
       console.error('[auth/callback] profile error:', e)
-      // Trimitem la setup-profile oricum dacă ceva a mers prost
-      const setupUrl = new URL('/setup-profile', requestUrl.origin)
-      return NextResponse.redirect(setupUrl)
+      const res = NextResponse.redirect(setupUrl)
+      response.cookies.getAll().forEach(cookie => {
+        res.cookies.set(cookie.name, cookie.value, { path: '/', sameSite: 'lax', httpOnly: true })
+      })
+      return res
     }
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin))
+  return response
 }
