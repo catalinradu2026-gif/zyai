@@ -21,6 +21,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Paginile dinamice nu se cacheaza niciodata
+        source: '/(cauta|anunt|marketplace|cont)(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Surrogate-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
