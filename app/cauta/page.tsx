@@ -70,7 +70,7 @@ async function searchListings(query: string) {
   const buildBase = () => admin
     .from('listings')
     .select(SELECT, { count: 'exact' })
-    .in('status', ['activ', 'bidding'])
+    .in('status', ['activ', 'bidding', 'vandut'])
     .order('created_at', { ascending: false })
     .limit(40)
 
@@ -218,8 +218,20 @@ export default async function SearchPage({ searchParams }: Props) {
                   <div className="h-40 flex items-center justify-center relative overflow-hidden"
                     style={{ background: 'linear-gradient(135deg,#4c1d95,#1e3a8a)' }}>
                     {listing.images?.[0]
-                      ? <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
+                      ? <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" style={{ opacity: listing.status === 'vandut' ? 0.5 : 1 }} />
                       : <span className="text-4xl opacity-40">📦</span>}
+                    {listing.status === 'vandut' && (
+                      <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0.45)'
+                      }}>
+                        <span style={{
+                          background: '#ef4444', color: 'white', fontWeight: 900, fontSize: '15px',
+                          padding: '6px 18px', borderRadius: '8px', letterSpacing: '2px', transform: 'rotate(-10deg)',
+                          border: '2px solid white'
+                        }}>VÂNDUT</span>
+                      </div>
+                    )}
                     <div className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full"
                       style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>✨ AI</div>
                     {(() => {
