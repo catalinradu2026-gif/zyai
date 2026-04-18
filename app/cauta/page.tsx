@@ -14,45 +14,56 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return { title: q ? `"${q}" - Căutare zyAI` : 'Căutare - zyAI' }
 }
 
-async function parseQuery(query: string) {
+type ParsedQuery = { keyword: string; city: string; maxPrice: number | null; variants: string[] }
+
+async function parseQuery(query: string): Promise<ParsedQuery> {
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
     const res = await groq.chat.completions.create({
       messages: [
         {
           role: 'system',
-          content: `Ești un parser pentru un marketplace românesc. Din query-ul utilizatorului extrage:
-- keyword: cuvântul cheie principal de căutat (forma de bază, singular, fără "caut", "vreau", "găsește" etc.). Ex: "caut electricieni" → "electrician", "vreau iPhone ieftin" → "iPhone"
-- city: orașul dacă e menționat (ex: "Craiova", "București") sau "" dacă nu
-- maxPrice: numărul dacă e menționat un preț maxim, altfel null
+          content: `Ești un parser inteligent pentru un marketplace românesc. Query-ul poate veni din voce și poate conține greșeli fonetice sau transcrieri incorecte ale mărcilor.
 
-Returnează DOAR JSON valid fără explicații: {"keyword":"...","city":"...","maxPrice":null}`,
+Extrage:
+- keyword: cuvântul cheie CORECT (corectează greșeli fonetice de mărci auto: "bemveu"/"be em ve"/"bm vu" → "BMW", "aude"/"audde"/"ode" → "Audi", "mertcedes"/"mersedes"/"mercedes benz" → "Mercedes", "datie"/"dacia" → "Dacia", "vw"/"folfsvagen" → "Volkswagen". Corectează și produse: "labtop"/"latop" → "laptop", "telefon"/"telepon" → "telefon"). Fără "caut/vreau/vand/găsesc". Forma de bază.
+- city: orașul corect dacă e menționat (ex: "craiova" → "Craiova", "bucuresti" → "București") sau "" dacă nu
+- maxPrice: prețul maxim ca număr dacă e menționat, altfel null
+- variants: array cu variante de scris ale keyword-ului pentru căutare (ex: ["casa","casă","case","Case"] sau ["BMW","bmw"] sau ["laptop","Laptop"]). Max 4 variante.
+
+Returnează DOAR JSON valid: {"keyword":"...","city":"...","maxPrice":null,"variants":["..."]}`,
         },
         { role: 'user', content: query },
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0,
-      max_tokens: 80,
+      max_tokens: 120,
     })
     const txt = (res.choices[0].message.content || '{}')
       .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    return JSON.parse(txt) as { keyword: string; city: string; maxPrice: number | null }
+    const parsed = JSON.parse(txt)
+    return {
+      keyword: parsed.keyword || query,
+      city: parsed.city || '',
+      maxPrice: parsed.maxPrice || null,
+      variants: Array.isArray(parsed.variants) ? parsed.variants : [parsed.keyword || query],
+    }
   } catch {
-    return { keyword: query, city: '', maxPrice: null }
+    return { keyword: query, city: '', maxPrice: null, variants: [query] }
   }
 }
 
-
-const STOP_WORDS = new Set(['caut','vreau','vand','vind','cumpar','gaseste','gasesc','afla','un','una','cel','mai','bun','buna','ieftin','ieftina','si','in','la','pe','de','cu','sau','din','care','are','sau'])
 
 async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
   const admin = createSupabaseAdmin()
   const parsed = await parseQuery(query)
 
-  const kw = (parsed.keyword || query).trim()
+  const kw = parsed.keyword.trim()
   const city = parsed.city || ''
   const maxPrice = parsed.maxPrice
+  // Groq returnează variante cu/fără diacritice (ex: ["casa","casă"])
+  const variants = [...new Set([kw, ...parsed.variants])].filter(Boolean)
 
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
@@ -69,23 +80,13 @@ async function searchListings(query: string) {
     return q
   }
 
-  // Căutare principală: keyword în titlu
-  const { data, count } = await applyFilters(buildBase().ilike('title', `%${kw}%`))
-  if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw }
-
-  // Fallback 1: fiecare cuvânt semnificativ din keyword
-  const words = kw.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w))
-  for (const word of words) {
-    const { data: d2, count: c2 } = await applyFilters(buildBase().ilike('title', `%${word}%`))
-    if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: word }
+  // Încearcă fiecare variantă (keyword + diacritice + sinonime) în titlu
+  for (const variant of variants) {
+    const { data, count } = await applyFilters(buildBase().ilike('title', `%${variant}%`))
+    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
   }
 
-  // Fallback 2: dacă are oraș, toate anunțurile din acel oraș
-  if (city) {
-    const { data: d3, count: c3 } = await buildBase().ilike('city', `%${city}%`)
-    if (d3?.length) return { listings: d3 as any[], count: c3 || 0, usedKeyword: city }
-  }
-
+  // Niciun rezultat — returnează gol (nu fallback agresiv "toate din oraș")
   return { listings: [], count: 0, usedKeyword: kw }
 }
 
