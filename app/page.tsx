@@ -132,17 +132,23 @@ export default async function Home() {
   const soldMapped = soldListings.map(mapListing)
   const biddingMapped = biddingListings.map(mapListing)
 
-  // Merge: bidding + sold + active (fără duplicate), cele mai noi primele
+  // Deduplicare globală
   const seenIds = new Set<string>()
-  const allMerged = [...biddingMapped, ...soldMapped, ...activeListings].filter((l: any) => {
+  const dedupe = (arr: any[]) => arr.filter((l: any) => {
     if (seenIds.has(l.id)) return false
     seenIds.add(l.id)
     return true
   })
-  const listings = allMerged.slice(0, 20)
+
+  // "Cele mai noi" = licitații active + vandute + cele mai noi active (max 12)
+  const recentListings = dedupe([...biddingMapped, ...soldMapped, ...activeListings]).slice(0, 12)
+
+  // "Oferte pentru tine" = restul anunțurilor active (fără cele deja afișate în "cele mai noi")
+  const recentIds = new Set(recentListings.map((l: any) => l.id))
+  const oferteListing = activeListings.filter((l: any) => !recentIds.has(l.id))
 
   // Selectează primele 6 anunțuri cu imagine pentru secțiunea "Produse subevaluate"
-  const undervalued = listings.filter((l: any) => l.images && l.images.length > 0).slice(0, 6)
+  const undervalued = recentListings.filter((l: any) => l.images && l.images.length > 0 && l.status === 'activ').slice(0, 6)
 
   return (
     <>
@@ -253,17 +259,17 @@ export default async function Home() {
         )}
 
 
-        {/* ========== CELE MAI NOI ANUNȚURI (existent, funcțional) ========== */}
+        {/* ========== CELE MAI NOI ANUNȚURI ========== */}
         <SwipeableRow
-          listings={listings}
+          listings={recentListings}
           title="Cele mai noi anunțuri"
-          subtitle="Adăugate recent pe platformă"
+          subtitle="Licitații active, vânzări recente și anunțuri noi"
           userId={user?.id}
           favoritedIds={favoritedIds}
         />
 
-        {/* ========== OFERTE PENTRU TINE (existent, funcțional) ========== */}
-        <PersonalizedSection allListings={listings} />
+        {/* ========== OFERTE PENTRU TINE ========== */}
+        <PersonalizedSection allListings={oferteListing.length >= 4 ? oferteListing : activeListings} />
 
         {/* ========== DIFERENȚIERE ========== */}
         <section className="max-w-5xl mx-auto mb-16 md:mb-24">
