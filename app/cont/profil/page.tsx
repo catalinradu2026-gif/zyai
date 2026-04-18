@@ -2,32 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase'
-import { signOut } from '@/lib/actions/auth'
+import { updateProfile, signOut } from '@/lib/actions/auth'
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    city: '',
-  })
+  const [formData, setFormData] = useState({ fullName: '', phone: '', city: '' })
   const [message, setMessage] = useState('')
 
-  // Load existing profile data on mount
   useEffect(() => {
     async function loadProfile() {
       try {
         const supabase = createSupabaseBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-          setMessage('Trebuie să fii autentificat')
-          return
-        }
+        if (!user) return
 
         const { data } = await supabase
           .from('profiles')
-          .select('*')
+          .select('full_name, phone, city')
           .eq('id', user.id)
           .single()
 
@@ -42,7 +33,6 @@ export default function ProfilePage() {
         console.error('Error loading profile:', err)
       }
     }
-
     loadProfile()
   }, [])
 
@@ -50,27 +40,14 @@ export default function ProfilePage() {
     e.preventDefault()
     setLoading(true)
     setMessage('')
-
     try {
-      const supabase = createSupabaseBrowserClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        setMessage('Trebuie să fii autentificat')
-        return
-      }
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.fullName,
-          phone: formData.phone,
-          city: formData.city,
-        })
-        .eq('id', user.id)
-
-      if (error) {
-        setMessage('Eroare: ' + error.message)
+      const result = await updateProfile({
+        full_name: formData.fullName,
+        phone: formData.phone,
+        city: formData.city,
+      })
+      if (result.error) {
+        setMessage('Eroare: ' + result.error)
       } else {
         setMessage('✓ Profil actualizat cu succes!')
       }
