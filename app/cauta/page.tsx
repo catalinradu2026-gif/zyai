@@ -152,10 +152,6 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
-      {/* TEST BANNER — sterge dupa confirmare */}
-      <div style={{ background: '#ef4444', color: 'white', fontWeight: 700, fontSize: '13px', padding: '8px 16px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center' }}>
-        🧪 v18apr-5 — Toate statusurile in search (activ/licitatie/vandut cu badge), sortare dupa cele mai noi modificari
-      </div>
       {/* Voice response — vorbește rezultatele când vine de la mic */}
       <SearchVoice
         query={query}

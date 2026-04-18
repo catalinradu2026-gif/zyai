@@ -24,44 +24,50 @@ function buildVoiceText(query: string, count: number, firstTitle?: string, first
 }
 
 export default function SearchVoice({ query, count, firstTitle, firstPrice, firstCity }: Props) {
-  const searchParams = useSearchParams()
-  const playedRef = useRef(false)
+  const playedRef = useRef<string>('')
   const [speaking, setSpeaking] = useState(false)
 
-  // Auto-play la montare dacă vine de la mic (voice=1)
+  // Auto-play întotdeauna când apare un query nou
   useEffect(() => {
-    if (searchParams.get('voice') !== '1') return
-    if (playedRef.current) return
-    playedRef.current = true
+    if (!query || playedRef.current === query) return
+    playedRef.current = query
 
     const text = buildVoiceText(query, count, firstTitle, firstPrice, firstCity)
+    speak(text, setSpeaking)
+  }, [query, count, firstTitle, firstPrice, firstCity])
 
-    // Folosim audio-ul global deblocat de HeroSearch la tap pe mic
-    const audio = (window as any).__zyaiAudio as HTMLAudioElement | undefined
-    if (!audio) return
+  function speak(text: string, setSpeak?: (v: boolean) => void) {
+    setSpeak?.(true)
+    // Încearcă speechSynthesis (nu necesită user gesture pe desktop)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utt = new SpeechSynthesisUtterance(text)
+      utt.lang = 'ro-RO'
+      utt.rate = 1.05
+      utt.onend = () => setSpeak?.(false)
+      utt.onerror = () => {
+        setSpeak?.(false)
+        // Fallback: audio element
+        tryAudio(text, setSpeak)
+      }
+      window.speechSynthesis.speak(utt)
+      return
+    }
+    tryAudio(text, setSpeak)
+  }
 
-    const src = `/api/tts-get?text=${encodeURIComponent(text)}`
-    audio.src = src
-    setSpeaking(true)
-    audio.onended = () => setSpeaking(false)
-    audio.onerror = () => setSpeaking(false)
-    audio.play().catch(() => setSpeaking(false))
-  }, [searchParams, query, count, firstTitle, firstPrice, firstCity])
+  function tryAudio(text: string, setSpeak?: (v: boolean) => void) {
+    let audio = (window as any).__zyaiAudio as HTMLAudioElement | undefined
+    if (!audio) { audio = new Audio(); (window as any).__zyaiAudio = audio }
+    audio.src = `/api/tts-get?text=${encodeURIComponent(text)}`
+    audio.onended = () => setSpeak?.(false)
+    audio.onerror = () => setSpeak?.(false)
+    audio.play().catch(() => setSpeak?.(false))
+  }
 
-  // Buton replay (dacă vrea să asculte din nou)
   function replay() {
     const text = buildVoiceText(query, count, firstTitle, firstPrice, firstCity)
-    let audio = (window as any).__zyaiAudio as HTMLAudioElement | undefined
-    if (!audio) {
-      audio = new Audio()
-      ;(window as any).__zyaiAudio = audio
-    }
-    const src = `/api/tts-get?text=${encodeURIComponent(text)}`
-    audio.src = src
-    setSpeaking(true)
-    audio.onended = () => setSpeaking(false)
-    audio.onerror = () => setSpeaking(false)
-    audio.play().catch(() => setSpeaking(false))
+    speak(text, setSpeaking)
   }
 
   if (!query) return null
