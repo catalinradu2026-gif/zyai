@@ -59,7 +59,7 @@ const MOCK_LISTINGS = [
 
 export default async function Home() {
   // Utilizator curent + favorite IDs (paralel)
-  const [userResult, suggestionsResult, dbListingsResult, soldListingsResult] = await Promise.allSettled([
+  const [userResult, suggestionsResult, dbListingsResult, soldListingsResult, biddingListingsResult] = await Promise.allSettled([
     getUser(),
     (async () => {
       const supabase = await createSupabaseServerClient()
@@ -83,12 +83,24 @@ export default async function Home() {
         .limit(10)
       return data ?? []
     })(),
+    // Toate licitațiile active — apar cu badge LICITAȚIE
+    (async () => {
+      const admin = createSupabaseAdmin()
+      const { data } = await admin
+        .from('listings')
+        .select('id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata')
+        .eq('status', 'bidding')
+        .order('created_at', { ascending: false })
+        .limit(10)
+      return data ?? []
+    })(),
   ])
 
   const user = userResult.status === 'fulfilled' ? userResult.value : null
   const suggestions: string[] = suggestionsResult.status === 'fulfilled' ? suggestionsResult.value : []
   const dbListings = dbListingsResult.status === 'fulfilled' ? dbListingsResult.value.data : null
   const soldListings = soldListingsResult.status === 'fulfilled' ? soldListingsResult.value : []
+  const biddingListings = biddingListingsResult.status === 'fulfilled' ? biddingListingsResult.value : []
 
   // Fetch favorite IDs dacă userul e logat
   let favoritedIds: string[] = []
@@ -118,11 +130,16 @@ export default async function Home() {
 
   const activeListings = (dbListings ?? []).map(mapListing)
   const soldMapped = soldListings.map(mapListing)
+  const biddingMapped = biddingListings.map(mapListing)
 
-  // Merge: active + sold (fără duplicate), sortat după created_at desc
-  const activeIds = new Set(activeListings.map((l: any) => l.id))
-  const uniqueSold = soldMapped.filter((l: any) => !activeIds.has(l.id))
-  const listings = [...uniqueSold, ...activeListings].slice(0, 20)
+  // Merge: bidding + sold + active (fără duplicate), cele mai noi primele
+  const seenIds = new Set<string>()
+  const allMerged = [...biddingMapped, ...soldMapped, ...activeListings].filter((l: any) => {
+    if (seenIds.has(l.id)) return false
+    seenIds.add(l.id)
+    return true
+  })
+  const listings = allMerged.slice(0, 20)
 
   // Selectează primele 6 anunțuri cu imagine pentru secțiunea "Produse subevaluate"
   const undervalued = listings.filter((l: any) => l.images && l.images.length > 0).slice(0, 6)
