@@ -65,13 +65,13 @@ async function searchListings(query: string) {
   // Groq returnează variante cu/fără diacritice (ex: ["casa","casă"])
   const variants = [...new Set([kw, ...parsed.variants])].filter(Boolean)
 
-  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status, updated_at'
+  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
   const buildBase = () => admin
     .from('listings')
     .select(SELECT, { count: 'exact' })
     .in('status', ['activ', 'bidding', 'vandut'])
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(40)
 
   const applyFilters = (q: any) => {
