@@ -61,8 +61,8 @@ export async function getListings(filters: ListingFilters = {}) {
       `id, title, description, price, price_type, currency, city, images, created_at, status, category_id, metadata`,
       { count: 'exact' }
     )
-    .in('status', ['activ', 'bidding'])
-    .order('created_at', { ascending: false })
+    .in('status', ['activ', 'bidding', 'vandut'])
+    .order('updated_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 
   if (filters.query) {
