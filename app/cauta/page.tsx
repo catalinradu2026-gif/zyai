@@ -65,13 +65,13 @@ async function searchListings(query: string) {
   // Groq returnează variante cu/fără diacritice (ex: ["casa","casă"])
   const variants = [...new Set([kw, ...parsed.variants])].filter(Boolean)
 
-  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
+  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status, updated_at'
 
   const buildBase = () => admin
     .from('listings')
     .select(SELECT, { count: 'exact' })
     .in('status', ['activ', 'bidding', 'vandut'])
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(40)
 
   const applyFilters = (q: any) => {
@@ -154,7 +154,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
       {/* TEST BANNER — sterge dupa confirmare */}
       <div style={{ background: '#ef4444', color: 'white', fontWeight: 700, fontSize: '13px', padding: '8px 16px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center' }}>
-        🧪 v18apr-3 — Groq corecteaza fonetic (bemveu→BMW), variante diacritice (casa/casă), fara fallback agresiv, verdict real din DB
+        🧪 v18apr-5 — Toate statusurile in search (activ/licitatie/vandut cu badge), sortare dupa cele mai noi modificari
       </div>
       {/* Voice response — vorbește rezultatele când vine de la mic */}
       <SearchVoice
@@ -218,18 +218,16 @@ export default async function SearchPage({ searchParams }: Props) {
                   <div className="h-40 flex items-center justify-center relative overflow-hidden"
                     style={{ background: 'linear-gradient(135deg,#4c1d95,#1e3a8a)' }}>
                     {listing.images?.[0]
-                      ? <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" style={{ opacity: listing.status === 'vandut' ? 0.5 : 1 }} />
+                      ? <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" style={{ opacity: listing.status === 'vandut' ? 0.45 : 1 }} />
                       : <span className="text-4xl opacity-40">📦</span>}
                     {listing.status === 'vandut' && (
-                      <div style={{
-                        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'rgba(0,0,0,0.45)'
-                      }}>
-                        <span style={{
-                          background: '#ef4444', color: 'white', fontWeight: 900, fontSize: '15px',
-                          padding: '6px 18px', borderRadius: '8px', letterSpacing: '2px', transform: 'rotate(-10deg)',
-                          border: '2px solid white'
-                        }}>VÂNDUT</span>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)' }}>
+                        <span style={{ background: '#ef4444', color: 'white', fontWeight: 900, fontSize: '14px', padding: '5px 16px', borderRadius: '8px', letterSpacing: '2px', transform: 'rotate(-12deg)', border: '2px solid white' }}>VÂNDUT</span>
+                      </div>
+                    )}
+                    {listing.status === 'bidding' && (
+                      <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'linear-gradient(135deg,#f59e0b,#ef4444)', color: 'white', fontWeight: 800, fontSize: '11px', padding: '3px 10px', borderRadius: '20px', letterSpacing: '1px', boxShadow: '0 0 12px rgba(245,158,11,0.6)' }}>
+                        🔨 LICITAȚIE ACTIVĂ
                       </div>
                     )}
                     <div className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full"
