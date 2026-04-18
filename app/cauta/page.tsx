@@ -42,9 +42,8 @@ Returnează DOAR JSON valid fără explicații: {"keyword":"...","city":"...","m
   }
 }
 
-const AUTO_BRANDS = ['audi','bmw','mercedes','volkswagen','vw','dacia','ford','opel','renault','mazda','porsche','volvo','skoda','seat','toyota','honda','nissan','hyundai','kia','peugeot','citroen','fiat','suzuki','subaru','alfa','jeep','land rover','mini','mitsubishi','lexus','tesla','chevrolet','dodge']
 
-const STOP_WORDS = new Set(['caut','vreau','vand','vind','cumpar','gaseste','gasesc','afla','am','un','una','cel','mai','bun','buna','ieftin','ieftina','si','in','la','pe','de','cu','sau','din'])
+const STOP_WORDS = new Set(['caut','vreau','vand','vind','cumpar','gaseste','gasesc','afla','un','una','cel','mai','bun','buna','ieftin','ieftina','si','in','la','pe','de','cu','sau','din','care','are','sau'])
 
 async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
@@ -55,10 +54,6 @@ async function searchListings(query: string) {
   const city = parsed.city || ''
   const maxPrice = parsed.maxPrice
 
-  const kwLower = kw.toLowerCase()
-  const kwWords = kwLower.split(/\s+/)
-  const isAutoBrand = AUTO_BRANDS.includes(kwLower) || kwWords.some(w => AUTO_BRANDS.includes(w))
-
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
   const buildBase = () => admin
@@ -68,30 +63,24 @@ async function searchListings(query: string) {
     .order('created_at', { ascending: false })
     .limit(40)
 
-  // Căutare principală
-  let q = buildBase()
-  if (isAutoBrand) {
-    const brand = kwWords.find(w => AUTO_BRANDS.includes(w)) || kw
-    q = q.or(`metadata->>brand.ilike.%${brand}%,title.ilike.%${brand}%`)
-  } else {
-    q = q.ilike('title', `%${kw}%`)
+  const applyFilters = (q: any) => {
+    if (city) q = q.ilike('city', `%${city}%`)
+    if (maxPrice) q = q.lte('price', maxPrice)
+    return q
   }
-  if (city) q = q.ilike('city', `%${city}%`)
-  if (maxPrice) q = q.lte('price', maxPrice)
 
-  const { data, count } = await q
+  // Căutare principală: keyword în titlu
+  const { data, count } = await applyFilters(buildBase().ilike('title', `%${kw}%`))
   if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw }
 
-  // Fallback: încearcă fiecare cuvânt semnificativ din keyword (fără stop words)
-  const meaningful = kwWords.filter(w => w.length > 2 && !STOP_WORDS.has(w))
-  for (const word of meaningful) {
-    const q2 = buildBase().ilike('title', `%${word}%`)
-    const qf = city ? q2.ilike('city', `%${city}%`) : q2
-    const { data: d2, count: c2 } = await qf
+  // Fallback 1: fiecare cuvânt semnificativ din keyword
+  const words = kw.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w))
+  for (const word of words) {
+    const { data: d2, count: c2 } = await applyFilters(buildBase().ilike('title', `%${word}%`))
     if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: word }
   }
 
-  // Fallback final: dacă are oraș, toate anunțurile din acel oraș
+  // Fallback 2: dacă are oraș, toate anunțurile din acel oraș
   if (city) {
     const { data: d3, count: c3 } = await buildBase().ilike('city', `%${city}%`)
     if (d3?.length) return { listings: d3 as any[], count: c3 || 0, usedKeyword: city }
