@@ -57,9 +57,45 @@ const MOCK_LISTINGS = [
   { id: 'a1b2c3d4-0001-0000-0000-000000000020', title: 'MacBook Pro M3, 16GB RAM, 512GB', description: 'MacBook Pro 14", chip M3 Pro, Space Black, baterie 90%. Garanție AppleCare până în 2026.', price: 9800, currency: 'RON', city: 'Cluj', images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop'], category: 'electronice', status: 'activ', createdAt: '2026-04-08T20:00:00.000Z' },
 ]
 
+async function getUndervaluedListings() {
+  const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
+  const admin = createSupabaseAdmin()
+
+  const { data } = await admin
+    .from('listings')
+    .select('id, title, price, price_type, currency, city, images, category_id, metadata, status, created_at')
+    .in('status', ['activ', 'bidding'])
+    .not('price', 'is', null)
+    .gt('price', 0)
+    .order('price', { ascending: true })
+
+  if (!data?.length) return []
+
+  // Grupează pe categorie și calculează mediana
+  const byCategory: Record<number, typeof data> = {}
+  for (const l of data) {
+    if (!byCategory[l.category_id]) byCategory[l.category_id] = []
+    byCategory[l.category_id].push(l)
+  }
+
+  const undervalued: typeof data = []
+  for (const listings of Object.values(byCategory)) {
+    if (listings.length < 3) continue
+    const sorted = [...listings].sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+    const median = sorted[Math.floor(sorted.length * 0.5)].price ?? 0
+    // Sub 70% din mediană = subevaluat real
+    const threshold = median * 0.7
+    const uv = sorted.filter(l => (l.price ?? 0) <= threshold && l.images?.length > 0)
+    undervalued.push(...uv)
+  }
+
+  // Sortează după cel mai mare discount față de mediană și ia primele 6
+  return undervalued.slice(0, 6)
+}
+
 export default async function Home() {
   // Utilizator curent + favorite IDs (paralel)
-  const [userResult, suggestionsResult, dbListingsResult, soldListingsResult, biddingListingsResult] = await Promise.allSettled([
+  const [userResult, suggestionsResult, dbListingsResult, soldListingsResult, biddingListingsResult, undervaluedResult] = await Promise.allSettled([
     getUser(),
     (async () => {
       const supabase = await createSupabaseServerClient()
@@ -94,6 +130,7 @@ export default async function Home() {
         .limit(10)
       return data ?? []
     })(),
+    getUndervaluedListings(),
   ])
 
   const user = userResult.status === 'fulfilled' ? userResult.value : null
@@ -101,6 +138,7 @@ export default async function Home() {
   const dbListings = dbListingsResult.status === 'fulfilled' ? dbListingsResult.value.data : null
   const soldListings = soldListingsResult.status === 'fulfilled' ? soldListingsResult.value : []
   const biddingListings = biddingListingsResult.status === 'fulfilled' ? biddingListingsResult.value : []
+  const undervalued = undervaluedResult.status === 'fulfilled' ? undervaluedResult.value : []
 
   // Fetch favorite IDs dacă userul e logat
   let favoritedIds: string[] = []
@@ -147,8 +185,6 @@ export default async function Home() {
   const recentIds = new Set(recentListings.map((l: any) => l.id))
   const oferteListing = activeListings.filter((l: any) => !recentIds.has(l.id))
 
-  // Selectează primele 6 anunțuri cu imagine pentru secțiunea "Produse subevaluate"
-  const undervalued = recentListings.filter((l: any) => l.images && l.images.length > 0 && l.status === 'activ').slice(0, 6)
 
   return (
     <>
