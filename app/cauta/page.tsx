@@ -42,41 +42,73 @@ Returnează DOAR JSON valid fără explicații: {"keyword":"...","city":"...","m
   }
 }
 
+const AUTO_BRANDS = ['audi','bmw','mercedes','volkswagen','vw','dacia','ford','opel','renault','mazda','porsche','volvo','skoda','seat','toyota','honda','nissan','hyundai','kia','peugeot','citroen','fiat','suzuki','subaru','alfa','jeep','land rover','mini','mitsubishi','lexus','tesla','chevrolet','dodge']
+
+const REAL_ESTATE_WORDS = ['casa','casă','apartament','garsonieră','teren','vila','vilă','spatiu','spațiu','birou','imobil','proprietate']
+
 async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
   const admin = createSupabaseAdmin()
   const parsed = await parseQuery(query)
 
-  const kw = parsed.keyword || query
+  const kw = (parsed.keyword || query).trim()
   const city = parsed.city || ''
   const maxPrice = parsed.maxPrice
 
-  // Construiește filtrul OR: caută în titlu SAU descriere (activ + bidding)
+  const kwLower = kw.toLowerCase()
+  const isAutoBrand = AUTO_BRANDS.includes(kwLower)
+  const isRealEstate = REAL_ESTATE_WORDS.some(w => kwLower.includes(w))
+
+  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
+
   let q = admin
     .from('listings')
-    .select('id, title, description, price, price_type, currency, city, images, category_id, metadata, status', { count: 'exact' })
+    .select(SELECT, { count: 'exact' })
     .in('status', ['activ', 'bidding'])
-    .or(`title.ilike.%${kw}%,description.ilike.%${kw}%`)
     .order('created_at', { ascending: false })
     .limit(40)
+
+  if (isAutoBrand) {
+    // Pentru mărci auto: caută în metadata.brand + titlu, NU în descriere
+    q = q.or(`metadata->>brand.ilike.%${kw}%,title.ilike.%${kw}%`)
+  } else if (isRealEstate) {
+    // Pentru imobiliare: titlu + filtru categorie 2
+    q = q.ilike('title', `%${kw}%`).eq('category_id', 2)
+  } else {
+    // General: titlu only (nu descriere — prea mulți fals pozitivi)
+    q = q.ilike('title', `%${kw}%`)
+  }
 
   if (city) q = q.ilike('city', `%${city}%`)
   if (maxPrice) q = q.lte('price', maxPrice)
 
   const { data, count } = await q
 
-  // Fallback: dacă nu găsește nimic, caută fiecare cuvânt din keyword
+  // Fallback 1: dacă imobiliare n-a găsit, încearcă fără filtru categorie
+  if (!data?.length && isRealEstate && city) {
+    const { data: d2, count: c2 } = await admin
+      .from('listings')
+      .select(SELECT, { count: 'exact' })
+      .in('status', ['activ', 'bidding'])
+      .eq('category_id', 2)
+      .ilike('city', `%${city}%`)
+      .order('created_at', { ascending: false })
+      .limit(40)
+    if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: city }
+  }
+
+  // Fallback 2: caută fiecare cuvânt din keyword în titlu
   if (!data?.length) {
     const words = kw.split(/\s+/).filter((w: string) => w.length > 2)
     for (const word of words) {
-      const { data: d2, count: c2 } = await admin
+      const { data: d3, count: c3 } = await admin
         .from('listings')
-        .select('id, title, description, price, price_type, currency, city, images, category_id, metadata, status', { count: 'exact' })
+        .select(SELECT, { count: 'exact' })
         .in('status', ['activ', 'bidding'])
-        .or(`title.ilike.%${word}%,description.ilike.%${word}%`)
+        .ilike('title', `%${word}%`)
         .order('created_at', { ascending: false })
         .limit(40)
-      if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: word }
+      if (d3?.length) return { listings: d3 as any[], count: c3 || 0, usedKeyword: word }
     }
   }
 
