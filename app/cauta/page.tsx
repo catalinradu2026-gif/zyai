@@ -44,7 +44,7 @@ Returnează DOAR JSON valid fără explicații: {"keyword":"...","city":"...","m
 
 const AUTO_BRANDS = ['audi','bmw','mercedes','volkswagen','vw','dacia','ford','opel','renault','mazda','porsche','volvo','skoda','seat','toyota','honda','nissan','hyundai','kia','peugeot','citroen','fiat','suzuki','subaru','alfa','jeep','land rover','mini','mitsubishi','lexus','tesla','chevrolet','dodge']
 
-const REAL_ESTATE_WORDS = ['casa','casă','apartament','garsonieră','teren','vila','vilă','spatiu','spațiu','birou','imobil','proprietate']
+const REAL_ESTATE_WORDS = ['casa','casă','case','apartament','garsonieră','garsoniera','teren','terenuri','vila','vilă','vile','spatiu','spațiu','birou','birouri','imobil','proprietate','penthouse','duplex','mansarda','mansardă']
 
 async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
@@ -57,7 +57,7 @@ async function searchListings(query: string) {
 
   const kwLower = kw.toLowerCase()
   const isAutoBrand = AUTO_BRANDS.includes(kwLower)
-  const isRealEstate = REAL_ESTATE_WORDS.some(w => kwLower.includes(w))
+  const isRealEstate = REAL_ESTATE_WORDS.some(w => kwLower === w || kwLower.startsWith(w + ' ') || kwLower.endsWith(' ' + w) || kwLower.includes(' ' + w + ' '))
 
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
@@ -69,13 +69,10 @@ async function searchListings(query: string) {
     .limit(40)
 
   if (isAutoBrand) {
-    // Pentru mărci auto: caută în metadata.brand + titlu, NU în descriere
+    // Mărci auto: metadata.brand + titlu, NU descriere
     q = q.or(`metadata->>brand.ilike.%${kw}%,title.ilike.%${kw}%`)
-  } else if (isRealEstate) {
-    // Pentru imobiliare: titlu + filtru categorie 2
-    q = q.ilike('title', `%${kw}%`).eq('category_id', 2)
   } else {
-    // General: titlu only (nu descriere — prea mulți fals pozitivi)
+    // General + imobiliare: doar titlu (fără descriere = fără fals pozitivi)
     q = q.ilike('title', `%${kw}%`)
   }
 
@@ -84,31 +81,46 @@ async function searchListings(query: string) {
 
   const { data, count } = await q
 
-  // Fallback 1: dacă imobiliare n-a găsit, încearcă fără filtru categorie
-  if (!data?.length && isRealEstate && city) {
-    const { data: d2, count: c2 } = await admin
+  // Fallback 1: dacă are oraș și e imobiliar, caută orice în titlu din acel oraș
+  if (!data?.length && city && isRealEstate) {
+    const reWords = ['casa','casă','apartament','teren','vila','vilă','garson']
+    for (const rw of reWords) {
+      const { data: d2, count: c2 } = await admin
+        .from('listings')
+        .select(SELECT, { count: 'exact' })
+        .in('status', ['activ', 'bidding'])
+        .ilike('title', `%${rw}%`)
+        .ilike('city', `%${city}%`)
+        .order('created_at', { ascending: false })
+        .limit(40)
+      if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: rw }
+    }
+  }
+
+  // Fallback 2: dacă are oraș, întoarce toate anunțurile din acel oraș
+  if (!data?.length && city) {
+    const { data: d3, count: c3 } = await admin
       .from('listings')
       .select(SELECT, { count: 'exact' })
       .in('status', ['activ', 'bidding'])
-      .eq('category_id', 2)
       .ilike('city', `%${city}%`)
       .order('created_at', { ascending: false })
       .limit(40)
-    if (d2?.length) return { listings: d2 as any[], count: c2 || 0, usedKeyword: city }
+    if (d3?.length) return { listings: d3 as any[], count: c3 || 0, usedKeyword: city }
   }
 
-  // Fallback 2: caută fiecare cuvânt din keyword în titlu
+  // Fallback 3: caută fiecare cuvânt din keyword în titlu
   if (!data?.length) {
     const words = kw.split(/\s+/).filter((w: string) => w.length > 2)
     for (const word of words) {
-      const { data: d3, count: c3 } = await admin
+      const { data: d4, count: c4 } = await admin
         .from('listings')
         .select(SELECT, { count: 'exact' })
         .in('status', ['activ', 'bidding'])
         .ilike('title', `%${word}%`)
         .order('created_at', { ascending: false })
         .limit(40)
-      if (d3?.length) return { listings: d3 as any[], count: c3 || 0, usedKeyword: word }
+      if (d4?.length) return { listings: d4 as any[], count: c4 || 0, usedKeyword: word }
     }
   }
 
