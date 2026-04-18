@@ -94,25 +94,31 @@ export async function updateProfile(data: {
     if (authError || !user) return { error: 'Nu ești autentificat' }
 
     const admin = createSupabaseAdmin()
-    const fullName = data.full_name ||
+
+    // upsert — actualizează dacă există, creează dacă nu există
+    const metaName =
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       user.email?.split('@')[0] ||
       'Utilizator'
 
+    const payload: Record<string, any> = { id: user.id }
+    if (data.full_name !== undefined) payload.full_name = data.full_name
+    else payload.full_name = metaName
+    if (data.phone !== undefined) payload.phone = data.phone
+    if (data.city !== undefined) payload.city = data.city
+
     const { error } = await admin
       .from('profiles')
-      .upsert({
-        id: user.id,
-        full_name: fullName,
-        phone: data.phone ?? '',
-        city: data.city ?? '',
-        ...data,
-      })
+      .upsert(payload, { onConflict: 'id' })
 
-    if (error) return { error: 'Eroare la salvare. Încearcă din nou.' }
+    if (error) {
+      console.error('[updateProfile] error:', error)
+      return { error: 'Eroare la salvare: ' + error.message }
+    }
     return { success: true }
   } catch (err) {
+    console.error('[updateProfile] unexpected:', err)
     return { error: String(err) }
   }
 }
