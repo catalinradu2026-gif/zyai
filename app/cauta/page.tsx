@@ -100,13 +100,37 @@ async function searchListings(query: string) {
   return { listings: [], count: 0, usedKeyword: kw }
 }
 
-function getVerdict(price: number | null, allPrices: number[]): { emoji: string; label: string; color: string; bg: string } | null {
-  if (!price || allPrices.length < 3) return null
-  const sorted = [...allPrices].sort((a, b) => a - b)
-  const p33 = sorted[Math.floor(sorted.length * 0.33)]
-  const p66 = sorted[Math.floor(sorted.length * 0.66)]
-  if (price <= p33) return { emoji: '🟢', label: 'bun', color: '#4ADE80', bg: 'rgba(34,197,94,0.1)' }
-  if (price <= p66) return { emoji: '🟡', label: 'ok', color: '#FDE047', bg: 'rgba(234,179,8,0.1)' }
+type PriceStats = { p25: number; p75: number }
+
+async function getCategoryPriceStats(categoryIds: number[]): Promise<Record<number, PriceStats>> {
+  const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
+  const admin = createSupabaseAdmin()
+  const stats: Record<number, PriceStats> = {}
+  await Promise.all(categoryIds.map(async (catId) => {
+    const { data } = await admin
+      .from('listings')
+      .select('price')
+      .eq('category_id', catId)
+      .in('status', ['activ', 'bidding'])
+      .not('price', 'is', null)
+      .gt('price', 0)
+      .order('price', { ascending: true })
+    if (data && data.length >= 5) {
+      const prices = data.map((d: any) => Number(d.price))
+      stats[catId] = {
+        p25: prices[Math.floor(prices.length * 0.25)],
+        p75: prices[Math.floor(prices.length * 0.75)],
+      }
+    }
+  }))
+  return stats
+}
+
+function getVerdict(price: number | null, categoryId: number, stats: Record<number, PriceStats>): { emoji: string; label: string; color: string; bg: string } | null {
+  if (!price || !stats[categoryId]) return null
+  const { p25, p75 } = stats[categoryId]
+  if (price <= p25) return { emoji: '🟢', label: 'ieftin', color: '#4ADE80', bg: 'rgba(34,197,94,0.1)' }
+  if (price <= p75) return { emoji: '🟡', label: 'ok', color: '#FDE047', bg: 'rgba(234,179,8,0.1)' }
   return { emoji: '🔴', label: 'scump', color: '#F87171', bg: 'rgba(239,68,68,0.1)' }
 }
 
@@ -133,7 +157,8 @@ export default async function SearchPage({ searchParams }: Props) {
     favoritedIds = fav || []
   }
 
-  const allPrices = listings.filter((l: any) => l.price).map((l: any) => l.price)
+  const uniqueCategoryIds = [...new Set(listings.map((l: any) => l.category_id).filter(Boolean))]
+  const priceStats = listings.length > 0 ? await getCategoryPriceStats(uniqueCategoryIds) : {}
 
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
@@ -204,7 +229,7 @@ export default async function SearchPage({ searchParams }: Props) {
                     <div className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full"
                       style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>✨ AI</div>
                     {(() => {
-                      const v = getVerdict(listing.price, allPrices)
+                      const v = getVerdict(listing.price, listing.category_id, priceStats)
                       return v ? (
                         <div style={{
                           position: 'absolute', bottom: '8px', left: '8px',
