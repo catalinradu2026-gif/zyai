@@ -59,9 +59,9 @@ export default function ImportListingPage() {
     setPublishing(true)
     setPublishError('')
 
-    // Upload photos to Supabase Storage via API
+    // Upload photos to Supabase Storage via API — toate pozele disponibile
     const uploadedImages: string[] = []
-    for (const photoUrl of (scraped.photos || []).slice(0, 5)) {
+    for (const photoUrl of (scraped.photos || [])) {
       try {
         const res = await fetch('/api/upload-from-url', {
           method: 'POST',
@@ -79,6 +79,7 @@ export default function ImportListingPage() {
       return
     }
 
+    const m = scraped.metadata || {}
     const result = await createListing({
       title: scraped.title,
       description: scraped.description || scraped.title,
@@ -89,13 +90,16 @@ export default function ImportListingPage() {
       priceType: 'negociabil',
       currency: scraped.currency || 'EUR',
       images: uploadedImages,
-      brand: scraped.metadata?.brand,
-      model: scraped.metadata?.model,
-      year: scraped.metadata?.year,
-      mileage: scraped.metadata?.mileage,
-      fuelType: scraped.metadata?.fuelType,
-      gearbox: scraped.metadata?.gearbox,
-      power: scraped.metadata?.power,
+      // Auto
+      brand: m.brand,
+      model: m.model,
+      year: m.year,
+      mileage: m.mileage,
+      fuelType: m.fuelType,
+      gearbox: m.gearbox,
+      power: m.power,
+      // Toți parametrii (imobiliare, electronice, etc.)
+      extraMetadata: { ...m, sourceUrl: scraped.sourceUrl },
     })
 
     if (result.error) { setPublishError(result.error); setPublishing(false); return }

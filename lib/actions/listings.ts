@@ -47,6 +47,7 @@ export async function createListing(formData: {
   power?: string
   condition?: string
   contactPhone?: string
+  extraMetadata?: Record<string, any>
 }) {
   try {
     const user = await getUser()
@@ -79,6 +80,8 @@ export async function createListing(formData: {
       if (formData.model) metadata.model = formData.model
     }
     if (formData.contactPhone) metadata.contactPhone = formData.contactPhone
+    // Extra metadata (imobiliare, electronice, etc.) — merge over existing
+    if (formData.extraMetadata) Object.assign(metadata, formData.extraMetadata)
 
     const insertData: any = {
       user_id: user.id,
