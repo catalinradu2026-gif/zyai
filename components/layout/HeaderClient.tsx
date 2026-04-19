@@ -87,9 +87,10 @@ export default function HeaderClient() {
     <>
       {/* Onboarding Modal */}
       {showOnboarding && user && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 overflow-y-auto"
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
-          <div className="w-full max-w-sm rounded-2xl p-8 space-y-5 my-auto"
+          <div className="w-full max-w-sm rounded-2xl p-8 space-y-5 overflow-y-auto"
+            style={{ maxHeight: '90vh' }}
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
 
             <div className="text-center space-y-2">
