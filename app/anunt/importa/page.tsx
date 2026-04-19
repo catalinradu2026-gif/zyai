@@ -59,9 +59,10 @@ export default function ImportListingPage() {
     setPublishing(true)
     setPublishError('')
 
-    // Upload photos to Supabase Storage via API — toate pozele disponibile
+    // Upload photos — max 3 gratuit
+    const FREE_PHOTO_LIMIT = 3
     const uploadedImages: string[] = []
-    for (const photoUrl of (scraped.photos || [])) {
+    for (const photoUrl of (scraped.photos || []).slice(0, FREE_PHOTO_LIMIT)) {
       try {
         const res = await fetch('/api/upload-from-url', {
           method: 'POST',
@@ -185,18 +186,26 @@ export default function ImportListingPage() {
 
             {/* Photos preview */}
             {scraped.photos?.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {scraped.photos.slice(0, 5).map((p: string, i: number) => (
-                  <div key={i} className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden"
-                    style={{ border: '1px solid var(--border-subtle)' }}>
-                    <Image src={p} alt="" fill className="object-cover" unoptimized />
-                  </div>
-                ))}
-                {scraped.photos.length > 5 && (
-                  <div className="flex-shrink-0 w-24 h-24 rounded-xl flex items-center justify-center"
-                    style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
-                    +{scraped.photos.length - 5}
-                  </div>
+              <div className="space-y-2">
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {scraped.photos.slice(0, 3).map((p: string, i: number) => (
+                    <div key={i} className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden"
+                      style={{ border: '1px solid var(--border-subtle)' }}>
+                      <Image src={p} alt="" fill className="object-cover" unoptimized />
+                    </div>
+                  ))}
+                  {scraped.photos.length > 3 && (
+                    <div className="flex-shrink-0 w-24 h-24 rounded-xl flex flex-col items-center justify-center gap-1"
+                      style={{ background: 'rgba(139,92,246,0.1)', border: '1px dashed rgba(139,92,246,0.4)', color: '#a78bfa' }}>
+                      <span className="text-lg">🔒</span>
+                      <span className="text-xs font-bold">+{scraped.photos.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+                {scraped.photos.length > 3 && (
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    📸 {scraped.photos.length} poze găsite — se publică primele 3 gratuit. Upgrade pentru toate.
+                  </p>
                 )}
               </div>
             )}

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import Image from 'next/image'
 
-const FREE_LIMIT = 1
+const FREE_LIMIT = 3
 const MAX_IMAGES = 8
 
 interface ImageUploaderProps {
@@ -22,7 +22,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
       if (!files.length) return
 
       if (images.length >= FREE_LIMIT) {
-        setUploadError('Poți adăuga o singură poză gratuit. Upgrade pentru mai multe.')
+        setUploadError(`Poți adăuga maxim ${FREE_LIMIT} poze gratuit. Upgrade pentru mai multe.`)
         e.target.value = ''
         return
       }
@@ -149,7 +149,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
               Poze suplimentare — funcție Premium
             </p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Planul gratuit include 1 poză. Upgrade pentru până la {MAX_IMAGES} imagini și mai multă vizibilitate.
+              Planul gratuit include {FREE_LIMIT} poze. Upgrade pentru până la {MAX_IMAGES} imagini și mai multă vizibilitate.
             </p>
             <button
               type="button"
@@ -169,7 +169,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
             </span>
             {!uploading && (
               <span className="text-xs mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>
-                JPG, PNG, WebP — 1 imagine gratuită
+                JPG, PNG, WebP — {FREE_LIMIT} imagini gratuite
               </span>
             )}
             <input
