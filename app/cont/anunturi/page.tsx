@@ -10,6 +10,7 @@ import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 import StopBiddingButton from '@/components/listings/StopBiddingButton'
+import ToggleStatusButton from '@/components/listings/ToggleStatusButton'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -191,17 +192,18 @@ export default async function MyListingsPage() {
                       <DeleteListingButton id={listing.id} />
                     </>
                   ) : (
-                    // ACTIV — Edit + SOLD + Licitație + Șterge
+                    // ACTIV / INACTIV — Edit + Toggle + SOLD + Licitație + Șterge
                     <>
                       <Link href={`/anunt/${listing.id}/edit`} className="flex-1 lg:flex-none lg:w-full">
                         <Button variant="secondary" size="md" fullWidth>✏️ Editează</Button>
                       </Link>
-                      <MarkAsSoldButton
-                        listingId={listing.id}
-                        categoryId={listing.category_id}
-                        currentStatus={listing.status}
-                      />
-                      <ActivateBiddingButton listingId={listing.id} categoryId={listing.category_id} />
+                      <ToggleStatusButton listingId={listing.id} currentStatus={listing.status} />
+                      {listing.status === 'activ' && (
+                        <>
+                          <MarkAsSoldButton listingId={listing.id} categoryId={listing.category_id} currentStatus={listing.status} />
+                          <ActivateBiddingButton listingId={listing.id} categoryId={listing.category_id} />
+                        </>
+                      )}
                       <DeleteListingButton id={listing.id} />
                     </>
                   )}

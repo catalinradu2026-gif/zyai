@@ -83,6 +83,43 @@ export async function getEmailByPhone(phone: string) {
   }
 }
 
+export async function updateEmail(newEmail: string) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { error: 'Nu ești autentificat' }
+
+    const admin = createSupabaseAdmin()
+    const { error } = await admin.auth.admin.updateUserById(user.id, { email: newEmail, email_confirm: true })
+    if (error) return { error: error.message }
+    return { success: true }
+  } catch (err) {
+    return { error: String(err) }
+  }
+}
+
+export async function updatePassword(currentPassword: string, newPassword: string) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { error: 'Nu ești autentificat' }
+
+    // Verifică parola curentă
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: currentPassword,
+    })
+    if (signInError) return { error: 'Parola curentă este greșită' }
+
+    const admin = createSupabaseAdmin()
+    const { error } = await admin.auth.admin.updateUserById(user.id, { password: newPassword })
+    if (error) return { error: error.message }
+    return { success: true }
+  } catch (err) {
+    return { error: String(err) }
+  }
+}
+
 export async function updateProfile(data: {
   full_name?: string
   phone?: string

@@ -188,6 +188,32 @@ export async function deleteListing(id: string) {
   }
 }
 
+export async function toggleListingStatus(listingId: string) {
+  try {
+    const user = await getUser()
+    if (!user) return { error: 'Neautorizat' }
+
+    const admin = createSupabaseAdmin()
+    const { data: listing } = await admin
+      .from('listings')
+      .select('id, user_id, status')
+      .eq('id', listingId)
+      .single()
+
+    if (!listing || listing.user_id !== user.id) return { error: 'Nu ai permisiunea' }
+    if (listing.status === 'bidding' || listing.status === 'vandut') return { error: 'Nu poți dezactiva un anunț în licitație sau vândut' }
+
+    const newStatus = listing.status === 'activ' ? 'inactiv' : 'activ'
+    const { error } = await admin.from('listings').update({ status: newStatus }).eq('id', listingId)
+    if (error) return { error: error.message }
+
+    revalidatePath('/cont/anunturi')
+    return { ok: true, newStatus }
+  } catch (err: any) {
+    return { error: err?.message || 'Eroare neașteptată' }
+  }
+}
+
 export async function activateBidding(listingId: string, durationHours: number) {
   try {
     const user = await getUser()
