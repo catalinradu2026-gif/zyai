@@ -150,7 +150,17 @@ export async function updateListing(
     const user = await getUser()
     if (!user) return { error: 'Neautorizat' }
 
-    const supabase = await createSupabaseServerClient()
+    const admin = createSupabaseAdmin()
+
+    // Verifica ownership manual (permite si admin sa editeze orice listing)
+    const { data: existing } = await admin.from('listings').select('id, user_id').eq('id', id).single()
+    if (!existing) return { error: 'Anunțul nu există' }
+    if (existing.user_id !== user.id) {
+      // Verifica daca userul e admin (email @zyai.ro cu cont special sau alt criteriu)
+      const isAdmin = user.email === 'catalin.radu2026@gmail.com'
+      if (!isAdmin) return { error: 'Nu ai permisiunea să editezi acest anunț' }
+    }
+
     const updateData: any = {
       title: formData.title,
       description: formData.description,
@@ -164,11 +174,10 @@ export async function updateListing(
     if (formData.metadata) updateData.metadata = formData.metadata
     if (formData.categorySlug) updateData.category_id = getCatId(formData.categorySlug)
 
-    const { error } = await supabase
+    const { error } = await admin
       .from('listings')
       .update(updateData)
       .eq('id', id)
-      .eq('user_id', user.id)
 
     if (error) return { error: error.message }
 
