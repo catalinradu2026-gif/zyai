@@ -61,13 +61,21 @@ export async function getUser() {
   }
 }
 
+function normalizePhone(phone: string): string {
+  let p = phone.trim().replace(/[\s\-\(\)]/g, '')
+  if (p.startsWith('+40')) p = '0' + p.slice(3)
+  else if (p.startsWith('40') && p.length === 11) p = '0' + p.slice(2)
+  return p
+}
+
 export async function getEmailByPhone(phone: string) {
   try {
     const supabase = await createSupabaseServerClient()
+    const normalized = normalizePhone(phone)
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
-      .eq('phone', phone)
+      .eq('phone', normalized)
       .single()
 
     if (!profile) return { error: 'Numărul de telefon nu a fost găsit' }

@@ -216,15 +216,32 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                 {mode === 'register' ? 'Email *' : 'Email sau telefon *'}
               </label>
-              <input
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder={mode === 'register' ? 'email@exemplu.com' : 'email@exemplu.com sau +40723...'}
-                disabled={loading}
-                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
-                style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-              />
+              {mode === 'login' && !identifier.includes('@') && identifier.length > 0 ? (
+                <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+                  <span className="flex items-center px-3 text-sm font-medium" style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', borderRight: '1px solid var(--border-subtle)' }}>
+                    🇷🇴 +40
+                  </span>
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="07XX XXX XXX"
+                    disabled={loading}
+                    className="flex-1 px-4 py-2.5 text-sm focus:outline-none disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder={mode === 'register' ? 'email@exemplu.com' : 'email@exemplu.com sau 07XX...'}
+                  disabled={loading}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
+                />
+              )}
             </div>
 
             {mode === 'register' && (
