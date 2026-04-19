@@ -370,6 +370,52 @@ async function scrapeGeneric(url: string, html?: string) {
   return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category, categoryId, sourceUrl: url, platform }
 }
 
+// ─── AI description rewrite ───────────────────────────────────────────────
+
+async function rewriteDescriptionWithAI(title: string, description: string, category: string, metadata: Record<string, any>): Promise<string> {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY
+  if (!GROQ_API_KEY || !description) return description
+
+  const metaLines = Object.entries(metadata)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(', ')
+
+  const prompt = `Ești un copywriter profesionist pentru anunțuri de vânzare în România. Rescrie descrierea de mai jos pentru anunțul "${title}" (categorie: ${category}${metaLines ? ', ' + metaLines : ''}).
+
+Descriere originală:
+${description.substring(0, 800)}
+
+Reguli:
+- Scrie în română, natural și convingător
+- Evidențiază punctele forte ale produsului
+- Păstrează toate informațiile tehnice importante
+- Fără exagerări sau promisiuni false
+- Maximum 300 de cuvinte
+- Nu include titlul sau prețul în descriere
+- Răspunde DOAR cu descrierea rescrisă, fără introducere sau explicații`
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!res.ok) return description
+    const data = await res.json()
+    const rewritten = data.choices?.[0]?.message?.content?.trim()
+    return rewritten || description
+  } catch {
+    return description
+  }
+}
+
 // ─── Route handler ────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -384,6 +430,8 @@ export async function POST(req: NextRequest) {
     else data = await scrapeGeneric(url)
 
     if (!data.title) return NextResponse.json({ error: 'Nu am putut citi datele anunțului. Încearcă un alt link.' }, { status: 422 })
+
+    data.description = await rewriteDescriptionWithAI(data.title, data.description, data.category, data.metadata || {})
 
     return NextResponse.json(data)
   } catch (e: any) {
