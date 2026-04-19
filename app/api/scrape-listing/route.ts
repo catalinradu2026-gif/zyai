@@ -164,70 +164,59 @@ async function fetchPage(url: string) {
   return res.text()
 }
 
-async function scrapeOLX(url: string) {
-  const html = await fetchPage(url)
-
-  // OLX removed __NEXT_DATA__ — parse using og: tags + regex
-
-  // Title: og:title, strip " • OLX.ro" suffix
-  const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/)?.[1] || ''
-  const titleRaw = ogTitle.replace(/\s*[•·]\s*OLX\.ro\s*$/i, '').trim()
-
-  // City: last segment before " • " in og:title e.g. "VW Golf ... Craiova • OLX.ro"
-  const cityMatch = ogTitle.match(/[•·]\s*([A-ZĂÂÎȘȚ][a-zăâîșțA-ZĂÂÎȘȚ\s\-]+?)\s*[•·]\s*OLX/i)
-  const city = cityMatch ? cityMatch[1].trim() : ''
-
-  // Title without city suffix
-  const title = city ? titleRaw.replace(new RegExp('\\s+' + city + '\\s*$', 'i'), '').trim() : titleRaw
-
-  // Description: try JSON "description":"..." pattern in HTML
-  let description = ''
-  const descJsonMatch = html.match(/"description"\s*:\s*"((?:[^"\\]|\\.)*)"/)
-  if (descJsonMatch) {
-    try { description = JSON.parse('"' + descJsonMatch[1] + '"') } catch { description = descJsonMatch[1].replace(/\\n/g, '\n') }
+function olxDecodeId(encoded: string): string {
+  const ALPHA = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let n = BigInt(0)
+  for (const c of encoded) {
+    const idx = ALPHA.indexOf(c)
+    if (idx < 0) return ''
+    n = n * BigInt(62) + BigInt(idx)
   }
-  if (!description) description = html.match(/<meta property="og:description" content="([^"]+)"/)?.[1] || ''
+  return n.toString()
+}
 
-  // Price + currency
+async function scrapeOLX(url: string) {
+  // Extract encoded ID from URL: "...IDkteTL.html" → "kteTL"
+  const encMatch = url.match(/ID([A-Za-z0-9]+)(?:\.html)?(?:\?.*)?$/)
+  if (!encMatch) return scrapeGeneric(url)
+
+  const numericId = olxDecodeId(encMatch[1])
+  if (!numericId) return scrapeGeneric(url)
+
+  const apiRes = await fetch(`https://www.olx.ro/api/v1/offers/${numericId}/`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'application/json',
+      'Referer': 'https://www.olx.ro/',
+    },
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!apiRes.ok) return scrapeGeneric(url)
+  const json = await apiRes.json()
+  const ad = json?.data
+  if (!ad?.title) return scrapeGeneric(url)
+
+  const title = ad.title || ''
+  const description = (ad.description || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').substring(0, 1000)
+  const city = ad.location?.city?.name || ad.location?.district?.name || ''
+  const county = ad.location?.region?.name || ''
+
   let price: number | null = null
   let currency = 'EUR'
-  const priceEur = html.match(/(\d[\d\s]{1,8})\s*(?:EUR|€)/i)
-  const priceRon = html.match(/(\d[\d\s]{1,8})\s*(?:RON|lei)/i)
-  if (priceEur) { price = parseInt(priceEur[1].replace(/\s/g, '')); currency = 'EUR' }
-  else if (priceRon) { price = parseInt(priceRon[1].replace(/\s/g, '')); currency = 'RON' }
-
-  // Photos: collect apollo.olxcdn.com URLs from HTML (deduplicated)
-  const photos: string[] = []
-  const cdnPattern = /https:\/\/[a-z]+\.apollo\.olxcdn\.com\/v1\/files\/[a-zA-Z0-9\-]+[^"'\s]*/g
-  const cdnMatches = html.matchAll(cdnPattern)
-  const seen = new Set<string>()
-  for (const m of cdnMatches) {
-    // Normalize — strip size suffix and use a consistent size
-    const base = m[0].split(';')[0].split('?')[0]
-    if (!seen.has(base)) {
-      seen.add(base)
-      photos.push(base + ';s=800x600')
-    }
-  }
-  // Fallback: og:image
-  if (photos.length === 0) {
-    const ogImg = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1]
-    if (ogImg) photos.push(ogImg)
+  const priceParam = (ad.params || []).find((p: any) => p.key === 'price')
+  if (priceParam?.value?.value) {
+    price = parseInt(priceParam.value.value)
+    currency = priceParam.value.currency || 'EUR'
   }
 
-  // Params: OLX embeds params as JSON like {"key":"brand","value":{"label":"VW"}}
+  const photos: string[] = (ad.photos || []).map((p: any) =>
+    (p.link || '').replace('{width}', '800').replace('{height}', '600')
+  ).filter((u: string) => u && !u.includes('{'))
+
   const rawParams: Record<string, string> = {}
-  const paramPattern = /"key"\s*:\s*"([^"]+)"[^}]*"value"\s*:\s*\{[^}]*"label"\s*:\s*"([^"]+)"/g
-  for (const m of html.matchAll(paramPattern)) {
-    rawParams[m[1]] = m[2]
+  for (const p of (ad.params || [])) {
+    if (p.key && p.value?.label) rawParams[p.key] = p.value.label
   }
-  // Also try {"name":"...","value":"..."} pattern
-  const paramPattern2 = /"name"\s*:\s*"([^"]+)"[^}]*"value"\s*:\s*"([^"]+)"/g
-  for (const m of html.matchAll(paramPattern2)) {
-    if (!rawParams[m[1]]) rawParams[m[1]] = m[2]
-  }
-
-  if (!title) return scrapeGeneric(url, html)
 
   const catFromUrl = detectCategoryFromUrl(url)
   const catFromContent = detectCategoryFromContent(title, description)
@@ -235,7 +224,7 @@ async function scrapeOLX(url: string) {
 
   const metadata = extractMetaByCategory(category, title, description, rawParams)
 
-  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category, categoryId, sourceUrl: url, platform: 'OLX' }
+  return { title, description, price, currency, city, county, photos: photos.slice(0, 8), metadata, category, categoryId, sourceUrl: url, platform: 'OLX' }
 }
 
 async function scrapeStoria(url: string) {
