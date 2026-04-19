@@ -202,6 +202,9 @@ export default async function ListingDetailPage({ params }: Props) {
               <div className="p-4">
                 <ImageGallery images={listing.images || []} title={listing.title} />
               </div>
+              <div className="px-4 pb-4">
+                <ShareButtons listingId={id} listingTitle={listing.title} />
+              </div>
             </div>
 
             {/* Title + Meta */}

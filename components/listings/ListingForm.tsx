@@ -315,7 +315,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [fuel, setFuel] = useState(initMeta.fuelType || '')
   const [year, setYear] = useState(initMeta.year || '')
   const [km, setKm] = useState(initMeta.mileage || '')
-  const [bodyType, setBodyType] = useState(initMeta.bodyType || '')
+  const [bodyType, setBodyType] = useState(initMeta.bodyType || initMeta.car_body || '')
   const [sellerType, setSellerType] = useState(initMeta.sellerType || '')
   const [leasing, setLeasing] = useState(initMeta.leasing || false)
   const [engineSize, setEngineSize] = useState(initMeta.engineSize || '')
@@ -323,7 +323,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [gearbox, setGearbox] = useState(initMeta.gearbox || '')
   const [color, setColor] = useState(initMeta.color || '')
   const [doorsNr, setDoorsNr] = useState(initMeta.doorsNr || '')
-  const [condition, setCondition] = useState(initMeta.condition || '')
+  const [condition, setCondition] = useState(initMeta.condition || initMeta.state || '')
   // AUTO - autoutilitare
   const [maxMass, setMaxMass] = useState(initMeta.maxMass || '')
   const [cargo, setCargo] = useState(initMeta.cargo || '')

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getUser } from './auth'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { postListingToFacebook } from '@/lib/facebook'
 
 const CATEGORY_IDS: Record<string, number> = {
   joburi: 1,
@@ -110,6 +111,17 @@ export async function createListing(formData: {
     }
 
     if (!data?.id) return { error: 'Eroare la creare anunț' }
+
+    // Auto-post pe pagina Facebook zyAI (fire-and-forget)
+    postListingToFacebook({
+      id: data.id,
+      title: formData.title,
+      price: formData.price,
+      currency: formData.currency,
+      city: formData.city,
+      description: formData.description,
+      images: formData.images,
+    }).catch(() => {})
 
     revalidatePath('/marketplace')
     return { id: data.id }
