@@ -14,6 +14,30 @@ const PLATFORMS = [
   { name: 'Altă platformă', domain: '', icon: '🌐' },
 ]
 
+const inputStyle = {
+  background: 'var(--bg-input)', color: 'var(--text-primary)',
+  border: '1px solid var(--border-subtle)', borderRadius: '10px',
+  padding: '10px 14px', width: '100%', fontSize: '15px',
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)} style={inputStyle}>
+      <option value="">— selectează —</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  )
+}
+
 export default function ImportListingPage() {
   const router = useRouter()
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -22,6 +46,7 @@ export default function ImportListingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [scraped, setScraped] = useState<any>(null)
+  const [meta, setMeta] = useState<Record<string, string>>({})
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState('')
 
@@ -29,12 +54,15 @@ export default function ImportListingPage() {
     const supabase = createSupabaseBrowserClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.replace('/login?redirect=/anunt/importa'); return }
-      // Pre-fill phone from profile
       const { data: profile } = await supabase.from('profiles').select('phone').eq('id', user.id).single()
       if (profile?.phone) setPhone(profile.phone)
       setCheckingAuth(false)
     })
   }, [router])
+
+  function setM(key: string, val: string) {
+    setMeta(prev => ({ ...prev, [key]: val }))
+  }
 
   async function handleScrape(e: React.FormEvent) {
     e.preventDefault()
@@ -42,6 +70,7 @@ export default function ImportListingPage() {
     setLoading(true)
     setError('')
     setScraped(null)
+    setMeta({})
 
     try {
       const res = await fetch('/api/scrape-listing', {
@@ -52,6 +81,7 @@ export default function ImportListingPage() {
       const data = await res.json()
       if (data.error) { setError(data.error); setLoading(false); return }
       setScraped(data)
+      setMeta(data.metadata || {})
     } catch {
       setError('Eroare de rețea. Încearcă din nou.')
     }
@@ -63,7 +93,6 @@ export default function ImportListingPage() {
     setPublishing(true)
     setPublishError('')
 
-    // Upload photos — max 3 gratuit
     const FREE_PHOTO_LIMIT = 3
     const uploadedImages: string[] = []
     for (const photoUrl of (scraped.photos || []).slice(0, FREE_PHOTO_LIMIT)) {
@@ -84,7 +113,6 @@ export default function ImportListingPage() {
       return
     }
 
-    const m = scraped.metadata || {}
     const result = await createListing({
       title: scraped.title,
       description: scraped.description || scraped.title,
@@ -95,27 +123,19 @@ export default function ImportListingPage() {
       priceType: 'negociabil',
       currency: scraped.currency || 'EUR',
       images: uploadedImages,
-      // Auto
-      brand: m.brand,
-      model: m.model,
-      year: m.year,
-      mileage: m.mileage,
-      fuelType: m.fuelType,
-      gearbox: m.gearbox,
-      power: m.power,
-      // Toți parametrii (imobiliare, electronice, etc.)
+      brand: meta.brand,
+      model: meta.model,
+      year: meta.year,
+      mileage: meta.mileage || meta.rulaj_pana,
+      fuelType: meta.fuelType || meta.petrol,
+      gearbox: meta.gearbox,
+      power: meta.power || meta.engine_power,
       contactPhone: phone.trim() || undefined,
-      extraMetadata: { ...m, sourceUrl: scraped.sourceUrl },
+      extraMetadata: { ...meta, sourceUrl: scraped.sourceUrl },
     })
 
     if (result.error) { setPublishError(result.error); setPublishing(false); return }
     router.push(`/anunt/${result.id}`)
-  }
-
-  const inputStyle = {
-    background: 'var(--bg-input)', color: 'var(--text-primary)',
-    border: '1px solid var(--border-subtle)', borderRadius: '12px',
-    padding: '12px 16px', width: '100%', fontSize: '16px',
   }
 
   if (checkingAuth) return (
@@ -123,6 +143,10 @@ export default function ImportListingPage() {
       <div className="animate-pulse text-lg" style={{ color: 'var(--text-secondary)' }}>Se verifică contul...</div>
     </main>
   )
+
+  const category = scraped?.category || ''
+  const isAuto = category === 'auto'
+  const isImob = category === 'imobiliare'
 
   return (
     <main className="min-h-screen py-12 px-4" style={{ background: 'var(--bg-primary)' }}>
@@ -147,46 +171,25 @@ export default function ImportListingPage() {
           ))}
         </div>
 
-        {/* URL Input */}
+        {/* URL + Phone Input */}
         <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
           <form onSubmit={handleScrape} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                Link anunț
-              </label>
-              <input
-                type="url"
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://www.olx.ro/d/oferta/..."
-                style={inputStyle}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                Număr de telefon
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="07xxxxxxxx"
-                style={inputStyle}
-                disabled={loading}
-              />
-            </div>
+            <Field label="Link anunț">
+              <input type="url" value={url} onChange={e => setUrl(e.target.value)}
+                placeholder="https://www.olx.ro/d/oferta/..." style={inputStyle} disabled={loading} />
+            </Field>
+            <Field label="Număr de telefon">
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="07xxxxxxxx" style={inputStyle} disabled={loading} />
+            </Field>
             {error && (
               <div className="p-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.2)' }}>
                 ❌ {error}
               </div>
             )}
-            <button
-              type="submit"
-              disabled={loading || !url.trim()}
+            <button type="submit" disabled={loading || !url.trim()}
               className="w-full py-3 rounded-xl font-bold text-white transition hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' }}
-            >
+              style={{ background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' }}>
               {loading ? '⏳ Se citesc datele...' : '🔍 Citește anunțul'}
             </button>
           </form>
@@ -202,7 +205,7 @@ export default function ImportListingPage() {
               </h2>
             </div>
 
-            {/* Photos preview */}
+            {/* Photos */}
             {scraped.photos?.length > 0 && (
               <div className="space-y-2">
                 <div className="flex gap-2 overflow-x-auto pb-1">
@@ -222,19 +225,18 @@ export default function ImportListingPage() {
                 </div>
                 {scraped.photos.length > 3 && (
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    📸 {scraped.photos.length} poze găsite — se publică primele 3 gratuit. Upgrade pentru toate.
+                    📸 {scraped.photos.length} poze găsite — se publică primele 3 gratuit.
                   </p>
                 )}
               </div>
             )}
 
-            {/* Details */}
+            {/* Title + price + city */}
             <div className="space-y-3">
               <div>
                 <span className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Titlu</span>
                 <p className="font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>{scraped.title}</p>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 {scraped.price && (
                   <div>
@@ -248,29 +250,7 @@ export default function ImportListingPage() {
                     <p className="mt-0.5" style={{ color: 'var(--text-primary)' }}>📍 {scraped.city}</p>
                   </div>
                 )}
-                {scraped.category && (
-                  <div>
-                    <span className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Categorie</span>
-                    <p className="mt-0.5" style={{ color: 'var(--text-primary)' }}>{scraped.category}</p>
-                  </div>
-                )}
               </div>
-
-              {/* Metadata (auto params etc.) */}
-              {Object.keys(scraped.metadata || {}).filter(k => scraped.metadata[k]).length > 0 && (
-                <div>
-                  <span className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Detalii</span>
-                  <div className="flex flex-wrap gap-2 mt-1.5">
-                    {Object.entries(scraped.metadata).filter(([, v]) => v).map(([k, v]) => (
-                      <span key={k} className="px-2.5 py-1 rounded-full text-xs font-medium"
-                        style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}>
-                        {k}: {v as string}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {scraped.description && (
                 <div>
                   <span className="text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Descriere</span>
@@ -279,6 +259,87 @@ export default function ImportListingPage() {
               )}
             </div>
 
+            {/* ── AUTO filters ── */}
+            {isAuto && (
+              <div className="space-y-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>🚗 Detalii vehicul</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Marcă">
+                    <input type="text" value={meta.brand || ''} onChange={e => setM('brand', e.target.value)} placeholder="ex: VW" style={inputStyle} />
+                  </Field>
+                  <Field label="Model">
+                    <input type="text" value={meta.model || ''} onChange={e => setM('model', e.target.value)} placeholder="ex: Golf" style={inputStyle} />
+                  </Field>
+                  <Field label="An fabricație">
+                    <input type="text" value={meta.year || ''} onChange={e => setM('year', e.target.value)} placeholder="ex: 2018" style={inputStyle} />
+                  </Field>
+                  <Field label="Rulaj (km)">
+                    <input type="text" value={meta.mileage || meta.rulaj_pana || ''} onChange={e => setM('mileage', e.target.value)} placeholder="ex: 150000" style={inputStyle} />
+                  </Field>
+                  <Field label="Combustibil">
+                    <Select value={meta.fuelType || meta.petrol || ''} onChange={v => setM('fuelType', v)}
+                      options={['Benzina', 'Diesel', 'Hibrid', 'Electric', 'GPL', 'Benzina+GPL']} />
+                  </Field>
+                  <Field label="Cutie viteze">
+                    <Select value={meta.gearbox || ''} onChange={v => setM('gearbox', v)}
+                      options={['Manuala', 'Automata']} />
+                  </Field>
+                  <Field label="Putere (CP)">
+                    <input type="text" value={meta.power || meta.engine_power || ''} onChange={e => setM('power', e.target.value)} placeholder="ex: 150" style={inputStyle} />
+                  </Field>
+                  <Field label="Caroserie">
+                    <Select value={meta.car_body || meta.bodyType || ''} onChange={v => setM('car_body', v)}
+                      options={['Berlina', 'Break', 'SUV', 'Coupe', 'Cabrio', 'Monovolum', 'Pickup', 'Utilitara', 'Hatchback']} />
+                  </Field>
+                  <Field label="Stare">
+                    <Select value={meta.state || meta.condition || ''} onChange={v => setM('state', v)}
+                      options={['Utilizat', 'Nou']} />
+                  </Field>
+                  <Field label="Culoare">
+                    <input type="text" value={meta.color || ''} onChange={e => setM('color', e.target.value)} placeholder="ex: Negru" style={inputStyle} />
+                  </Field>
+                </div>
+              </div>
+            )}
+
+            {/* ── IMOBILIARE filters ── */}
+            {isImob && (
+              <div className="space-y-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>🏠 Detalii proprietate</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Tip tranzacție">
+                    <Select value={meta.tipTranzactie || ''} onChange={v => setM('tipTranzactie', v)}
+                      options={['Vanzare', 'Inchiriere']} />
+                  </Field>
+                  <Field label="Tip imobil">
+                    <Select value={meta.tipImobil || ''} onChange={v => setM('tipImobil', v)}
+                      options={['Apartament', 'Casa', 'Vila', 'Garsoniera', 'Teren', 'Spatiu comercial', 'Birou', 'Depozit']} />
+                  </Field>
+                  <Field label="Nr. camere">
+                    <Select value={meta.nrCamere || ''} onChange={v => setM('nrCamere', v)}
+                      options={['1', '2', '3', '4', '5+']} />
+                  </Field>
+                  <Field label="Suprafață (mp)">
+                    <input type="text" value={meta.suprafata || ''} onChange={e => setM('suprafata', e.target.value)} placeholder="ex: 65" style={inputStyle} />
+                  </Field>
+                  <Field label="Etaj">
+                    <input type="text" value={meta.etaj || ''} onChange={e => setM('etaj', e.target.value)} placeholder="ex: 3" style={inputStyle} />
+                  </Field>
+                  <Field label="An construcție">
+                    <input type="text" value={meta.anConstructie || ''} onChange={e => setM('anConstructie', e.target.value)} placeholder="ex: 1995" style={inputStyle} />
+                  </Field>
+                  <Field label="Compartimentare">
+                    <Select value={meta.compartimentare || ''} onChange={v => setM('compartimentare', v)}
+                      options={['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular']} />
+                  </Field>
+                  <Field label="Confort">
+                    <Select value={meta.confort || ''} onChange={v => setM('confort', v)}
+                      options={['Confort 1', 'Confort 2', 'Confort 3', 'Lux']} />
+                  </Field>
+                </div>
+              </div>
+            )}
+
             {publishError && (
               <div className="p-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.2)' }}>
                 ❌ {publishError}
@@ -286,19 +347,14 @@ export default function ImportListingPage() {
             )}
 
             <div className="flex gap-3">
-              <button
-                onClick={() => { setScraped(null); setUrl('') }}
+              <button onClick={() => { setScraped(null); setUrl(''); setMeta({}) }}
                 className="flex-1 py-3 rounded-xl font-semibold transition"
-                style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}
-              >
+                style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}>
                 ← Înapoi
               </button>
-              <button
-                onClick={handlePublish}
-                disabled={publishing}
+              <button onClick={handlePublish} disabled={publishing}
                 className="flex-2 flex-1 py-3 rounded-xl font-bold text-white transition hover:scale-[1.02] disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' }}
-              >
+                style={{ background: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' }}>
                 {publishing ? '⏳ Se publică...' : '🚀 Publică pe zyAI'}
               </button>
             </div>
