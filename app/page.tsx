@@ -178,8 +178,10 @@ export default async function Home() {
     return true
   })
 
-  // "Cele mai noi" = licitații active + vandute + cele mai noi active (max 12)
-  const recentListings = dedupe([...biddingMapped, ...soldMapped, ...activeListings]).slice(0, 12)
+  // "Cele mai noi" = toate anunțurile active + licitații, sortate după created_at DESC
+  const recentListings = dedupe([...activeListings, ...biddingMapped])
+    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 20)
 
   // "Oferte pentru tine" = restul anunțurilor active (fără cele deja afișate în "cele mai noi")
   const recentIds = new Set(recentListings.map((l: any) => l.id))
