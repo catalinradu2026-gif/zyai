@@ -1,7 +1,9 @@
 import { getListings } from '@/lib/queries/listings'
+import { getListingFacets } from '@/lib/queries/facets'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
+import MarketplaceFacets from '@/components/listings/MarketplaceFacets'
 import { getCategoryBySlug, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
@@ -85,6 +87,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   } catch (err) {
     error = err
   }
+
+  // Fetch facete dinamice (contor per oraș/marcă/etc)
+  const categoryId = getCategoryIdBySlug(category)
+  const facetGroups = await getListingFacets(category, categoryId, activeSub || undefined).catch(() => [])
 
   // Fetch recent sold listings for same category (social proof — admin bypasses RLS)
   let soldListings: any[] = []
@@ -180,6 +186,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
         {/* Listings */}
         <div>
+          {/* FACETE DINAMICE — chips cu contoare reale */}
+          {facetGroups.length > 0 && (
+            <MarketplaceFacets groups={facetGroups} />
+          )}
           {error ? (
             <div style={{ background: '#fefce8', border: '2px solid #fde047', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
               <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>⚠️</span>
