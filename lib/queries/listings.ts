@@ -51,7 +51,7 @@ export type ListingFilters = {
 
 export async function getListings(filters: ListingFilters = {}) {
   const admin = createSupabaseAdmin()
-  const PAGE_SIZE = 40
+  const PAGE_SIZE = 20
   const page = filters.page ?? 1
 
   // Query 1: anunțuri active + în licitație — admin client bypass RLS (bidding listings must be visible)
