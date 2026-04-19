@@ -19,8 +19,18 @@ const CATEGORY_IDS: Record<string, number> = {
   'mama-copilul': 10,
 }
 
+const SUBCATEGORY_PARENT: Record<string, number> = {
+  // imobiliare
+  apartamente: 2, garsoniere: 2, case: 2, terenuri: 2,
+  'spatii-comerciale': 2, garaje: 2, 'case-vile': 2, birouri: 2,
+  // auto
+  autoturisme: 3, autoutilitare: 3, piese: 3, motociclete: 3,
+  agricole: 3, remorci: 3, camioane: 3,
+}
+
 function getCatId(slug: string) {
   if (CATEGORY_IDS[slug] !== undefined) return CATEGORY_IDS[slug]
+  if (SUBCATEGORY_PARENT[slug] !== undefined) return SUBCATEGORY_PARENT[slug]
   const parentKey = Object.keys(CATEGORY_IDS).find(k => slug.startsWith(k))
   return parentKey ? CATEGORY_IDS[parentKey] : 1
 }
