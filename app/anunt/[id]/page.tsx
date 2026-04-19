@@ -12,6 +12,7 @@ import ShareButtons from '@/components/listings/ShareButtons'
 import PhoneRevealButton from '@/components/listings/PhoneRevealButton'
 import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
+import CompareButton from '@/components/compare/CompareButton'
 import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
@@ -202,7 +203,26 @@ export default async function ListingDetailPage({ params }: Props) {
               <div className="p-4">
                 <ImageGallery images={listing.images || []} title={listing.title} />
               </div>
-              <div className="px-4 pb-4">
+              <div className="px-4 pb-4 flex flex-col gap-3">
+                {/* Fav + Compare */}
+                <div className="flex items-center gap-3">
+                  <FavoriteButton
+                    listingId={id}
+                    initialFavorited={listingIsFavorited}
+                    userId={user?.id}
+                    overlay
+                  />
+                  <CompareButton item={{
+                    id,
+                    title: listing.title,
+                    price: listing.price ?? undefined,
+                    priceType: listing.price_type,
+                    currency: listing.currency,
+                    city: listing.city,
+                    image: (listing.images as string[])?.[0],
+                    category: CATEGORY_SLUGS_MAP[listing.category_id],
+                  }} />
+                </div>
                 <ShareButtons listingId={id} listingTitle={listing.title} />
               </div>
             </div>
