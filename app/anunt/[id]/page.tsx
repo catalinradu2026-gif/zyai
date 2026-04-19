@@ -29,9 +29,30 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { id } = await params
   const { data: listing } = await getListing(id)
+
+  const title = listing ? `${listing.title} - zyAI` : 'zyAI'
+  const description = listing?.description?.substring(0, 160) ?? 'Anunț pe zyAI'
+  const images = (listing?.images as string[] | null | undefined) ?? []
+  const ogImage = images[0] ?? 'https://zyai.ro/og-default.png'
+  const url = `https://zyai.ro/anunt/${id}`
+
   return {
-    title: listing ? `${listing.title} - zyAI` : 'zyAI',
-    description: listing?.description?.substring(0, 160),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'zyAI',
+      images: [{ url: ogImage, width: 1200, height: 630, alt: listing?.title ?? 'zyAI' }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
   }
 }
 
