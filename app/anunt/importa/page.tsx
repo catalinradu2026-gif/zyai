@@ -18,6 +18,7 @@ export default function ImportListingPage() {
   const router = useRouter()
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [url, setUrl] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [scraped, setScraped] = useState<any>(null)
@@ -26,9 +27,12 @@ export default function ImportListingPage() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.replace('/login?redirect=/anunt/importa')
-      else setCheckingAuth(false)
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.replace('/login?redirect=/anunt/importa'); return }
+      // Pre-fill phone from profile
+      const { data: profile } = await supabase.from('profiles').select('phone').eq('id', user.id).single()
+      if (profile?.phone) setPhone(profile.phone)
+      setCheckingAuth(false)
     })
   }, [router])
 
@@ -100,6 +104,7 @@ export default function ImportListingPage() {
       gearbox: m.gearbox,
       power: m.power,
       // Toți parametrii (imobiliare, electronice, etc.)
+      contactPhone: phone.trim() || undefined,
       extraMetadata: { ...m, sourceUrl: scraped.sourceUrl },
     })
 
@@ -154,6 +159,19 @@ export default function ImportListingPage() {
                 value={url}
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://www.olx.ro/d/oferta/..."
+                style={inputStyle}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                Număr de telefon
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="07xxxxxxxx"
                 style={inputStyle}
                 disabled={loading}
               />
