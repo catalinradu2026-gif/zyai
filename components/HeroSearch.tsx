@@ -3,11 +3,46 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+// Autodidact: citește corecțiile salvate local
+function loadCorrections(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem('zyai_voice_corrections') || '{}') } catch { return {} }
+}
+
+// Autodidact: salvează o corecție (ce a zis → ce era corect)
+export function saveCorrection(wrong: string, right: string) {
+  try {
+    const c = loadCorrections()
+    c[wrong.toLowerCase()] = right
+    localStorage.setItem('zyai_voice_corrections', JSON.stringify(c))
+  } catch {}
+}
+
+async function smartNavigate(query: string, router: any) {
+  try {
+    const corrections = loadCorrections()
+    const res = await fetch('/api/ai/smart-filter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, corrections }),
+    })
+    const data = await res.json()
+    if (data.redirectUrl) {
+      router.push(data.redirectUrl)
+      return data
+    }
+  } catch {}
+  // Fallback
+  router.push(`/cauta?q=${encodeURIComponent(query)}`)
+  return null
+}
+
 export default function HeroSearch({ suggestions = [] }: { suggestions?: string[] }) {
   const [search, setSearch] = useState('')
   const [focused, setFocused] = useState(false)
   const [listening, setListening] = useState(false)
   const [interimText, setInterimText] = useState('')
+  const [processing, setProcessing] = useState(false)
+  const [aiSummary, setAiSummary] = useState('')
   const recognitionRef = useRef<any>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -27,20 +62,27 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
     } catch {}
   }
 
-  function navigate(query: string) {
+  async function navigate(query: string, useSmartFilter = false) {
     const q = query.trim()
     if (!q) return
     saveSearch(q)
-    router.push(`/cauta?q=${encodeURIComponent(q)}`)
+    if (useSmartFilter) {
+      setProcessing(true)
+      const data = await smartNavigate(q, router)
+      if (data?.summary) setAiSummary(data.summary)
+      setProcessing(false)
+    } else {
+      router.push(`/cauta?q=${encodeURIComponent(q)}`)
+    }
   }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    navigate(search)
+    navigate(search, true)
   }
 
   function handleExampleClick(example: string) {
-    navigate(example)
+    navigate(example, true)
   }
 
   function startListening() {
@@ -108,16 +150,21 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
       setListening(false)
       setInterimText('')
       if (capturedText.trim()) {
-        // Navighează la pagina de căutare (ca înainte) — vocea se aude după ce se încarcă rezultatele
         saveSearch(capturedText.trim())
-        router.push(`/cauta?q=${encodeURIComponent(capturedText.trim())}&voice=1`)
+        // Smart filter: AI parsează intentia + redirectează cu filtre
+        setProcessing(true)
+        setAiSummary('')
+        smartNavigate(capturedText.trim(), router).then((data) => {
+          if (data?.summary) setAiSummary(data.summary)
+          setProcessing(false)
+        })
       }
     }
 
     rec.start()
   }
 
-  const displayValue = listening && interimText ? interimText : search
+  const displayValue = listening && interimText ? interimText : (processing ? '⚡ AI procesează...' : search)
 
   return (
     <div className="w-full">
@@ -127,7 +174,7 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
           className="flex items-center gap-0 transition-all duration-300"
           style={{
             background: 'var(--bg-input, rgba(15,22,41,0.9))',
-            border: `2px solid ${listening ? '#ef4444' : focused ? 'var(--purple, #8B5CF6)' : 'var(--border-subtle, rgba(139,92,246,0.25))'}`,
+            border: `2px solid ${listening ? '#ef4444' : processing ? '#8B5CF6' : focused ? 'var(--purple, #8B5CF6)' : 'var(--border-subtle, rgba(139,92,246,0.25))'}`,
             borderRadius: '999px',
             boxShadow: listening
               ? '0 0 0 4px rgba(239,68,68,0.18), 0 8px 32px rgba(239,68,68,0.12)'
@@ -156,14 +203,14 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={listening ? '🎤 Te ascult...' : 'Caută apartament, mașină, job...'}
+            placeholder={listening ? '🎤 Te ascult...' : processing ? '⚡ AI procesează...' : 'Caută apartament, mașină, job...'}
             className="flex-1 py-4 text-base md:text-lg bg-transparent outline-none"
             style={{
-              color: listening ? '#ef4444' : 'var(--text-primary, #F8FAFC)',
+              color: listening ? '#ef4444' : processing ? '#a78bfa' : 'var(--text-primary, #F8FAFC)',
               caretColor: listening ? '#ef4444' : 'var(--purple, #8B5CF6)',
               minWidth: 0,
             }}
-            readOnly={listening}
+            readOnly={listening || processing}
           />
 
           {/* Buton microfon */}
@@ -214,17 +261,21 @@ export default function HeroSearch({ suggestions = [] }: { suggestions?: string[
             className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-sm"
             style={{ color: '#ef4444', whiteSpace: 'nowrap' }}
           >
-            <span
-              style={{
-                display: 'inline-block',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#ef4444',
-                animation: 'micPulseHero 1s ease-in-out infinite',
-              }}
-            />
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', animation: 'micPulseHero 1s ease-in-out infinite' }} />
             Ascult... vorbește acum
+          </div>
+        )}
+        {/* Indicator AI procesare */}
+        {processing && !listening && (
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-sm" style={{ color: '#8B5CF6', whiteSpace: 'nowrap' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#8B5CF6', animation: 'micPulseHero 0.6s ease-in-out infinite' }} />
+            AI înțelege cererea...
+          </div>
+        )}
+        {/* Summary AI după procesare */}
+        {aiSummary && !processing && !listening && (
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', whiteSpace: 'nowrap', border: '1px solid rgba(139,92,246,0.3)' }}>
+            ✨ {aiSummary}
           </div>
         )}
       </form>
