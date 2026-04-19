@@ -113,11 +113,12 @@ export default function ImportListingPage() {
       return
     }
 
+    const catSlug = scraped.subcategory ? `${scraped.category}/${scraped.subcategory}` : scraped.category
     const result = await createListing({
       title: scraped.title,
       description: scraped.description || scraped.title,
-      categorySlug: scraped.category,
-      categoryName: scraped.category,
+      categorySlug: catSlug,
+      categoryName: scraped.subcategory || scraped.category,
       city: scraped.city || 'România',
       price: scraped.price || undefined,
       priceType: 'negociabil',
@@ -145,6 +146,7 @@ export default function ImportListingPage() {
   )
 
   const category = scraped?.category || ''
+  const subcategory = scraped?.subcategory || ''
   const isAuto = category === 'auto'
   const isImob = category === 'imobiliare'
 
@@ -198,11 +200,25 @@ export default function ImportListingPage() {
         {/* Scraped Preview */}
         {scraped && (
           <div className="rounded-2xl p-6 space-y-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center gap-2">
-              <span className="text-green-400 text-xl">✓</span>
-              <h2 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-                Anunț citit de pe {scraped.platform}
-              </h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 text-xl">✓</span>
+                <h2 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                  Anunț citit de pe {scraped.platform}
+                </h2>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  {scraped.category}
+                </span>
+                {scraped.subcategory && (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' }}>
+                    {scraped.subcategory}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Photos */}

@@ -2,33 +2,57 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // ─── Category detection ────────────────────────────────────────────────────
 
-function detectCategoryFromUrl(url: string) {
+function detectCategoryFromUrl(url: string): { category: string; categoryId: number; subcategory: string } | null {
   const u = url.toLowerCase()
-  if (u.includes('autovit') || u.includes('/auto/') || u.includes('/autoturisme') || u.includes('/masini')) return { category: 'auto', categoryId: 3 }
-  if (u.includes('storia.ro') || u.includes('imobiliare.ro') || u.includes('/imobiliare') || u.includes('/apartament') || u.includes('/casa') || u.includes('/teren')) return { category: 'imobiliare', categoryId: 2 }
-  if (u.includes('/electronice') || u.includes('/telefoane') || u.includes('/laptopuri') || u.includes('emag') || u.includes('altex')) return { category: 'electronice', categoryId: 5 }
-  if (u.includes('/joburi') || u.includes('/locuri-de-munca') || u.includes('ejobs') || u.includes('bestjobs') || u.includes('hipo')) return { category: 'joburi', categoryId: 1 }
-  if (u.includes('/moda') || u.includes('/haine') || u.includes('/incaltaminte')) return { category: 'moda', categoryId: 6 }
-  if (u.includes('/animale') || u.includes('/caini') || u.includes('/pisici')) return { category: 'animale', categoryId: 9 }
-  if (u.includes('/sport') || u.includes('/biciclete') || u.includes('/fitness')) return { category: 'sport', categoryId: 8 }
-  if (u.includes('/casa-gradina') || u.includes('/mobilier') || u.includes('/electrocasnice')) return { category: 'casa-gradina', categoryId: 7 }
-  if (u.includes('/mama') || u.includes('/copii') || u.includes('/jucarii')) return { category: 'mama-copilul', categoryId: 10 }
-  if (u.includes('/servicii')) return { category: 'servicii', categoryId: 4 }
+  if (u.includes('autovit') || u.includes('/autoturisme') || u.includes('/masini')) return { category: 'auto', categoryId: 3, subcategory: 'autoturisme' }
+  if (u.includes('/autoutilitare') || u.includes('/camioane') || u.includes('/dube')) return { category: 'auto', categoryId: 3, subcategory: 'autoutilitare' }
+  if (u.includes('/motociclete') || u.includes('/scutere') || u.includes('/atv')) return { category: 'auto', categoryId: 3, subcategory: 'motociclete' }
+  if (u.includes('/auto/')) return { category: 'auto', categoryId: 3, subcategory: 'autoturisme' }
+  if (u.includes('/apartamente') || u.includes('/apartament-')) return { category: 'imobiliare', categoryId: 2, subcategory: 'apartamente' }
+  if (u.includes('/garsoniere') || u.includes('/garsoniera-')) return { category: 'imobiliare', categoryId: 2, subcategory: 'garsoniere' }
+  if (u.includes('/case-vile') || u.includes('/case/') || u.includes('/vila-') || u.includes('/casa-')) return { category: 'imobiliare', categoryId: 2, subcategory: 'case-vile' }
+  if (u.includes('/terenuri') || u.includes('/teren-')) return { category: 'imobiliare', categoryId: 2, subcategory: 'terenuri' }
+  if (u.includes('/spatii-comerciale') || u.includes('/birouri')) return { category: 'imobiliare', categoryId: 2, subcategory: 'spatii-comerciale' }
+  if (u.includes('storia.ro') || u.includes('imobiliare.ro') || u.includes('/imobiliare')) return { category: 'imobiliare', categoryId: 2, subcategory: 'apartamente' }
+  if (u.includes('/electronice') || u.includes('/telefoane') || u.includes('/laptopuri') || u.includes('emag') || u.includes('altex')) return { category: 'electronice', categoryId: 5, subcategory: '' }
+  if (u.includes('/joburi') || u.includes('/locuri-de-munca') || u.includes('ejobs') || u.includes('bestjobs')) return { category: 'joburi', categoryId: 1, subcategory: '' }
+  if (u.includes('/moda') || u.includes('/haine') || u.includes('/incaltaminte')) return { category: 'moda', categoryId: 6, subcategory: '' }
+  if (u.includes('/animale') || u.includes('/caini') || u.includes('/pisici')) return { category: 'animale', categoryId: 9, subcategory: '' }
+  if (u.includes('/sport') || u.includes('/biciclete') || u.includes('/fitness')) return { category: 'sport', categoryId: 8, subcategory: '' }
+  if (u.includes('/casa-gradina') || u.includes('/mobilier') || u.includes('/electrocasnice')) return { category: 'casa-gradina', categoryId: 7, subcategory: '' }
+  if (u.includes('/mama') || u.includes('/copii') || u.includes('/jucarii')) return { category: 'mama-copilul', categoryId: 10, subcategory: '' }
+  if (u.includes('/servicii')) return { category: 'servicii', categoryId: 4, subcategory: '' }
   return null
 }
 
-function detectCategoryFromContent(title: string, description: string) {
+function detectSubcategoryImob(t: string): string {
+  if (/\bgarsoniera\b/.test(t)) return 'garsoniere'
+  if (/\b(vila|case|casa\s|casa,)/.test(t)) return 'case-vile'
+  if (/\bteren\b/.test(t)) return 'terenuri'
+  if (/\b(spatiu comercial|birou|depozit|hala)\b/.test(t)) return 'spatii-comerciale'
+  if (/\b(apartament|\d\s*camere|camera)/.test(t)) return 'apartamente'
+  return 'apartamente'
+}
+
+function detectSubcategoryAuto(t: string): string {
+  if (/\b(camion|autoutilitara|duba|furgon|basculanta|tractor)\b/.test(t)) return 'autoutilitare'
+  if (/\b(motocicleta|moto|scuter|atv|enduro|quad)\b/.test(t)) return 'motociclete'
+  if (/\b(rulota|autorulota|camper|caravan)\b/.test(t)) return 'rulote'
+  if (/\b(barca|ambarcatiune|yacht|vela|kayak)\b/.test(t)) return 'ambarcatiuni'
+  return 'autoturisme'
+}
+
+function detectCategoryFromContent(title: string, description: string): { category: string; categoryId: number; subcategory: string } {
   const t = (title + ' ' + description).toLowerCase()
-  // Auto
-  if (/\b(vw|bmw|audi|dacia|opel|ford|toyota|mercedes|skoda|renault|honda|volkswagen|hyundai|kia|seat|fiat|peugeot|mazda|volvo|nissan|suzuki|mitsubishi|jeep|porsche|tesla|mini cooper|subaru|lexus|alfa romeo|citroen|chevrolet)\b/.test(t)) return { category: 'auto', categoryId: 3 }
-  if (/\b(apartament|garsoniera|vila|casa\s|teren\s|spatiu comercial|birou|imobil|suprafata|etaj|camere|dormitor|living)\b/.test(t)) return { category: 'imobiliare', categoryId: 2 }
-  if (/\b(iphone|samsung|laptop|telefon mobil|pc|tableta|monitor|playstation|xbox|camera foto|smartwatch|tv\s|televizor)\b/.test(t)) return { category: 'electronice', categoryId: 5 }
-  if (/\b(angajam|angajare|job|salariu|program lucru|experienta|cv|candidat|post vacant)\b/.test(t)) return { category: 'joburi', categoryId: 1 }
-  if (/\b(rochie|pantofi|geanta|haina|tricou|jacheta|palton|blugi|adidasi|marime)\b/.test(t)) return { category: 'moda', categoryId: 6 }
-  if (/\b(caine|pisica|papagal|acvariu|hamster|iepure|rasa|vaccin|pasaport animal)\b/.test(t)) return { category: 'animale', categoryId: 9 }
-  if (/\b(bicicleta|fitness|trotineta|ski|snowboard|gantere|sala de sport)\b/.test(t)) return { category: 'sport', categoryId: 8 }
-  if (/\b(canapea|masa|scaun|dulap|frigider|masina de spalat|aragaz|mobilier)\b/.test(t)) return { category: 'casa-gradina', categoryId: 7 }
-  return { category: 'auto', categoryId: 3 } // fallback
+  if (/\b(vw|bmw|audi|dacia|opel|ford|toyota|mercedes|skoda|renault|honda|volkswagen|hyundai|kia|seat|fiat|peugeot|mazda|volvo|nissan|suzuki|mitsubishi|jeep|porsche|tesla|subaru|lexus|alfa romeo|citroen|chevrolet)\b/.test(t)) return { category: 'auto', categoryId: 3, subcategory: detectSubcategoryAuto(t) }
+  if (/\b(apartament|garsoniera|vila|teren\s|spatiu comercial|birou|imobil|suprafata|etaj|camere|dormitor|living)\b/.test(t)) return { category: 'imobiliare', categoryId: 2, subcategory: detectSubcategoryImob(t) }
+  if (/\b(iphone|samsung|laptop|telefon mobil|pc|tableta|monitor|playstation|xbox|smartwatch|televizor)\b/.test(t)) return { category: 'electronice', categoryId: 5, subcategory: '' }
+  if (/\b(angajam|angajare|job|salariu|cv|candidat|post vacant)\b/.test(t)) return { category: 'joburi', categoryId: 1, subcategory: '' }
+  if (/\b(rochie|pantofi|geanta|haina|tricou|jacheta|palton|blugi|adidasi|marime)\b/.test(t)) return { category: 'moda', categoryId: 6, subcategory: '' }
+  if (/\b(caine|pisica|papagal|acvariu|hamster|iepure|rasa|vaccin|pasaport animal)\b/.test(t)) return { category: 'animale', categoryId: 9, subcategory: '' }
+  if (/\b(bicicleta|fitness|trotineta|ski|snowboard|gantere)\b/.test(t)) return { category: 'sport', categoryId: 8, subcategory: '' }
+  if (/\b(canapea|masa|scaun|dulap|frigider|masina de spalat|aragaz|mobilier)\b/.test(t)) return { category: 'casa-gradina', categoryId: 7, subcategory: '' }
+  return { category: 'diverse', categoryId: 1, subcategory: '' }
 }
 
 // ─── Auto metadata ─────────────────────────────────────────────────────────
@@ -220,11 +244,11 @@ async function scrapeOLX(url: string) {
 
   const catFromUrl = detectCategoryFromUrl(url)
   const catFromContent = detectCategoryFromContent(title, description)
-  const { category, categoryId } = catFromUrl || catFromContent
+  const { category, categoryId, subcategory } = catFromUrl || catFromContent
 
   const metadata = extractMetaByCategory(category, title, description, rawParams)
 
-  return { title, description, price, currency, city, county, photos: photos.slice(0, 8), metadata, category, categoryId, sourceUrl: url, platform: 'OLX' }
+  return { title, description, price, currency, city, county, photos: photos.slice(0, 8), metadata, category, subcategory, categoryId, sourceUrl: url, platform: 'OLX' }
 }
 
 async function scrapeStoria(url: string) {
@@ -257,7 +281,8 @@ async function scrapeStoria(url: string) {
   }
 
   const metadata = extractImobMeta(title, description, rawParams)
-  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category: 'imobiliare', categoryId: 2, sourceUrl: url, platform: 'Storia/Imobiliare' }
+  const subcategoryImob = detectSubcategoryImob((title + ' ' + description).toLowerCase())
+  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category: 'imobiliare', subcategory: subcategoryImob, categoryId: 2, sourceUrl: url, platform: 'Storia/Imobiliare' }
 }
 
 async function scrapeAutoVit(url: string) {
@@ -293,7 +318,8 @@ async function scrapeAutoVit(url: string) {
   }
 
   const metadata = extractAutoMeta(title, description, rawParams)
-  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category: 'auto', categoryId: 3, sourceUrl: url, platform: 'AutoVit' }
+  const subcategoryAuto = detectSubcategoryAuto((title + ' ' + description).toLowerCase())
+  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category: 'auto', subcategory: subcategoryAuto, categoryId: 3, sourceUrl: url, platform: 'AutoVit' }
 }
 
 async function scrapeGeneric(url: string, html?: string) {
@@ -359,15 +385,14 @@ async function scrapeGeneric(url: string, html?: string) {
 
   const catFromUrl = detectCategoryFromUrl(url)
   const catFromContent = detectCategoryFromContent(title, description)
-  const { category, categoryId } = catFromUrl || catFromContent
+  const { category, categoryId, subcategory } = catFromUrl || catFromContent
 
   const metadata = extractMetaByCategory(category, title, description, {})
 
-  // Detect platform name from hostname
   let platform = 'Altă platformă'
   try { platform = new URL(url).hostname.replace('www.', '') } catch { /* */ }
 
-  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category, categoryId, sourceUrl: url, platform }
+  return { title, description: description.substring(0, 1000), price, currency, city, photos: photos.slice(0, 8), metadata, category, subcategory, categoryId, sourceUrl: url, platform }
 }
 
 // ─── AI description rewrite ───────────────────────────────────────────────
