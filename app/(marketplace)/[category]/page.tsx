@@ -1,9 +1,9 @@
 import { getListings } from '@/lib/queries/listings'
 import { getListingFacets } from '@/lib/queries/facets'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
-import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
 import MarketplaceFacets from '@/components/listings/MarketplaceFacets'
+import InfiniteListingGrid from '@/components/listings/InfiniteListingGrid'
 import { getCategoryBySlug, getCategoryIdBySlug } from '@/lib/constants/categories'
 import { SUBCATEGORIES } from '@/lib/constants/subcategories'
 import { notFound } from 'next/navigation'
@@ -197,7 +197,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <p style={{ color: '#92400e', marginTop: '8px' }}>Folosește chat-ul 💬 pentru a căuta anunțuri!</p>
             </div>
           ) : mappedListings && mappedListings.length > 0 ? (
-            <ListingGrid listings={mappedListings} />
+            <InfiniteListingGrid
+              initialListings={mappedListings}
+              initialCount={count}
+              category={category}
+            />
           ) : (
             <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '48px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
               <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📭</span>
