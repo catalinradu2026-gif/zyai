@@ -201,28 +201,36 @@ export default async function ListingDetailPage({ params }: Props) {
             {/* Image Gallery */}
             <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
               <div className="p-4">
-                <ImageGallery images={listing.images || []} title={listing.title} />
+                <ImageGallery
+                  images={listing.images || []}
+                  title={listing.title}
+                  overlay={<>
+                    {/* Fav — top right */}
+                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}>
+                      <FavoriteButton
+                        listingId={id}
+                        initialFavorited={listingIsFavorited}
+                        userId={user?.id}
+                        overlay
+                      />
+                    </div>
+                    {/* Compare — bottom left */}
+                    <div style={{ position: 'absolute', bottom: 10, left: 10, zIndex: 10 }}>
+                      <CompareButton item={{
+                        id,
+                        title: listing.title,
+                        price: listing.price ?? undefined,
+                        priceType: listing.price_type,
+                        currency: listing.currency,
+                        city: listing.city,
+                        image: (listing.images as string[])?.[0],
+                        category: CATEGORY_SLUGS_MAP[listing.category_id],
+                      }} />
+                    </div>
+                  </>}
+                />
               </div>
-              <div className="px-4 pb-4 flex flex-col gap-3">
-                {/* Fav + Compare */}
-                <div className="flex items-center gap-3">
-                  <FavoriteButton
-                    listingId={id}
-                    initialFavorited={listingIsFavorited}
-                    userId={user?.id}
-                    overlay
-                  />
-                  <CompareButton item={{
-                    id,
-                    title: listing.title,
-                    price: listing.price ?? undefined,
-                    priceType: listing.price_type,
-                    currency: listing.currency,
-                    city: listing.city,
-                    image: (listing.images as string[])?.[0],
-                    category: CATEGORY_SLUGS_MAP[listing.category_id],
-                  }} />
-                </div>
+              <div className="px-4 pb-4">
                 <ShareButtons listingId={id} listingTitle={listing.title} />
               </div>
             </div>
