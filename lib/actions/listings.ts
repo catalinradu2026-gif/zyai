@@ -174,12 +174,22 @@ export async function deleteListing(id: string) {
     const user = await getUser()
     if (!user) return { error: 'Neautorizat' }
 
-    const supabase = await createSupabaseServerClient()
-    const { error } = await supabase
+    const admin = createSupabaseAdmin()
+
+    // Verify ownership first
+    const { data: listing } = await admin
+      .from('listings')
+      .select('id, user_id')
+      .eq('id', id)
+      .single()
+
+    if (!listing) return { error: 'Anunțul nu există' }
+    if (listing.user_id !== user.id) return { error: 'Nu ai permisiunea să ștergi acest anunț' }
+
+    const { error } = await admin
       .from('listings')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id)
 
     if (error) return { error: error.message }
 
