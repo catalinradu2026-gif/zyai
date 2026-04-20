@@ -414,13 +414,7 @@ export default async function Home() {
                 >
                   📸 Vinde acum
                 </Link>
-                <Link
-                  href="/anunt/importa"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-lg text-white hover:scale-105 transition-transform"
-                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)' }}
-                >
-                  🔗 Import din OLX/AutoVit
-                </Link>
+
                 <Link
                   href="#search-ai"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-lg text-white hover:scale-105 transition-transform"
