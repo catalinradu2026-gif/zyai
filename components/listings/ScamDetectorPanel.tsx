@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 type ScamResult = {
   risk: 'LOW' | 'MEDIUM' | 'HIGH'
@@ -27,13 +27,14 @@ const RISK_STYLE = {
 
 export default function ScamDetectorPanel({ title, description, price, category, city, imageCount }: Props) {
   const [result, setResult] = useState<ScamResult | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(true)
+
+  useEffect(() => { analyze() }, [])
 
   async function analyze() {
-    if (result) { setOpen(true); return }
+    if (result) return
     setLoading(true)
-    setOpen(true)
     try {
       const res = await fetch('/api/ai/scam-detect', {
         method: 'POST',
@@ -53,7 +54,7 @@ export default function ScamDetectorPanel({ title, description, price, category,
       <button
         onClick={analyze}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition"
-        style={{ background: open ? 'rgba(139,92,246,0.1)' : 'transparent', color: 'var(--text-primary)' }}
+        style={{ background: 'rgba(139,92,246,0.08)', color: 'var(--text-primary)' }}
       >
         <span className="flex items-center gap-2">
           🛡️ <span>Verificare Antifrauda AI</span>

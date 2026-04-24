@@ -150,23 +150,28 @@ export default async function SearchPage({ searchParams }: Props) {
   const uniqueCategoryIds = [...new Set(listings.map((l: any) => l.category_id).filter(Boolean))]
   const priceStats = listings.length > 0 ? await getCategoryPriceStats(uniqueCategoryIds) : {}
 
-  // AI Matchmaking — scor potrivire per anunț
+  // AI Matchmaking — scor potrivire per anunț (direct Groq, fără self-fetch)
   const matchScores: Record<string, { score: number; reason: string }> = {}
   if (query && listings.length > 0) {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-      const matchRes = await fetch(`${baseUrl}/api/ai/matchmaking`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userQuery: query,
-          listings: listings.map((l: any) => ({ id: l.id, title: l.title, price: l.price, city: l.city })),
-        }),
-        cache: 'no-store',
+      const groq2 = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
+      const listingsSummary = listings.slice(0, 20).map((l: any, i: number) =>
+        `[${i}] ID:${l.id} | "${l.title}" | ${l.price || '?'}${l.currency || 'EUR'} | ${l.city || ''}`
+      ).join('\n')
+      const matchRes = await groq2.chat.completions.create({
+        messages: [{
+          role: 'user',
+          content: `Utilizatorul caută: "${query}"\n\nAnunțuri:\n${listingsSummary}\n\nReturnează DOAR JSON: {"matches":[{"id":"listing_id","score":număr_0_100,"reason":"de ce se potrivește (max 30 caractere)"}]}\nPrimele 5, sortate descrescător după score.`,
+        }],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        max_tokens: 400,
       })
-      const matchData = await matchRes.json()
-      if (matchData.ok && matchData.result?.matches) {
-        for (const m of matchData.result.matches) matchScores[m.id] = { score: m.score, reason: m.reason }
+      const raw = (matchRes.choices[0].message.content || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0])
+        for (const m of (parsed.matches || [])) matchScores[m.id] = { score: m.score, reason: m.reason }
       }
     } catch {}
   }
