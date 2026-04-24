@@ -1,0 +1,104 @@
+'use client'
+
+import { useState } from 'react'
+
+type Props = {
+  listingTitle: string
+  price: number | null
+  currency: string
+  sellerPhone: string
+  sellerName: string
+}
+
+export default function NegotiateButton({ listingTitle, price, currency, sellerPhone, sellerName }: Props) {
+  const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
+
+  async function generate() {
+    setLoading(true)
+    setMessage('')
+    setError('')
+    try {
+      const res = await fetch('/api/ai/negotiate-buyer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingTitle, price, currency, sellerName }),
+      })
+      const data = await res.json()
+      if (data.ok && data.message) setMessage(data.message)
+      else setError('Nu am putut genera mesajul')
+    } catch {
+      setError('Eroare de conexiune')
+    }
+    setLoading(false)
+  }
+
+  function sendWhatsApp() {
+    const phone = sellerPhone.replace(/\D/g, '')
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    window.open(url, '_blank')
+    setSent(true)
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => { setOpen(true); generate() }}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition hover:scale-105"
+        style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}
+      >
+        🤖 Negociază cu AI
+      </button>
+    )
+  }
+
+  return (
+    <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.25)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold uppercase" style={{ color: '#A78BFA' }}>🤖 Mesaj negociere AI</p>
+        <button onClick={() => setOpen(false)} className="text-xs" style={{ color: 'var(--text-secondary)' }}>✕</button>
+      </div>
+
+      {loading && (
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full border border-purple-400 border-t-transparent animate-spin" />
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Generez mesaj...</span>
+        </div>
+      )}
+
+      {message && (
+        <>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            rows={6}
+            className="w-full px-3 py-2 rounded-lg text-xs focus:outline-none resize-none"
+            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={sendWhatsApp}
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition"
+              style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', color: '#4ADE80' }}
+            >
+              📱 Trimite pe WhatsApp
+            </button>
+            <button
+              onClick={generate}
+              className="px-3 py-2 rounded-lg text-xs font-semibold transition"
+              style={{ border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA', background: 'rgba(139,92,246,0.1)' }}
+            >
+              🔄
+            </button>
+          </div>
+          {sent && <p className="text-xs text-center" style={{ color: '#4ADE80' }}>✅ WhatsApp deschis!</p>}
+        </>
+      )}
+
+      {error && <p className="text-xs" style={{ color: '#F87171' }}>{error}</p>}
+    </div>
+  )
+}

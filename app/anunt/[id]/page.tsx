@@ -18,6 +18,7 @@ import ScamDetectorPanel from '@/components/listings/ScamDetectorPanel'
 import FomoSignals from '@/components/listings/FomoSignals'
 import TrustScoreWidget from '@/components/listings/TrustScoreWidget'
 import BuyerAlertButton from '@/components/listings/BuyerAlertButton'
+import NegotiateButton from '@/components/listings/NegotiateButton'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
@@ -434,6 +435,15 @@ export default async function ListingDetailPage({ params }: Props) {
                                 📱 WhatsApp
                               </a>
                             )}
+                            {contactPhone && (
+                              <NegotiateButton
+                                listingTitle={listing.title}
+                                price={listing.price}
+                                currency={listing.currency || 'EUR'}
+                                sellerPhone={contactPhone}
+                                sellerName={profile?.full_name || 'Vânzător'}
+                              />
+                            )}
                             {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                           </>
                         )}
@@ -462,6 +472,15 @@ export default async function ListingDetailPage({ params }: Props) {
                             style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ADE80' }}>
                             📱 WhatsApp
                           </a>
+                        )}
+                        {contactPhone && (
+                          <NegotiateButton
+                            listingTitle={listing.title}
+                            price={listing.price}
+                            currency={listing.currency || 'EUR'}
+                            sellerPhone={contactPhone}
+                            sellerName={profile?.full_name || 'Vânzător'}
+                          />
                         )}
                         {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                       </>
