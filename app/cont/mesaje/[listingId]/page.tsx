@@ -82,6 +82,10 @@ export default async function ConversationPage({ params, searchParams }: Props) 
           otherUserName={otherUserName}
           otherUserAvatar={otherUserAvatar}
           initialMessages={messages || []}
+          listingTitle={listing.title}
+          listingPrice={listing.price ?? undefined}
+          listingCurrency={listing.currency ?? 'EUR'}
+          isSellerView={listing.user_id === user.id}
         />
       </div>
     </main>

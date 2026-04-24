@@ -22,6 +22,10 @@ interface MessageThreadProps {
   otherUserName: string
   otherUserAvatar?: string
   initialMessages: Message[]
+  listingTitle?: string
+  listingPrice?: number
+  listingCurrency?: string
+  isSellerView?: boolean
 }
 
 export default function MessageThread({
@@ -31,11 +35,18 @@ export default function MessageThread({
   otherUserName,
   otherUserAvatar,
   initialMessages,
+  listingTitle,
+  listingPrice,
+  listingCurrency = 'EUR',
+  isSellerView = false,
 }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [minPrice, setMinPrice] = useState(listingPrice ? String(Math.round(listingPrice * 0.9)) : '')
+  const [showMinPrice, setShowMinPrice] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -69,6 +80,30 @@ export default function MessageThread({
       channel.unsubscribe()
     }
   }, [listingId])
+
+  async function handleAiReply() {
+    const lastBuyerMsg = [...messages].reverse().find(m => m.sender_id !== currentUserId)
+    if (!lastBuyerMsg || !listingTitle) return
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/ai/negotiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingTitle,
+          askPrice: listingPrice,
+          minPrice: minPrice ? Number(minPrice) : listingPrice,
+          buyerMessage: lastBuyerMsg.content,
+          currency: listingCurrency,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok && data.result?.reply) {
+        setContent(data.result.reply)
+      }
+    } catch {}
+    setAiLoading(false)
+  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -147,9 +182,48 @@ export default function MessageThread({
       </div>
 
       {/* Input */}
-      <div className="p-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="p-4 space-y-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+        {/* AI Negotiator toolbar — seller only */}
+        {isSellerView && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleAiReply}
+              disabled={aiLoading || !messages.some(m => m.sender_id !== currentUserId)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.15))', border: '1px solid rgba(139,92,246,0.4)', color: '#A78BFA' }}
+            >
+              {aiLoading
+                ? <><span className="w-3 h-3 rounded-full border border-purple-400 border-t-transparent animate-spin" /> Generez...</>
+                : <>🤖 Sugestie AI</>
+              }
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMinPrice(p => !p)}
+              className="text-xs px-2 py-1.5 rounded-lg transition"
+              style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}
+            >
+              ⚙️ Preț min
+            </button>
+            {showMinPrice && (
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={minPrice}
+                  onChange={e => setMinPrice(e.target.value)}
+                  placeholder="ex: 4500"
+                  className="w-24 px-2 py-1 rounded-lg text-xs focus:outline-none"
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                />
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{listingCurrency}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {errorMsg && (
-          <p className="text-xs mb-2" style={{ color: '#f87171' }}>❌ {errorMsg}</p>
+          <p className="text-xs" style={{ color: '#f87171' }}>❌ {errorMsg}</p>
         )}
         <form onSubmit={handleSend} className="flex gap-2">
           <input
