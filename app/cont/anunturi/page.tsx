@@ -11,6 +11,7 @@ import ReactivateButton from '@/components/listings/ReactivateButton'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 import StopBiddingButton from '@/components/listings/StopBiddingButton'
 import ToggleStatusButton from '@/components/listings/ToggleStatusButton'
+import SellerInsightsPanel from '@/components/listings/SellerInsightsPanel'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -81,6 +82,16 @@ export default async function MyListingsPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Seller Insights */}
+      {listings && listings.length > 0 && (
+        <SellerInsightsPanel listings={listings.map((l: any) => ({
+          title: l.title,
+          price: l.price || 0,
+          views: l.views || 0,
+          status: l.status,
+        }))} />
+      )}
 
       {/* Listings List */}
       {listings && listings.length > 0 ? (

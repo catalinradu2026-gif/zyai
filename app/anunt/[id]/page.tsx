@@ -14,6 +14,8 @@ import { isFavorited as checkIsFavorited } from '@/lib/queries/favorites'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import CompareButton from '@/components/compare/CompareButton'
 import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
+import ScamDetectorPanel from '@/components/listings/ScamDetectorPanel'
+import FomoSignals from '@/components/listings/FomoSignals'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
@@ -255,6 +257,14 @@ export default async function ListingDetailPage({ params }: Props) {
                 ))}
               </div>
 
+              {/* FOMO Signals */}
+              <FomoSignals
+                listingId={id}
+                views={listing.views ?? 0}
+                category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                createdAt={listing.created_at}
+              />
+
               {/* Auto Details */}
               {isAuto && (
                 <div className="mt-5 mb-5">
@@ -316,6 +326,16 @@ export default async function ListingDetailPage({ params }: Props) {
                 category_id: listing.category_id,
                 metadata: (listing.metadata as any) || {},
               }} />
+
+              {/* Scam Detector */}
+              <ScamDetectorPanel
+                title={listing.title}
+                description={listing.description || ''}
+                price={listing.price}
+                category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                city={listing.city || ''}
+                imageCount={(listing.images as string[] | null)?.length || 0}
+              />
 
               {/* Favorite */}
               <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
