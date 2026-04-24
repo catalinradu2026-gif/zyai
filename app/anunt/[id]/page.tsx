@@ -16,6 +16,8 @@ import CompareButton from '@/components/compare/CompareButton'
 import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import ScamDetectorPanel from '@/components/listings/ScamDetectorPanel'
 import FomoSignals from '@/components/listings/FomoSignals'
+import TrustScoreWidget from '@/components/listings/TrustScoreWidget'
+import BuyerAlertButton from '@/components/listings/BuyerAlertButton'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
@@ -90,6 +92,26 @@ export default async function ListingDetailPage({ params }: Props) {
 
   const profileRaw = listing.profiles as any
   const profile = Array.isArray(profileRaw) ? profileRaw[0] : profileRaw
+
+  // Seller stats for TrustScore
+  let sellerListingCount = 0
+  let sellerJoinedDaysAgo = 0
+  let sellerAvgImages = 0
+  try {
+    const admin2 = createSupabaseAdmin()
+    const { data: sellerListings } = await admin2
+      .from('listings')
+      .select('id, images, created_at')
+      .eq('user_id', listing.user_id)
+      .in('status', ['activ', 'vandut', 'bidding'])
+    if (sellerListings?.length) {
+      sellerListingCount = sellerListings.length
+      const oldest = sellerListings.reduce((a: any, b: any) => new Date(a.created_at) < new Date(b.created_at) ? a : b)
+      sellerJoinedDaysAgo = Math.floor((Date.now() - new Date(oldest.created_at).getTime()) / 86400000)
+      const totalImages = sellerListings.reduce((sum: number, l: any) => sum + ((l.images as any[] | null)?.length || 0), 0)
+      sellerAvgImages = Math.round(totalImages / sellerListings.length)
+    }
+  } catch {}
 
   const listingMetadata = (listing.metadata as any) || {}
   const contactPhone: string | null = listingMetadata.contactPhone || profile?.phone || null
@@ -363,11 +385,20 @@ export default async function ListingDetailPage({ params }: Props) {
                         {(profile?.full_name || 'U')[0].toUpperCase()}
                       </div>
                     )}
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{profile?.full_name || 'Utilizator'}</p>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>📍 {profile?.city || listing.city}</p>
                     </div>
                   </div>
+                  <TrustScoreWidget
+                    sellerName={profile?.full_name || 'Utilizator'}
+                    hasPhone={!!profile?.phone}
+                    city={profile?.city || listing.city || ''}
+                    hasAvatar={!!profile?.avatar_url}
+                    listingCount={sellerListingCount}
+                    joinedDaysAgo={sellerJoinedDaysAgo}
+                    avgImages={sellerAvgImages}
+                  />
                 </div>
 
                 {/* Actions */}
@@ -463,6 +494,17 @@ export default async function ListingDetailPage({ params }: Props) {
                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>nr. tel văzut</p>
                       </div>
                     </div>
+                    {listing.status === 'activ' && (
+                      <BuyerAlertButton
+                        listingId={id}
+                        listingTitle={listing.title}
+                        price={listing.price}
+                        currency={listing.currency || 'EUR'}
+                        city={listing.city || ''}
+                        category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                      />
+                    )}
+
                     {listing.status === 'vandut' ? (
                       <>
                         {/* Contact câștigător licitație */}

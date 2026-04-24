@@ -150,6 +150,27 @@ export default async function SearchPage({ searchParams }: Props) {
   const uniqueCategoryIds = [...new Set(listings.map((l: any) => l.category_id).filter(Boolean))]
   const priceStats = listings.length > 0 ? await getCategoryPriceStats(uniqueCategoryIds) : {}
 
+  // AI Matchmaking — scor potrivire per anunț
+  const matchScores: Record<string, { score: number; reason: string }> = {}
+  if (query && listings.length > 0) {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      const matchRes = await fetch(`${baseUrl}/api/ai/matchmaking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userQuery: query,
+          listings: listings.map((l: any) => ({ id: l.id, title: l.title, price: l.price, city: l.city })),
+        }),
+        cache: 'no-store',
+      })
+      const matchData = await matchRes.json()
+      if (matchData.ok && matchData.result?.matches) {
+        for (const m of matchData.result.matches) matchScores[m.id] = { score: m.score, reason: m.reason }
+      }
+    } catch {}
+  }
+
   return (
     <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 16px 48px' }}>
       {/* Voice response — vorbește rezultatele când vine de la mic */}
@@ -198,7 +219,20 @@ export default async function SearchPage({ searchParams }: Props) {
               : listing.price_type === 'negociabil' ? 'Negociabil' : 'Gratuit'
             return (
               <Link key={listing.id} href={`/anunt/${listing.id}`} className="block group">
-                {index === 0 && listings.length > 1 && (
+                {matchScores[listing.id] && (
+                  <div style={{
+                    padding: '5px 12px', borderRadius: '8px 8px 0 0', fontSize: '12px', fontWeight: 700,
+                    background: matchScores[listing.id].score >= 80
+                      ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)'
+                      : 'rgba(139,92,246,0.15)',
+                    color: matchScores[listing.id].score >= 80 ? 'white' : '#A78BFA',
+                    textAlign: 'center',
+                    border: matchScores[listing.id].score >= 80 ? 'none' : '1px solid rgba(139,92,246,0.3)',
+                  }}>
+                    🎯 {matchScores[listing.id].score}% potrivire
+                  </div>
+                )}
+                {!matchScores[listing.id] && index === 0 && listings.length > 1 && (
                   <div style={{
                     padding: '6px 12px', borderRadius: '8px 8px 0 0', fontSize: '12px', fontWeight: 700,
                     background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: 'white', textAlign: 'center'
@@ -209,7 +243,7 @@ export default async function SearchPage({ searchParams }: Props) {
                 <div className="rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.02]"
                   style={{
                     background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
-                    borderRadius: index === 0 && listings.length > 1 ? '0 0 12px 12px' : undefined
+                    borderRadius: (matchScores[listing.id] || (index === 0 && listings.length > 1)) ? '0 0 12px 12px' : undefined
                   }}>
                   <div className="h-40 flex items-center justify-center relative overflow-hidden"
                     style={{ background: 'linear-gradient(135deg,#4c1d95,#1e3a8a)' }}>
