@@ -58,7 +58,7 @@ export default async function MyListingsPage() {
     } catch { /* coloana nu există încă */ }
   }
 
-  // Detectăm anunțuri stagnante: active, >7 zile, >30 vizualizări, 0 contacte telefonice
+  // Detectăm anunțuri stagnante: active, >7 zile, >10 vizualizări, 0 contacte telefonice
   const now = Date.now()
   const staleListings = (listings || [])
     .filter((l: any) => {
@@ -66,7 +66,7 @@ export default async function MyListingsPage() {
       const daysSince = Math.floor((now - new Date(l.created_at).getTime()) / 86400000)
       const views = l.views || 0
       const phoneViews = phoneViewsMap[l.id] || 0
-      return daysSince >= 7 && views >= 30 && phoneViews === 0
+      return daysSince >= 7 && views >= 10 && phoneViews === 0
     })
     .map((l: any) => ({
       id: l.id,

@@ -10,33 +10,44 @@ export async function POST(req: Request) {
     const GROQ_API_KEY = process.env.GROQ_API_KEY
     if (!GROQ_API_KEY) return NextResponse.json({ error: 'no api key' }, { status: 500 })
 
-    const prompt = `Ești un expert anti-fraudă pentru marketplace-uri din România (similar OLX, autovit).
-Analizează acest anunț și detectează potențialele riscuri de înșelătorie.
+    const prompt = `Ești un expert anti-fraudă pentru marketplace-uri din România. Analizează obiectiv acest anunț.
+
+IMPORTANT: Platforma permite maxim 3 poze — nu penaliza pentru număr mic de poze.
 
 Anunț:
 - Titlu: ${title}
 - Categorie: ${category || 'necunoscută'}
 - Preț: ${price ? price + ' EUR' : 'nespecificat'}
 - Oraș: ${city || 'nespecificat'}
-- Descriere: ${description || 'fără descriere'}
-- Număr poze: ${images?.length || 0}
+- Descriere: ${description ? description.substring(0, 400) : 'lipsă'}
 
-Semnale de alertă comune în România:
-- Preț mult sub piață (telefon nou la 50€, mașină la 500€)
-- Descriere foarte scurtă sau generică
-- Fără poze sau puține poze
-- Promite livrare rapidă fără verificare
-- Cere plată în avans sau transfer bancar
-- Produs "de vânzare urgent din cauza plecării în străinătate"
-- Cuvinte cheie: "urgent", "plecare", "șansa vieții", "unic pret"
+REGULI DE SCORING (aplică strict):
 
-Returnează DOAR JSON valid:
+RISC SCĂZUT (score 0-30) — dacă:
+- Prețul e realist pentru categorie
+- Descrierea e detaliată și specifică
+- Orașul e specificat
+- Nu există cuvinte de alertă
+- Anunț obișnuit de vânzare
+
+RISC MEDIU (score 31-65) — dacă există 1-2 din:
+- Descriere scurtă sau vagă (sub 20 cuvinte)
+- Preț ușor sub piață (20-40% mai ieftin)
+- Lipsă detalii contact sau oraș
+
+RISC RIDICAT (score 66-100) — dacă există oricare din:
+- Preț aberant de mic (50%+ sub piață): ex telefon nou sub 100€, mașină sub 800€
+- Cuvinte: "urgent", "plecare în străinătate", "șansa vieții", "transfer bancar", "plată în avans"
+- Descriere generată sau copiată
+- Promisiuni nerealiste de livrare rapidă
+
+Returnează DOAR JSON valid, fără text înainte sau după:
 {
-  "risk": "LOW" | "MEDIUM" | "HIGH",
+  "risk": "LOW" sau "MEDIUM" sau "HIGH",
   "score": număr_între_0_și_100,
-  "flags": ["semnal 1 scurt", "semnal 2 scurt"],
-  "summary": "explicație scurtă în română (max 100 caractere)",
-  "tip": "sfat scurt pentru cumpărător (max 80 caractere)"
+  "flags": ["maxim 3 semnale concrete și scurte, sau array gol dacă nu există"],
+  "summary": "concluzie scurtă în română (max 80 caractere)",
+  "tip": "sfat practic pentru cumpărător (max 70 caractere)"
 }`
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -45,7 +56,7 @@ Returnează DOAR JSON valid:
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
+        temperature: 0.1,
         max_tokens: 300,
       }),
     })

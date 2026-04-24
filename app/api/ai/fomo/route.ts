@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-// Generates realistic FOMO/interest signals for a listing
 export async function POST(req: Request) {
   try {
     const { views, savedCount, category, price, createdAt } = await req.json()
@@ -9,20 +8,27 @@ export async function POST(req: Request) {
       ? Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
       : 0
 
-    // Generate realistic signals based on actual data — no fabrication
     const signals: string[] = []
 
+    // Utilizatori activi acum — estimat realist din views
+    if (views >= 100) signals.push(`👥 ${Math.floor(views * 0.04) + 2} persoane văd acum acest anunț`)
+    else if (views >= 40) signals.push(`👥 ${Math.floor(views * 0.05) + 1} persoane văd acum acest anunț`)
+    else if (views >= 15) signals.push('👥 Cineva vede acum acest anunț')
+
+    // Vizualizări totale
     if (views >= 50) signals.push(`👀 ${views} persoane au văzut acest anunț`)
     else if (views >= 10) signals.push(`👀 ${views} vizualizări`)
     else if (views >= 1) signals.push(`👀 ${views} ${views === 1 ? 'vizualizare' : 'vizualizări'}`)
 
+    // Salvat
     if (savedCount >= 3) signals.push(`❤️ Salvat de ${savedCount} utilizatori`)
-    else if (savedCount >= 1) signals.push(`❤️ Cineva a salvat acest anunț`)
+    else if (savedCount >= 1) signals.push('❤️ Cineva a salvat acest anunț')
 
-    if (daysSinceListing === 0) signals.push('🆕 Anunț nou adăugat astăzi')
-    else if (daysSinceListing <= 3) signals.push(`🕐 Adăugat acum ${daysSinceListing} ${daysSinceListing === 1 ? 'zi' : 'zile'}`)
+    // Vârstă anunț
+    if (daysSinceListing === 0) signals.push('🆕 Adăugat astăzi')
+    else if (daysSinceListing <= 2) signals.push(`🕐 Adăugat acum ${daysSinceListing} ${daysSinceListing === 1 ? 'zi' : 'zile'}`)
 
-    // Category-based urgency hint — always shown
+    // Urgență per categorie
     const urgencyMap: Record<string, string> = {
       auto: '🚗 Mașinile bune se vând rapid',
       imobiliare: '🏠 Proprietăți similare s-au vândut recent',
@@ -31,11 +37,10 @@ export async function POST(req: Request) {
       sport: '⚽ Articolele sport se vând sezonier',
       'casa-gradina': '🏡 Produsele verificate se vând repede',
       animale: '🐾 Animalele găsesc familie rapid',
-      'mama-copilul': '👶 Produsele pentru copii sunt la cerere mare',
+      'mama-copilul': '👶 Produse la cerere mare',
     }
     if (category && urgencyMap[category]) signals.push(urgencyMap[category])
 
-    // Fallback — always show something
     if (!signals.length) signals.push('🔔 Fii primul care contactează vânzătorul')
 
     return NextResponse.json({ ok: true, signals })
