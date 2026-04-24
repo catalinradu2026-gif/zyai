@@ -17,7 +17,7 @@ import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import ScamDetectorPanel from '@/components/listings/ScamDetectorPanel'
 import FomoSignals from '@/components/listings/FomoSignals'
 import TrustScoreWidget from '@/components/listings/TrustScoreWidget'
-import BuyerAlertButton from '@/components/listings/BuyerAlertButton'
+
 import NegotiateButton from '@/components/listings/NegotiateButton'
 import ViewNotifier from '@/components/listings/ViewNotifier'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
