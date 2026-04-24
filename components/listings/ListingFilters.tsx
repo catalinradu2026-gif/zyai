@@ -104,7 +104,6 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
   const [county, setCounty] = useState(searchParams.get('county') || '')
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
-  const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
 
   // Helper: preia valoarea din URL sau fallback la default
   const sp = (k: string, d = '') => searchParams.get(k) || d
@@ -277,7 +276,8 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
   function buildParams() {
     const p = new URLSearchParams()
     if (activeSub) p.set('sub', activeSub)
-    if (sort && sort !== 'newest') p.set('sort', sort)
+    const currentSort = searchParams.get('sort')
+    if (currentSort && currentSort !== 'newest') p.set('sort', currentSort)
     if (county) p.set('county', county)
     if (city) p.set('city', city)
     if (minPrice) p.set('minPrice', minPrice)
@@ -442,16 +442,6 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     </div>
   )
 
-  const SortField = () => (
-    <div>
-      {lbl('🔃 Sortare')}
-      <div className="flex gap-1.5 flex-wrap">
-        {[['newest', '🆕 Noi'], ['cheapest', '⬇️ Ieftine'], ['expensive', '⬆️ Scumpe']].map(([v, l]) => (
-          <Chip key={v} active={sort === v} onClick={() => setSort(sort === v ? 'newest' : v)}>{l}</Chip>
-        ))}
-      </div>
-    </div>
-  )
 
   const PriceField = ({ currency = 'EUR' }: { currency?: string }) => (
     <div>
@@ -989,7 +979,6 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
 
       {showFilters && (
         <div className="p-4 space-y-4">
-          <SortField />
           <LocationField />
           <PriceField currency={category === 'joburi' ? 'RON' : 'EUR'} />
           {renderFilters()}
@@ -1003,7 +992,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
               Aplică filtre
             </button>
             <button
-              onClick={() => { setBrands([]); setCounty(''); setSort('newest'); router.push(`/marketplace/${category}${activeSub ? `?sub=${activeSub}` : ''}`) }}
+              onClick={() => { setBrands([]); setCounty(''); router.push(`/marketplace/${category}${activeSub ? `?sub=${activeSub}` : ''}`) }}
               className="px-3 py-2 rounded-lg transition text-sm"
               style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-input)' }}
             >
