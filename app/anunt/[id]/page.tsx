@@ -444,6 +444,15 @@ export default async function ListingDetailPage({ params }: Props) {
                                 sellerName={profile?.full_name || 'Vânzător'}
                               />
                             )}
+                            {!contactPhone && (
+                              <NegotiateButton
+                                listingTitle={listing.title}
+                                price={listing.price}
+                                currency={listing.currency || 'EUR'}
+                                sellerPhone=""
+                                sellerName={profile?.full_name || 'Vânzător'}
+                              />
+                            )}
                             {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                           </>
                         )}
@@ -473,15 +482,13 @@ export default async function ListingDetailPage({ params }: Props) {
                             📱 WhatsApp
                           </a>
                         )}
-                        {contactPhone && (
-                          <NegotiateButton
-                            listingTitle={listing.title}
-                            price={listing.price}
-                            currency={listing.currency || 'EUR'}
-                            sellerPhone={contactPhone}
-                            sellerName={profile?.full_name || 'Vânzător'}
-                          />
-                        )}
+                        <NegotiateButton
+                          listingTitle={listing.title}
+                          price={listing.price}
+                          currency={listing.currency || 'EUR'}
+                          sellerPhone={contactPhone || ''}
+                          sellerName={profile?.full_name || 'Vânzător'}
+                        />
                         {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                       </>
                     )}
