@@ -12,6 +12,7 @@ import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 import StopBiddingButton from '@/components/listings/StopBiddingButton'
 import ToggleStatusButton from '@/components/listings/ToggleStatusButton'
 import SellerInsightsPanel from '@/components/listings/SellerInsightsPanel'
+import SmartPriceDrop from '@/components/listings/SmartPriceDrop'
 
 export const metadata = {
   title: 'Anunțurile mele - zyAI',
@@ -57,6 +58,25 @@ export default async function MyListingsPage() {
     } catch { /* coloana nu există încă */ }
   }
 
+  // Detectăm anunțuri stagnante: active, >7 zile, >30 vizualizări, 0 contacte telefonice
+  const now = Date.now()
+  const staleListings = (listings || [])
+    .filter((l: any) => {
+      if (l.status !== 'activ') return false
+      const daysSince = Math.floor((now - new Date(l.created_at).getTime()) / 86400000)
+      const views = l.views || 0
+      const phoneViews = phoneViewsMap[l.id] || 0
+      return daysSince >= 7 && views >= 30 && phoneViews === 0
+    })
+    .map((l: any) => ({
+      id: l.id,
+      title: l.title,
+      price: l.price || 0,
+      currency: l.currency || 'EUR',
+      views: l.views || 0,
+      daysSince: Math.floor((now - new Date(l.created_at).getTime()) / 86400000),
+    }))
+
   return (
     <div className="space-y-6">
       {/* Header Card */}
@@ -82,6 +102,9 @@ export default async function MyListingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Smart Price Drop — anunțuri stagnante */}
+      {staleListings.length > 0 && <SmartPriceDrop staleListings={staleListings} />}
 
       {/* AI Seller Insights */}
       {listings && listings.length > 0 && (
