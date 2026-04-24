@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ROMANIAN_CITIES } from '@/lib/constants/cities'
+import { ROMANIAN_CITIES, ROMANIAN_COUNTIES } from '@/lib/constants/cities'
 import {
   AUTO_BRANDS, AUTO_MODELS, CAROSERIE_TYPES, YEARS,
   TRUCK_BRANDS, TRUCK_BODY_TYPES, UTILITY_BRANDS,
@@ -101,8 +101,10 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
 
   // Common
   const [city, setCity] = useState(searchParams.get('city') || '')
+  const [county, setCounty] = useState(searchParams.get('county') || '')
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
+  const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
 
   // Helper: preia valoarea din URL sau fallback la default
   const sp = (k: string, d = '') => searchParams.get(k) || d
@@ -111,7 +113,8 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     return v ? v.split(',').filter(Boolean) : []
   }
 
-  // AUTO - autoturisme
+  // AUTO - autoturisme (multi-brand)
+  const [brands, setBrands] = useState<string[]>(spArr('brands'))
   const [brand, setBrand] = useState(sp('brand'))
   const [model, setModel] = useState(sp('model'))
   const [fuel, setFuel] = useState(sp('fuel'))
@@ -122,6 +125,10 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
   const [kmTo, setKmTo] = useState(sp('kmTo'))
   const [seller, setSeller] = useState(sp('seller'))
   const [leasing, setLeasing] = useState(sp('leasing') === 'da')
+  const [cilindreeFrom, setCilindreeFrom] = useState(sp('cilindreeFrom'))
+  const [cilindreeTo, setCilindreeTo] = useState(sp('cilindreeTo'))
+  const [putereFrom, setPutereFrom] = useState(sp('putereFrom'))
+  const [putereTo, setPutereTo] = useState(sp('putereTo'))
   // AUTO - autoutilitare
   const [massFrom, setMassFrom] = useState(sp('massFrom'))
   const [massTo, setMassTo] = useState(sp('massTo'))
@@ -264,15 +271,19 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
   const [mobilierCopiiTip, setMobilierCopiiTip] = useState(sp('mobilierCopiiTip'))
   const [ingrijireTip, setIngrijireTip] = useState(sp('ingrijireTip'))
 
-  const availableModels = brand && AUTO_MODELS[brand] ? AUTO_MODELS[brand] : []
+  const singleBrand = brands.length === 1 ? brands[0] : brand
+  const availableModels = singleBrand && AUTO_MODELS[singleBrand] ? AUTO_MODELS[singleBrand] : []
 
   function buildParams() {
     const p = new URLSearchParams()
     if (activeSub) p.set('sub', activeSub)
+    if (sort && sort !== 'newest') p.set('sort', sort)
+    if (county) p.set('county', county)
     if (city) p.set('city', city)
     if (minPrice) p.set('minPrice', minPrice)
     if (maxPrice) p.set('maxPrice', maxPrice)
     // auto
+    if (brands.length) p.set('brands', brands.join(','))
     if (brand) p.set('brand', brand)
     if (model) p.set('model', model)
     if (fuel) p.set('fuel', fuel)
@@ -283,6 +294,10 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     if (kmTo) p.set('kmTo', kmTo)
     if (seller) p.set('seller', seller)
     if (leasing) p.set('leasing', 'da')
+    if (cilindreeFrom) p.set('cilindreeFrom', cilindreeFrom)
+    if (cilindreeTo) p.set('cilindreeTo', cilindreeTo)
+    if (putereFrom) p.set('putereFrom', putereFrom)
+    if (putereTo) p.set('putereTo', putereTo)
     if (massFrom) p.set('massFrom', massFrom)
     if (massTo) p.set('massTo', massTo)
     if (volume) p.set('volume', volume)
@@ -411,10 +426,30 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     return p
   }
 
-  const CityField = () => (
+  const LocationField = () => (
+    <div className="space-y-2">
+      <div>
+        {lbl('🗺️ Județ')}
+        <select value={county} onChange={e => { setCounty(e.target.value); setCity('') }} style={ss} className={sc}>
+          <option value="">Toate județele</option>
+          {ROMANIAN_COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div>
+        {lbl('📍 Oraș')}
+        <Sel val={city} set={setCity} options={ROMANIAN_CITIES} placeholder="Toate orașele" />
+      </div>
+    </div>
+  )
+
+  const SortField = () => (
     <div>
-      {lbl('📍 Oraș')}
-      <Sel val={city} set={setCity} options={ROMANIAN_CITIES} placeholder="Toate orașele" />
+      {lbl('🔃 Sortare')}
+      <div className="flex gap-1.5 flex-wrap">
+        {[['newest', '🆕 Noi'], ['cheapest', '⬇️ Ieftine'], ['expensive', '⬆️ Scumpe']].map(([v, l]) => (
+          <Chip key={v} active={sort === v} onClick={() => setSort(sort === v ? 'newest' : v)}>{l}</Chip>
+        ))}
+      </div>
     </div>
   )
 
@@ -439,14 +474,27 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     </div>
   )
 
-  const AutoBaseFields = ({ brands = AUTO_BRANDS }: { brands?: string[] }) => (
+  const AutoBaseFields = ({ brandOptions = AUTO_BRANDS, multiSelect = false }: { brandOptions?: string[]; multiSelect?: boolean }) => (
     <>
       <div>
         {lbl('🚗 Marcă')}
-        <select value={brand} onChange={e => { setBrand(e.target.value); setModel('') }} style={ss} className={sc}>
-          <option value="">Toate mărcile</option>
-          {brands.map(b => <option key={b} value={b}>{b}</option>)}
-        </select>
+        {multiSelect ? (
+          <div>
+            <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+              {brandOptions.map(b => (
+                <Chip key={b} active={brands.includes(b)} onClick={() => setBrands(brands.includes(b) ? brands.filter(x => x !== b) : [...brands, b])}>{b}</Chip>
+              ))}
+            </div>
+            {brands.length > 0 && (
+              <button onClick={() => setBrands([])} className="mt-1 text-xs" style={{ color: '#8B5CF6' }}>✕ Șterge selecția ({brands.length})</button>
+            )}
+          </div>
+        ) : (
+          <select value={brand} onChange={e => { setBrand(e.target.value); setModel('') }} style={ss} className={sc}>
+            <option value="">Toate mărcile</option>
+            {brandOptions.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        )}
       </div>
       <div>
         {lbl('📋 Model')}
@@ -489,7 +537,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
     switch (activeSub) {
       case 'autoutilitare': return (
         <>
-          <AutoBaseFields brands={UTILITY_BRANDS} />
+          <AutoBaseFields brandOptions={UTILITY_BRANDS} />
           <div>{lbl('⚖️ Masă max (kg)')}<Row from={massFrom} to={massTo} setFrom={setMassFrom} setTo={setMassTo} ph={['Min kg', 'Max kg']} /></div>
           <div>{lbl('📦 Volum cargo (m³)')}<input type="number" value={volume} onChange={e => setVolume(e.target.value)} placeholder="ex: 8" style={is} className={ic} /></div>
           <div>{lbl('💺 Nr. locuri')}<Sel val={seats} set={setSeats} options={['2', '3', '4', '5', '6', '7', '8', '9+']} placeholder="Toate" /></div>
@@ -589,7 +637,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
       )
       default: return ( // autoturisme
         <>
-          <AutoBaseFields />
+          <AutoBaseFields multiSelect={true} />
           <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-blue-600 font-semibold flex items-center justify-between py-1">
             <span>Căutare detaliată</span><span>{showAdvanced ? '▲' : '▼'}</span>
           </button>
@@ -597,6 +645,8 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
             <div className="space-y-3 border-t border-gray-100 pt-3">
               <div>{lbl('🚙 Caroserie')}<Chips val={caroserie} set={setCaroserie} options={CAROSERIE_TYPES} /></div>
               <div>{lbl('🛣️ Kilometri')}<Row from={kmFrom} to={kmTo} setFrom={setKmFrom} setTo={setKmTo} /></div>
+              <div>{lbl('🔧 Cilindree (cm³)')}<Row from={cilindreeFrom} to={cilindreeTo} setFrom={setCilindreeFrom} setTo={setCilindreeTo} ph={['Min cm³', 'Max cm³']} /></div>
+              <div>{lbl('⚡ Putere (CP)')}<Row from={putereFrom} to={putereTo} setFrom={setPutereFrom} setTo={setPutereTo} ph={['Min CP', 'Max CP']} /></div>
             </div>
           )}
           <SellerField />
@@ -939,7 +989,8 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
 
       {showFilters && (
         <div className="p-4 space-y-4">
-          <CityField />
+          <SortField />
+          <LocationField />
           <PriceField currency={category === 'joburi' ? 'RON' : 'EUR'} />
           {renderFilters()}
 
@@ -952,7 +1003,7 @@ export default function ListingFilters({ category }: ListingFiltersProps) {
               Aplică filtre
             </button>
             <button
-              onClick={() => router.push(`/marketplace/${category}${activeSub ? `?sub=${activeSub}` : ''}`)}
+              onClick={() => { setBrands([]); setCounty(''); setSort('newest'); router.push(`/marketplace/${category}${activeSub ? `?sub=${activeSub}` : ''}`) }}
               className="px-3 py-2 rounded-lg transition text-sm"
               style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-input)' }}
             >

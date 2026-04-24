@@ -4,12 +4,15 @@ export type ListingFilters = {
   category?: string
   subcategory?: string
   city?: string
+  county?: string
   minPrice?: number
   maxPrice?: number
   query?: string
   page?: number
+  sort?: 'newest' | 'cheapest' | 'expensive'
   // AUTO
   brand?: string
+  brands?: string[]
   model?: string
   fuel?: string
   yearFrom?: string
@@ -20,6 +23,10 @@ export type ListingFilters = {
   seller?: string
   stare?: string
   gearbox?: string
+  cilindreeFrom?: string
+  cilindreeTo?: string
+  putereFrom?: string
+  putereTo?: string
   // IMOBILIARE
   tipTranzactie?: string
   tipApartament?: string
@@ -46,7 +53,7 @@ export type ListingFilters = {
   modaStare?: string
   modaGen?: string
   // GENERIC
-  [key: string]: string | number | undefined
+  [key: string]: string | number | string[] | undefined
 }
 
 export async function getListings(filters: ListingFilters = {}) {
@@ -55,6 +62,9 @@ export async function getListings(filters: ListingFilters = {}) {
   const page = filters.page ?? 1
 
   // Query 1: anunțuri active + în licitație — admin client bypass RLS (bidding listings must be visible)
+  const sortField = filters.sort === 'cheapest' || filters.sort === 'expensive' ? 'price' : 'created_at'
+  const sortAsc = filters.sort === 'cheapest'
+
   let q = admin
     .from('listings')
     .select(
@@ -62,7 +72,7 @@ export async function getListings(filters: ListingFilters = {}) {
       { count: 'exact' }
     )
     .in('status', ['activ', 'bidding'])
-    .order('created_at', { ascending: false })
+    .order(sortField, { ascending: sortAsc })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 
   if (filters.query) {
@@ -74,6 +84,10 @@ export async function getListings(filters: ListingFilters = {}) {
 
   if (filters.city) {
     q = q.eq('city', filters.city)
+  }
+
+  if (filters.county) {
+    q = q.eq('county', filters.county)
   }
 
   if (filters.minPrice) {
@@ -96,7 +110,9 @@ export async function getListings(filters: ListingFilters = {}) {
 
   // ── Filtre metadata AUTO ──────────────────────────────────────
   // Folosim ilike pentru case-insensitive match (user poate scrie bmw/BMW/Bmw)
-  if (filters.brand) q = q.ilike('metadata->>brand', filters.brand)
+  if (filters.brands && filters.brands.length > 0) {
+    q = q.or(filters.brands.map(b => `metadata->>brand.ilike.${b}`).join(','))
+  } else if (filters.brand) q = q.ilike('metadata->>brand', filters.brand)
   if (filters.model) q = q.ilike('metadata->>model', `%${filters.model}%`)
   if (filters.fuel) q = q.ilike('metadata->>fuelType', filters.fuel)
   if (filters.gearbox) q = q.ilike('metadata->>gearbox', filters.gearbox)
@@ -109,6 +125,10 @@ export async function getListings(filters: ListingFilters = {}) {
   // Kilometraj — string comparison (aproximativ, poate fi inexact pt numere diferite ca lungime)
   if (filters.kmFrom) q = q.gte('metadata->>mileage', filters.kmFrom.padStart(8, '0'))
   if (filters.kmTo) q = q.lte('metadata->>mileage', filters.kmTo.padStart(8, '0'))
+  if (filters.cilindreeFrom) q = q.gte('metadata->>cilindree', filters.cilindreeFrom.padStart(5, '0'))
+  if (filters.cilindreeTo) q = q.lte('metadata->>cilindree', filters.cilindreeTo.padStart(5, '0'))
+  if (filters.putereFrom) q = q.gte('metadata->>putere', filters.putereFrom.padStart(5, '0'))
+  if (filters.putereTo) q = q.lte('metadata->>putere', filters.putereTo.padStart(5, '0'))
 
   // ── Filtre metadata IMOBILIARE ────────────────────────────────
   if (filters.tipTranzactie) q = q.eq('metadata->>tipTranzactie', filters.tipTranzactie)

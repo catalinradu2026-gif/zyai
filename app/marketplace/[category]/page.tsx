@@ -1,6 +1,7 @@
 import { getListings } from '@/lib/queries/listings'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
+import SortBar from '@/components/listings/SortBar'
 import { getCategoryBySlug } from '@/lib/constants/categories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -68,16 +69,20 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   let error: any = null
 
   try {
+    const brandsArr = sp.brands ? sp.brands.split(',').filter(Boolean) : undefined
     const result = await getListings({
       category,
       subcategory: sp.sub || undefined,
       city: sp.city,
+      county: sp.county,
       minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
       maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
       query: sp.q,
       page: sp.pagina ? Number(sp.pagina) : 1,
+      sort: (sp.sort as any) || 'newest',
       // AUTO filters
       brand: sp.brand,
+      brands: brandsArr,
       model: sp.model,
       fuel: sp.fuel,
       yearFrom: sp.yearFrom,
@@ -88,6 +93,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       caroserie: sp.caroserie,
       seller: sp.seller,
       stare: sp.stare,
+      cilindreeFrom: sp.cilindreeFrom,
+      cilindreeTo: sp.cilindreeTo,
+      putereFrom: sp.putereFrom,
+      putereTo: sp.putereTo,
       // IMOBILIARE filters
       tipTranzactie: sp.tipTranzactie,
       tipApartament: sp.tipApartament,
@@ -135,12 +144,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
       {/* Header */}
       <div style={{ marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#000', marginBottom: '4px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#000' }}>
           {categoryData!.icon} {categoryData!.name}
         </h1>
-        <p style={{ color: '#555', fontSize: '14px' }}>
-          {count} anunț{count !== 1 ? 'uri' : ''} disponibil{count !== 1 ? 'e' : ''}
-        </p>
       </div>
 
       {/* SUBCATEGORIES BAR */}
@@ -193,6 +199,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         </div>
 
         <div className="lg:col-span-3">
+          <Suspense fallback={null}>
+            <SortBar count={count} />
+          </Suspense>
           {error ? (
             <div style={{ background: '#fefce8', border: '2px solid #fde047', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
               <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>⚠️</span>
