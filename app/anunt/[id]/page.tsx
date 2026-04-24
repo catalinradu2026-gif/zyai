@@ -601,6 +601,13 @@ export default async function ListingDetailPage({ params }: Props) {
                         📱 WhatsApp
                       </a>
                     )}
+                    <NegotiateButton
+                      listingTitle={listing.title}
+                      price={listing.price}
+                      currency={listing.currency || 'EUR'}
+                      sellerPhone={contactPhone || ''}
+                      sellerName={profile?.full_name || 'Vânzător'}
+                    />
                     {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                   </div>
                 ) : needsLogin ? (
