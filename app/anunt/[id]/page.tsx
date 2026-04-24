@@ -19,7 +19,6 @@ import FomoSignals from '@/components/listings/FomoSignals'
 import TrustScoreWidget from '@/components/listings/TrustScoreWidget'
 import BuyerAlertButton from '@/components/listings/BuyerAlertButton'
 import NegotiateButton from '@/components/listings/NegotiateButton'
-import ViewNotifier from '@/components/listings/ViewNotifier'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
@@ -169,14 +168,6 @@ export default async function ListingDetailPage({ params }: Props) {
 
   return (
     <main className="pt-24 pb-20 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {user && !isOwner && (
-        <ViewNotifier
-          listingId={id}
-          userId={user.id}
-          sellerId={listing.user_id}
-          listingTitle={listing.title}
-        />
-      )}
       {/* Breadcrumb */}
       <div style={{ borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 text-sm">
@@ -453,15 +444,6 @@ export default async function ListingDetailPage({ params }: Props) {
                                 sellerName={profile?.full_name || 'Vânzător'}
                               />
                             )}
-                            {!contactPhone && (
-                              <NegotiateButton
-                                listingTitle={listing.title}
-                                price={listing.price}
-                                currency={listing.currency || 'EUR'}
-                                sellerPhone=""
-                                sellerName={profile?.full_name || 'Vânzător'}
-                              />
-                            )}
                             {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                           </>
                         )}
@@ -491,13 +473,15 @@ export default async function ListingDetailPage({ params }: Props) {
                             📱 WhatsApp
                           </a>
                         )}
-                        <NegotiateButton
-                          listingTitle={listing.title}
-                          price={listing.price}
-                          currency={listing.currency || 'EUR'}
-                          sellerPhone={contactPhone || ''}
-                          sellerName={profile?.full_name || 'Vânzător'}
-                        />
+                        {contactPhone && (
+                          <NegotiateButton
+                            listingTitle={listing.title}
+                            price={listing.price}
+                            currency={listing.currency || 'EUR'}
+                            sellerPhone={contactPhone}
+                            sellerName={profile?.full_name || 'Vânzător'}
+                          />
+                        )}
                         {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                       </>
                     )}
@@ -529,6 +513,17 @@ export default async function ListingDetailPage({ params }: Props) {
                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>nr. tel văzut</p>
                       </div>
                     </div>
+                    {listing.status === 'activ' && (
+                      <BuyerAlertButton
+                        listingId={id}
+                        listingTitle={listing.title}
+                        price={listing.price}
+                        currency={listing.currency || 'EUR'}
+                        city={listing.city || ''}
+                        category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                      />
+                    )}
+
                     {listing.status === 'vandut' ? (
                       <>
                         {/* Contact câștigător licitație */}
@@ -599,13 +594,6 @@ export default async function ListingDetailPage({ params }: Props) {
                         📱 WhatsApp
                       </a>
                     )}
-                    <NegotiateButton
-                      listingTitle={listing.title}
-                      price={listing.price}
-                      currency={listing.currency || 'EUR'}
-                      sellerPhone={contactPhone || ''}
-                      sellerName={profile?.full_name || 'Vânzător'}
-                    />
                     {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
                   </div>
                 ) : needsLogin ? (

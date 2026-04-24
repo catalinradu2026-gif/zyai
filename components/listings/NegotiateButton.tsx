@@ -79,23 +79,13 @@ export default function NegotiateButton({ listingTitle, price, currency, sellerP
             style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
           />
           <div className="flex gap-2">
-            {sellerPhone ? (
-              <button
-                onClick={sendWhatsApp}
-                className="flex-1 py-2 rounded-lg text-xs font-semibold transition"
-                style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', color: '#4ADE80' }}
-              >
-                📱 Trimite pe WhatsApp
-              </button>
-            ) : (
-              <button
-                onClick={() => { navigator.clipboard.writeText(message); setSent(true) }}
-                className="flex-1 py-2 rounded-lg text-xs font-semibold transition"
-                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#A78BFA' }}
-              >
-                📋 Copiază mesajul
-              </button>
-            )}
+            <button
+              onClick={sendWhatsApp}
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition"
+              style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', color: '#4ADE80' }}
+            >
+              📱 Trimite pe WhatsApp
+            </button>
             <button
               onClick={generate}
               className="px-3 py-2 rounded-lg text-xs font-semibold transition"
@@ -104,7 +94,7 @@ export default function NegotiateButton({ listingTitle, price, currency, sellerP
               🔄
             </button>
           </div>
-          {sent && <p className="text-xs text-center" style={{ color: '#4ADE80' }}>{sellerPhone ? '✅ WhatsApp deschis!' : '✅ Copiat!'}</p>}
+          {sent && <p className="text-xs text-center" style={{ color: '#4ADE80' }}>✅ WhatsApp deschis!</p>}
         </>
       )}
 
