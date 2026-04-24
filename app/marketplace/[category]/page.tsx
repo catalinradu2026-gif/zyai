@@ -2,6 +2,7 @@ import { getListings } from '@/lib/queries/listings'
 import ListingGrid from '@/components/listings/ListingGrid'
 import ListingFilters from '@/components/listings/ListingFilters'
 import SortBar from '@/components/listings/SortBar'
+import BuyerAlertSetup from '@/components/listings/BuyerAlertSetup'
 import { getCategoryBySlug } from '@/lib/constants/categories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -202,6 +203,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <Suspense fallback={null}>
             <SortBar count={count} />
           </Suspense>
+          <div className="mb-4">
+            <BuyerAlertSetup
+              category={category}
+              city={sp.city}
+              query={sp.q}
+              minPrice={sp.minPrice ? Number(sp.minPrice) : undefined}
+              maxPrice={sp.maxPrice ? Number(sp.maxPrice) : undefined}
+            />
+          </div>
           {error ? (
             <div style={{ background: '#fefce8', border: '2px solid #fde047', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
               <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>⚠️</span>

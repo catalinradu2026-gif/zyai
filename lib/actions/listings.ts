@@ -133,6 +133,21 @@ export async function createListing(formData: {
       images: formData.images,
     }).catch(() => {})
 
+    // Notifică buyer alerts (fire-and-forget)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3006'
+    fetch(`${siteUrl}/api/alerts/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        listingId: data.id,
+        title: formData.title,
+        price: formData.price,
+        currency: formData.currency,
+        city: formData.city,
+        category: formData.categorySlug,
+      }),
+    }).catch(() => {})
+
     revalidatePath('/marketplace')
     return { id: data.id }
   } catch (err: any) {

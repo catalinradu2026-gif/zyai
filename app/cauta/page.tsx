@@ -4,6 +4,7 @@ import Groq from 'groq-sdk'
 import FavoriteButton from '@/components/listings/FavoriteButton'
 import SearchInline from '@/components/SearchInline'
 import SearchVoice from '@/components/SearchVoice'
+import BuyerAlertSetup from '@/components/listings/BuyerAlertSetup'
 import { getUser } from '@/lib/actions/auth'
 import { getFavoritedIds } from '@/lib/queries/favorites'
 
@@ -202,6 +203,9 @@ export default async function SearchPage({ searchParams }: Props) {
               ? `${count} anunț${count !== 1 ? 'uri' : ''} găsit${count !== 1 ? 'e' : ''}`
               : query ? 'Niciun rezultat găsit' : ''}
           </p>
+        </div>
+        <div style={{ marginTop: '12px' }}>
+          <BuyerAlertSetup query={query} />
         </div>
       </div>
 
