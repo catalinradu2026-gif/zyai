@@ -15,7 +15,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return { title: q ? `"${q}" - Căutare zyAI` : 'Căutare - zyAI' }
 }
 
-type ParsedQuery = { keyword: string; city: string; maxPrice: number | null; variants: string[] }
+// categoryId map: auto=3, imobiliare=2, joburi=1, servicii=4, electronice=5, moda=6, casa-gradina=7, sport=8, animale=9, mama-copilul=10
+type ParsedQuery = { keyword: string; city: string; maxPrice: number | null; variants: string[]; categoryId: number | null }
 
 async function parseQuery(query: string): Promise<ParsedQuery> {
   try {
@@ -24,33 +25,46 @@ async function parseQuery(query: string): Promise<ParsedQuery> {
       messages: [
         {
           role: 'system',
-          content: `Ești un parser inteligent pentru un marketplace românesc. Query-ul poate veni din voce și poate conține greșeli fonetice sau transcrieri incorecte ale mărcilor.
+          content: `Ești un parser pentru un marketplace românesc. Query-ul poate fi din voce sau text, în română informală.
 
 Extrage:
-- keyword: cuvântul cheie CORECT (corectează greșeli fonetice de mărci auto: "bemveu"/"be em ve"/"bm vu" → "BMW", "aude"/"audde"/"ode" → "Audi", "mertcedes"/"mersedes"/"mercedes benz" → "Mercedes", "datie"/"dacia" → "Dacia", "vw"/"folfsvagen" → "Volkswagen". Corectează și produse: "labtop"/"latop" → "laptop", "telefon"/"telepon" → "telefon"). Fără "caut/vreau/vand/găsesc". Forma de bază.
-- city: orașul corect dacă e menționat (ex: "craiova" → "Craiova", "bucuresti" → "București") sau "" dacă nu
-- maxPrice: prețul maxim ca număr dacă e menționat, altfel null
-- variants: array cu variante de scris ale keyword-ului pentru căutare (ex: ["casa","casă","case","Case"] sau ["BMW","bmw"] sau ["laptop","Laptop"]). Max 4 variante.
+- keyword: cuvântul cheie specific CORECT. Corectează greșeli fonetice de mărci: "bemveu/be em ve/bm vu"→"BMW", "aude/audde/ode"→"Audi", "mersedes/mertcedes"→"Mercedes", "datie"→"Dacia", "vw/folfsvagen"→"Volkswagen". Corectează produse: "labtop/latop"→"laptop", "telepon"→"telefon". Scoate cuvinte de umplutură: "caut/vreau/vand/găsesc/un/o/de". Dacă nu există keyword specific (ex: "caut masina") → keyword="".
+- city: orașul corect (ex: "craiova"→"Craiova", "bucuresti"→"București", "cluj"→"Cluj-Napoca") sau "" dacă nu e menționat.
+- maxPrice: prețul maxim ca număr sau null.
+- variants: variante de scris ale keyword-ului dacă keyword nu e gol (ex: ["BMW","bmw"], ["laptop","Laptop"], ["apartament","Apartament","ap"]). Max 4. Dacă keyword e gol → [].
+- categoryId: numărul categoriei detectate din context:
+  1=joburi (job/muncă/angajare/salariat/lucru)
+  2=imobiliare (apartament/casă/teren/garsonieră/chirie/imobil/bloc/vilă/ap/camere)
+  3=auto (mașină/masina/auto/BMW/Audi/Dacia/Volkswagen/Mercedes/Ford/Toyota/Opel/Renault/motocicletă/moto/camion/vehicul/bolid/rabla/autoturism/autoturisme)
+  4=servicii (service/reparații/curățenie/transport/IT/instalator/electrician/zugrav/meșter)
+  5=electronice (telefon/smartphone/iPhone/Samsung/laptop/PC/calculator/tabletă/TV/gaming/console)
+  6=moda (haine/îmbrăcăminte/pantofi/geantă/rochie/blugi/tricou/jachetă/bluză)
+  7=casa-gradina (mobilă/electrocasnic/frigider/aragaz/canapea/decoratiuni/unelte/grădină)
+  8=sport (bicicletă/fitness/fotbal/tenis/ski/echipament sportiv)
+  9=animale (câine/pisică/papagal/pești/hamster/animal)
+  10=mama-copilul (căruciор/jucărie/haine copii/mobilier copii/bebeluș)
+  null=dacă nu e clar
 
-Returnează DOAR JSON valid: {"keyword":"...","city":"...","maxPrice":null,"variants":["..."]}`,
+Returnează DOAR JSON valid: {"keyword":"...","city":"...","maxPrice":null,"variants":[...],"categoryId":null}`,
         },
         { role: 'user', content: query },
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0,
-      max_tokens: 120,
+      max_tokens: 150,
     })
     const txt = (res.choices[0].message.content || '{}')
       .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     const parsed = JSON.parse(txt)
     return {
-      keyword: parsed.keyword || query,
+      keyword: parsed.keyword || '',
       city: parsed.city || '',
       maxPrice: parsed.maxPrice || null,
-      variants: Array.isArray(parsed.variants) ? parsed.variants : [parsed.keyword || query],
+      variants: Array.isArray(parsed.variants) ? parsed.variants : (parsed.keyword ? [parsed.keyword] : []),
+      categoryId: parsed.categoryId || null,
     }
   } catch {
-    return { keyword: query, city: '', maxPrice: null, variants: [query] }
+    return { keyword: query, city: '', maxPrice: null, variants: [query], categoryId: null }
   }
 }
 
@@ -63,47 +77,65 @@ async function searchListings(query: string) {
   const kw = parsed.keyword.trim()
   const city = parsed.city || ''
   const maxPrice = parsed.maxPrice
-  // Groq returnează variante cu/fără diacritice (ex: ["casa","casă"])
+  const catId = parsed.categoryId
   const variants = [...new Set([kw, ...parsed.variants])].filter(Boolean)
 
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
-  const buildBase = () => admin
-    .from('listings')
-    .select(SELECT, { count: 'exact' })
-    .in('status', ['activ', 'bidding', 'vandut'])
-    .order('created_at', { ascending: false })
-    .limit(40)
-
-  const applyFilters = (q: any) => {
-    if (city) q = q.ilike('city', `%${city}%`)
+  const buildBase = () => {
+    let q = admin
+      .from('listings')
+      .select(SELECT, { count: 'exact' })
+      .in('status', ['activ', 'bidding', 'vandut'])
+      .order('created_at', { ascending: false })
+      .limit(40)
     if (maxPrice) q = q.lte('price', maxPrice)
     return q
   }
 
-  // 1. Titlu + filtre (oraș, preț)
-  for (const variant of variants) {
-    const { data, count } = await applyFilters(buildBase().ilike('title', `%${variant}%`))
-    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
-  }
-
-  // 2. Descriere + filtre
-  for (const variant of variants) {
-    const { data, count } = await applyFilters(buildBase().ilike('description', `%${variant}%`))
-    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
-  }
-
-  // 3. Dacă era filtru de oraș, caută titlu fără restricție de oraș
-  if (city) {
-    for (const variant of variants) {
-      let q = buildBase().ilike('title', `%${variant}%`)
-      if (maxPrice) q = q.lte('price', maxPrice)
+  // 1. Keyword în titlu + oraș
+  if (variants.length > 0) {
+    for (const v of variants) {
+      let q = buildBase().ilike('title', `%${v}%`)
+      if (city) q = q.ilike('city', `%${city}%`)
       const { data, count } = await q
-      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
+      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
     }
   }
 
-  return { listings: [], count: 0, usedKeyword: kw }
+  // 2. Keyword în descriere + oraș
+  if (variants.length > 0) {
+    for (const v of variants) {
+      let q = buildBase().ilike('description', `%${v}%`)
+      if (city) q = q.ilike('city', `%${city}%`)
+      const { data, count } = await q
+      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
+    }
+  }
+
+  // 3. Keyword în titlu fără restricție de oraș
+  if (variants.length > 0 && city) {
+    for (const v of variants) {
+      const { data, count } = await buildBase().ilike('title', `%${v}%`)
+      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
+    }
+  }
+
+  // 4. Categorie + oraș (pentru "caut masina in craiova", "caut apartament in cluj")
+  if (catId) {
+    let q = buildBase().eq('category_id', catId)
+    if (city) q = q.ilike('city', `%${city}%`)
+    const { data, count } = await q
+    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw || query }
+  }
+
+  // 5. Categorie fără restricție de oraș
+  if (catId) {
+    const { data, count } = await buildBase().eq('category_id', catId)
+    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw || query }
+  }
+
+  return { listings: [], count: 0, usedKeyword: kw || query }
 }
 
 type PriceStats = { p25: number; p75: number }
