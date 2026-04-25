@@ -25,6 +25,13 @@ type ChatResponse = {
   listings?: ChatListing[]
 }
 
+// Helper: getCategoryIdBySlug sigur (nu returnează 1 pentru null)
+const getCatId = (cat: string | null): number | null => {
+  if (!cat) return null
+  const id = getCategoryIdBySlug(cat)
+  return id > 0 ? id : null
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -36,139 +43,104 @@ export async function POST(req: Request) {
     if (message.length > 500) {
       return Response.json({ error: 'Mesaj prea lung (max 500 caractere)' }, { status: 400 })
     }
-    // Validare history — previne prompt injection via history falsificat
+
     const validHistory = (history as HistoryMessage[]).filter(
       (m) => ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length < 1000
     )
 
-    // Fallback simple chat if GROQ_API_KEY is missing
     if (!process.env.GROQ_API_KEY) {
-      console.warn('GROQ_API_KEY not configured')
-      return Response.json({
-        type: 'chat',
-        message: '🤖 Asistentul AI este în configurare. Încearcă din nou în câteva momente!',
-      } satisfies ChatResponse)
+      return Response.json({ type: 'chat', message: 'Asistentul AI este în configurare. Încearcă din nou!' } satisfies ChatResponse)
     }
 
-    // PASUL 1: Groq decide intent + extrage filtre (un singur apel)
-    const systemPrompt = `Ești "zyAI", expertul #1 în marketplace din România. Ești consultant specializat pe TOATE tipurile de anunțuri — auto, imobiliare, joburi, electronice, modă, servicii, casă-grădină, sport, animale, copii. Ai experiență vastă și cunoști piața românească perfect. Vorbești DOAR în română, natural, ca un om adevărat.
+    const systemPrompt = `Ești "zyAI", expertul #1 în marketplace din România. Ești consultant specializat pe TOATE categoriile — auto, imobiliare, joburi, electronice, modă, servicii, casă-grădină, sport, animale, mama-copilul. Cunoști piața românească perfect. Vorbești DOAR în română, natural, ca un prieten expert.
 
-## Platforma zyAI
-Cel mai avansat marketplace românesc cu AI integrat. Utilizatorii caută, compară, cumpără, vând, închiriază și găsesc joburi.
+## Expertiza ta:
+- **Auto**: Toate mărcile, fiabilitate, prețuri reale, consum, întreținere, piese. Cunoști diferența dintre generații (Golf 6 vs 7, F10 vs G30 etc.)
+- **Imobiliare**: Prețuri pe zone, cartiere, ce să verifici, preț/mp orientativ
+- **Joburi**: Salarii reale, firme, beneficii, red flags în anunțuri
+- **Electronice**: Raport calitate-preț, ce merită SH, ce să verifici
+- **Servicii, Modă, Sport, Animale, Casă**: Expert pe fiecare domeniu
 
-## Expertiza ta pe categorii:
-- **Auto**: Cunoști toate mărcile, știi ce mașini sunt fiabile, ce probleme au, prețuri reale pe piața românească, consum, întreținere, piesele care se strică
-- **Imobiliare**: Știi prețuri pe zone, cartiere bune/rele, ce întrebări să pui proprietarului, diferența între ofertele bune și cele suspecte
-- **Joburi**: Cunoști salariile reale pe industrii, ce firme sunt ok, beneficii standard, red flags în anunțuri
-- **Electronice**: Știi raportul calitate-preț, ce merită nou vs second-hand, ce să verifici la un telefon/laptop SH
-- **Modă**: Cunoști branduri, cum verifici autenticitatea, sezon vs off-season
-- **Servicii**: Știi prețuri orientative pentru meșteri, electricieni, instalatori, IT, curățenie
-- **Casă-grădină**: Sfaturi despre mobilă, electrocasnice, ce merită investiția
-- **Sport**: Echipament, biciclete, fitness — ce e overpriced și ce e chilipir
-- **Animale**: Rase, prețuri normale, ce să verifici la un crescător
-- **Mama-copilul**: Ce merită nou, ce poți lua SH fără probleme
+## Categorii DB (slug → category_id):
+auto=3, imobiliare=2, joburi=1, servicii=4, electronice=5, moda=6, casa-gradina=7, sport=8, animale=9, mama-copilul=10
 
-## Categorii și subcategorii disponibile:
-- **joburi**: it-telecom, contabilitate, vanzari, productie, transport, horeca, constructii, medicina, educatie, alte-joburi
-- **imobiliare**: apartamente-inchiriere, apartamente-vanzare, case-vanzare, case-inchiriere, terenuri, spatii-comerciale
-- **auto**: autoturisme, moto, camioane, piese-auto
-- **servicii**: reparatii, curatenie, transport-servicii, it-servicii, alte-servicii
-- **electronice**: telefoane, laptopuri, tv, gaming, alte-electronice
-- **moda**: haine, incaltaminte, accesorii, copii
-- **casa-gradina**: mobila, electrocasnice, gradina, decorare
-- **sport**: echipament, biciclete, fitness, outdoor
-- **animale**: caini, pisici, accesorii, alte-animale
-- **mama-copilul**: haine, jucarii, carucior, mobilier, ingrijire-bebelusi, carti-jocuri, alte-mama-copilul
+## Subcategorii EXACTE din DB (metadata.subcategory):
+- auto: "autoturisme" | "autoutilitare" | "camioane" | "motociclete" | "piese" | "rulote" | "remorci" | "barci"
+- imobiliare: "apartamente" | "case" | "terenuri" | "spatii-comerciale" | "birouri" | "garaje" | "cazare"
+- electronice: "telefoane" | "laptopuri" | "tablete" | "desktop" | "tv-audio" | "gaming" | "foto-video" | "componente-pc"
+- joburi: "it" | "marketing" | "vanzari" | "contabilitate" | "transport" | "horeca" | "medical" | "educatie" | "constructii" | "muncitori"
+- servicii: "reparatii" | "curatenie" | "transport-serviciu" | "it-serviciu" | "auto-service" | "frumusete" | "meditatii"
+- sport: "fitness" | "biciclete" | "outdoor" | "running" | "tenis"
+- animale: "caini" | "pisici" | "pesti" | "pasari" | "rozatoare"
+- moda: "haine-femei" | "haine-barbati" | "incaltaminte-femei" | "incaltaminte-barbati" | "genti-accesorii" | "bijuterii"
+- casa-gradina: "mobila" | "electrocasnice" | "decoratiuni" | "gradina" | "unelte" | "bucatarie"
+- mama-copilul: "carucioare" | "mobilier-copii" | "haine-bebe" | "jucarii" | "ingrijire"
 
-## Orașe principale România (normalizare):
-- "cluj" / "cluj napoca" / "clujul" → Cluj-Napoca
-- "buc" / "bucuresti" / "capitala" → București
-- "tm" / "timis" / "timisoara" → Timișoara
-- "iasi" → Iași
-- "constanta" / "constanța" → Constanța
-- "brasov" → Brașov
-- "craiova" → Craiova
-- "galati" → Galați
-- "oradea" → Oradea
-- "bacau" → Bacău
-- "arad" → Arad
-- "pitesti" → Pitești
-- "sibiu" → Sibiu
-- "targu mures" / "tg mures" → Târgu Mureș
-- Returnează orașul cu diacritice corecte în "city"
+## Normalizare input:
+- Mărci auto (corectează voce): "bemveu/be em ve/bm vu"→BMW, "aude/ode"→Audi, "mersedes"→Mercedes, "datie"→Dacia, "vw/folfsvagen"→Volkswagen, "opel"→Opel, "ford"→Ford, "toyota"→Toyota, "skoda"→Skoda, "seat"→Seat, "renault/reno"→Renault, "peugeot"→Peugeot, "kia"→KIA, "hyundai"→Hyundai
+- Telefoane: "aifor/aifon/iphone"→Apple, "samsung/samson"→Samsung, "xiaomi/siomi"→Xiaomi
+- Laptop: "labtop/latop"→laptop, "dell"→Dell, "hp"→HP, "lenovo"→Lenovo, "asus"→Asus
+- "masina/bolid/rabla/auto"→autoturisme, "garso/garsoniera"→apartamente, "ap/apartament"→apartamente, "casa/casuta"→case, "teren/lot"→terenuri
+- Orașe: "buc/bucuresti"→București, "cluj"→Cluj-Napoca, "timisoara/tm"→Timișoara, "craiova"→Craiova, "iasi"→Iași, "brasov"→Brașov, "constanta"→Constanța
+- "chirie/inchiriere/de inchiriat"→listingType:inchiriere, "vanzare/cumpar/de vanzare"→listingType:vanzare
 
-## Cum înțelegi mesajele românești (informal → formal):
-- "garsoniera" / "garso" → apartamente-inchiriere sau apartamente-vanzare
-- "ap 2 camere" / "2 cam" / "doua camere" → apartamente
-- "masina" / "auto" / "bolid" / "rabla" → autoturisme
-- "job" / "munca" / "angajare" / "serviciu" / "lucru" → joburi
-- "chirie" / "inchiriez" / "de inchiriat" → inchiriere
-- "de vanzare" / "vand" / "cumpar" / "vrei sa cumperi" → vanzare
-- "telefon" / "smartphone" / "iphone" / "samsung" → telefoane
-- "laptop" / "PC" / "calculator" → laptopuri
-- "bicicleta" / "bike" → biciclete
-- numere cu "€" / "euro" / "eur" → EUR; "lei" / "ron" → RON
-- "ieftin" → înseamnă maxPrice mic (relativ la categorie)
-- "urgent" → utilizatorul vrea să cumpere/vândă rapid
+## Reguli comportament:
+1. Mesaj CLAR cu ce caută → intent:"search"
+2. Mesaj VAGUE ("ceva ieftin", "vreau sa cumpar") → intent:"clarify", o întrebare concisă
+3. Salut, mulțumire, întrebare platformă → intent:"chat"
+4. Rafinare căutare anterioară ("mai ieftin", "în cluj", "altele") → intent:"search" cu filtrele din history
+5. Cerere ANALIZĂ mașină ("ce parere BMW X5", "merita Golf 4") → intent:"auto_verdict"
+6. "alte oferte/variante/mai arată/mai cauta" → intent:"search" cu aceleași filtre din history
 
-## Reguli de comportament:
-1. Dacă mesajul e CLAR ce caută → intent: "search", extrage filtrele
-2. Dacă mesajul e VAGUE sau GENERAL (ex: "ceva ieftin", "vreau sa cumpar") → intent: "clarify", pune o singură întrebare concisă
-3. Dacă mesajul e salut, mulțumire, întrebare despre platformă → intent: "chat"
-4. Dacă utilizatorul rafineaza o cautare anterioara (ex: "mai ieftin", "in cluj", "doar apartamente") → combina cu contextul din history și returnează intent: "search"
-5. Dacă mesajul cere PARERE / ANALIZA despre o mașină anume (ex: "ce parere ai despre Dacia Logan", "merită Golf 4", "e bun BMW X5", "analizează Skoda Octavia 2018", "ia iau sau nu", "merita cumparata") → intent: "auto_verdict"
-6. **CRITICAL**: Dacă utilizatorul cere "alte oferte", "alte variante", "mai arată-mi", "mai multe", "alte opțiuni", "altceva", "alte anunțuri", "mai cauta" → intent: "search" cu ACELEAȘI filtre din conversația anterioară (din history). NU răspunde textual, caută efectiv în platformă.
+## Ton:
+- Prieten expert, relaxat, natural. 1-3 propoziții.
+- Nu: "Cu plăcere!", "Desigur!", "Bineînțeles!" — fraze goale
+- Când găsești: mini-sfat expert relevant
+- Fiecare răspuns se termină cu O întrebare de ghidare (fără excepție)
 
-## Ton și stil:
-- **Vorbești ca un prieten expert** — natural, relaxat, dar competent. Ca și cum ai vorbi cu cineva la o cafea care se pricepe la toate.
-- Răspunsuri de 1-3 propoziții maxim
-- Nu folosi: "Cu plăcere!", "Desigur!", "Cu siguranță!", "Bineînțeles!" — fraze goale
-- Nu folosi emoji excesiv
-- Folosește "tu" mereu — conversație naturală
-- Când găsești → dă un mini-sfat de expert: "Am găsit X anunțuri. La prețul ăsta, verifică dacă..."
-- Când nu găsești → sugerezi concret alternativa cu o explicație de ce
-- Adaugă MEREU o mică recomandare sau insight de expert (1 propoziție): "La mașinile astea, kilometrajul real contează mai mult decât anul" / "Prețul e sub media pieței, merită verificat" / "Pentru zona asta, e un preț corect"
-- **OBLIGATORIU: Fiecare răspuns se termină MEREU cu o întrebare** — ca un consultant care ghidează clientul. Ex: "Vrei să restrâng pe un anumit buget?" / "Preferi ceva mai nou sau mai ieftin?" / "Cauți ceva specific sau orice variantă merge?" / "Ai o preferință de zonă?" — Fără excepție.
-
-## Format răspuns (JSON strict, fără markdown):
+## Format răspuns JSON strict:
 {
-  "intent": "search" | "chat" | "clarify" | "auto_verdict",
-  "message": "răspuns în română, scurt și direct",
+  "intent": "search"|"chat"|"clarify"|"auto_verdict",
+  "message": "răspuns în română",
   "filters": {
-    "product": "ce cauta exact (null dacă chat/clarify)",
-    "city": "orașul sau null",
+    "product": "termenul specific (brand+model sau produs) sau null",
+    "city": "orașul normalizat sau null",
     "maxPrice": număr sau null,
     "minPrice": număr sau null,
-    "category": "slug-ul categoriei principale sau null",
-    "subcategory": "slug-ul subcategoriei sau null",
-    "listingType": "vanzare" | "inchiriere" | null,
-    "keywords": ["cuvinte", "cheie", "relevante"]
+    "category": "slug categorie sau null",
+    "subcategory": "slug subcategorie EXACT din lista de mai sus sau null",
+    "brand": "marca auto exactă (BMW/Audi/Dacia/VW/Mercedes/Ford/Toyota/Opel/Renault/Skoda/Seat/Hyundai/KIA/Peugeot/Fiat/Nissan/Honda/Volvo/Porsche/Subaru/Tesla) sau null",
+    "model": "modelul auto (X5/A4/Logan/Golf/Octavia/Focus/Clio/308/Sandero/Passat/Tiguan etc.) sau null",
+    "telefonBrand": "Apple/Samsung/Huawei/Xiaomi/OnePlus/Nokia sau null",
+    "laptopBrand": "Dell/HP/Lenovo/Asus/Acer/Apple/MSI sau null",
+    "nrCamere": "1/2/3/4+ sau null",
+    "listingType": "vanzare"|"inchiriere"|null,
+    "keywords": ["cuvinte", "cheie"]
   }
 }
 
 ## Exemple:
-User: "caut ap 2 camere in cluj pana in 400 euro"
-→ {"intent":"search","message":"Caut apartamente 2 camere în Cluj până la 400€...","filters":{"product":"apartament 2 camere","city":"Cluj","maxPrice":400,"minPrice":null,"category":"imobiliare","subcategory":"apartamente-inchiriere","listingType":"inchiriere","keywords":["2 camere","apartament"]}}
+"caut BMW X5 in craiova sub 30000 euro"
+→ {"intent":"search","message":"Caut BMW X5 în Craiova sub 30.000€. La SUV-uri premium, verifică istoricul de service și starea suspensiei — sunt costisitoare. Ai preferință pentru an de fabricație?","filters":{"product":"BMW X5","city":"Craiova","maxPrice":30000,"minPrice":null,"category":"auto","subcategory":"autoturisme","brand":"BMW","model":"X5","telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":"vanzare","keywords":["BMW","X5"]}}
 
-User: "vreau o masina sub 5000 euro"
-→ {"intent":"search","message":"Caut autoturisme sub 5000€...","filters":{"product":"autoturism","city":null,"maxPrice":5000,"minPrice":null,"category":"auto","subcategory":"autoturisme","listingType":"vanzare","keywords":["masina","auto"]}}
+"vreau apartament 2 camere bucuresti pana in 600 euro chirie"
+→ {"intent":"search","message":"Caut apartamente 2 camere în București până la 600€ chirie. Pentru chirie, verifică dacă prețul include sau nu utilitățile. Preferi o anumită zonă?","filters":{"product":null,"city":"București","maxPrice":600,"minPrice":null,"category":"imobiliare","subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"2","listingType":"inchiriere","keywords":["apartament","2 camere"]}}
 
-User: "ceva ieftin"
-→ {"intent":"clarify","message":"Ce anume cauți? (apartament, mașină, job, telefon...)","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
+"cauta iPhone 15 Pro"
+→ {"intent":"search","message":"Caut iPhone 15 Pro disponibil. La telefoanele Apple SH, verifică dacă bateria e originală și dacă are Find My dezactivat. Vrei nou sau second-hand?","filters":{"product":"iPhone 15 Pro","city":null,"maxPrice":null,"minPrice":null,"category":"electronice","subcategory":"telefoane","brand":null,"model":null,"telefonBrand":"Apple","laptopBrand":null,"nrCamere":null,"listingType":null,"keywords":["iPhone","iPhone 15 Pro"]}}
 
-User: "salut"
-→ {"intent":"chat","message":"Salut! Spune-mi ce cauți și găsim împreună cel mai bun anunț.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
+"laptop Dell sub 2000"
+→ {"intent":"search","message":"Caut laptopuri Dell sub 2000€. Dell EliteBook și Latitude sunt cele mai fiabile pentru muncă. Ai nevoie de performanță sau portabilitate?","filters":{"product":"Dell","city":null,"maxPrice":2000,"minPrice":null,"category":"electronice","subcategory":"laptopuri","brand":null,"model":null,"telefonBrand":null,"laptopBrand":"Dell","nrCamere":null,"listingType":null,"keywords":["laptop","Dell"]}}
 
-User: "ce parere ai despre Dacia Logan 2015"
-→ {"intent":"auto_verdict","message":"","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":null,"subcategory":null,"listingType":null,"keywords":[]}}
+"caut casa in craiova"
+→ {"intent":"search","message":"Caut case în Craiova disponibile. Zona centrală e mai scumpă dar mai căutată la revânzare. Ai un buget orientativ?","filters":{"product":null,"city":"Craiova","maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"case","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":null,"keywords":["casa"]}}
 
-[History: user căutase "apartament 2 camere Cluj"] User: "alte oferte" / "mai arată-mi" / "mai multe opțiuni"
-→ {"intent":"search","message":"Caut mai multe apartamente 2 camere în Cluj...","filters":{"product":"apartament 2 camere","city":"Cluj-Napoca","maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente-inchiriere","listingType":"inchiriere","keywords":["apartament","2 camere"]}}
+"masina sub 5000"
+→ {"intent":"search","message":"Caut mașini sub 5.000€. La acest buget, Dacia Logan/Sandero sau VW Golf 5-6 sunt cele mai fiabile alegeri. Ai preferință de marcă?","filters":{"product":null,"city":null,"maxPrice":5000,"minPrice":null,"category":"auto","subcategory":"autoturisme","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":"vanzare","keywords":["masina"]}}
 
-[History: user căutase "masina sub 5000 euro"] User: "altele" / "alte variante" / "mai cauta"
-→ {"intent":"search","message":"Caut mai multe autoturisme sub 5000€...","filters":{"product":"autoturism","city":null,"maxPrice":5000,"minPrice":null,"category":"auto","subcategory":"autoturisme","listingType":"vanzare","keywords":["masina","auto"]}}`
+"bicicleta"
+→ {"intent":"search","message":"Caut biciclete disponibile. Spune-mi tipul — MTB, cursieră, city bike — și bugetul, să-ți găsesc ceva potrivit.","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":"sport","subcategory":"biciclete","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":null,"keywords":["bicicleta"]}}`
 
-    // Construieste mesajele cu history validat (max ultimele 6 pentru context)
     const recentHistory = validHistory.slice(-6)
 
     let rawText = ''
@@ -180,21 +152,15 @@ User: "ce parere ai despre Dacia Logan 2015"
           { role: 'user', content: message },
         ],
         model: 'llama-3.3-70b-versatile',
-        temperature: 0.3,
-        max_tokens: 400,
+        temperature: 0.2,
+        max_tokens: 500,
       })
-
       rawText = completion.choices[0].message.content || '{}'
     } catch (groqError) {
       console.error('Groq error:', groqError)
-      // Fallback - just return simple chat
-      return Response.json({
-        type: 'chat',
-        message: '🤖 Asistentul AI are o problemă temporară. Încearcă din nou în câteva secunde!',
-      } satisfies ChatResponse)
+      return Response.json({ type: 'chat', message: 'Am o problemă temporară. Încearcă din nou!' } satisfies ChatResponse)
     }
 
-    // Parseaza raspunsul JSON de la Groq
     let parsed: {
       intent: 'search' | 'chat' | 'clarify' | 'auto_verdict'
       message: string
@@ -205,221 +171,193 @@ User: "ce parere ai despre Dacia Logan 2015"
         minPrice: number | null
         category: string | null
         subcategory: string | null
+        brand: string | null
+        model: string | null
+        telefonBrand: string | null
+        laptopBrand: string | null
+        nrCamere: string | null
         listingType: 'vanzare' | 'inchiriere' | null
         keywords: string[]
       }
     }
 
     try {
-      const cleanJson = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      // Extrage obiectul JSON chiar dacă modelul adaugă text înainte/după
-      const jsonMatch = cleanJson.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) throw new Error('no JSON found')
+      const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      const jsonMatch = clean.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error('no JSON')
       parsed = JSON.parse(jsonMatch[0])
     } catch {
-      return Response.json({
-        type: 'chat',
-        message: 'Sunt aici să te ajut! Spune-mi ce cauți — apartament, mașină, job, telefon...',
-      } satisfies ChatResponse)
+      return Response.json({ type: 'chat', message: 'Sunt aici să te ajut! Spune-mi ce cauți.' } satisfies ChatResponse)
     }
 
-    // Intent "auto_verdict" — analiză expert mașină
+    // ── Auto verdict ──────────────────────────────────────────────────────────
     if (parsed.intent === 'auto_verdict') {
-      const autoExpertPrompt = `Ești un expert auto profesionist, obiectiv și sincer, specializat pe piața românească second-hand.
-
-Rolul tău este să analizezi mașini și să oferi un "AI VERDICT" clar, scurt și util.
-
-Reguli stricte:
-- Fii SPECIFIC la problemele REALE ale modelului respectiv (nu generic)
-- Ține cont de piața românească: service, disponibilitate piese, prețuri uzuale OLX/autovit
-- Dacă sunt mai mulți ani/versiuni cu diferențe importante, menționează-le scurt
-- Maxim 280 cuvinte total
-- Vorbești DOAR în română, fără markdown, fără bold, fără asteriscuri
-- Folosește EXACT structura de mai jos, cu emoji-urile indicate
-
-Structura răspunsului (respectă EXACT):
-
-🔎 ANALIZĂ RAPIDĂ:
-- Tip mașină: [sedan/suv/break/hatchback/monovolum]
-- Puncte forte: [max 3, concret]
-- Probleme cunoscute: [max 3, specific acestui model]
-
-💸 COSTURI:
-- Consum: [oraș/drum ex: 9/6 L/100km]
-- Întreținere: [ieftină/medie/scumpă + motiv scurt]
-- Piese: [ușor de găsit și ieftine / medii / scumpe și rare]
-
-⚠️ RISCURI:
-- [2-3 riscuri specifice, concrete]
-
-🧠 AI VERDICT: [EXACT unul din: 🔥 MERITĂ / ⚖️ DEPINDE / ❌ NU MERITĂ]
-
-📊 SCOR FINAL: [număr]/10
-
-🗣 RECOMANDARE:
-[2-3 propoziții directe, ca pentru un prieten care vrea să cumpere această mașină în România]`
-
       let verdictText = ''
       try {
-        const verdictCompletion = await groq.chat.completions.create({
+        const vc = await groq.chat.completions.create({
           messages: [
-            { role: 'system', content: autoExpertPrompt },
+            { role: 'system', content: `Ești expert auto profesionist, obiectiv, pentru piața românească SH. Analizezi mașini concis și sincer. Maxim 280 cuvinte, doar română, fără markdown/bold/asteriscuri. Structura EXACTĂ:
+🔎 ANALIZĂ RAPIDĂ:
+- Tip mașină: [sedan/suv/break/hatchback]
+- Puncte forte: [max 3, concret]
+- Probleme cunoscute: [max 3, specific modelului]
+💸 COSTURI:
+- Consum: [oraș/drum L/100km]
+- Întreținere: [ieftină/medie/scumpă + motiv]
+- Piese: [ușor/medii/scumpe și rare]
+⚠️ RISCURI:
+- [2-3 riscuri concrete]
+🧠 AI VERDICT: [🔥 MERITĂ / ⚖️ DEPINDE / ❌ NU MERITĂ]
+📊 SCOR FINAL: [număr]/10
+🗣 RECOMANDARE:
+[2-3 propoziții directe pentru un prieten care cumpără în România]` },
             { role: 'user', content: message },
           ],
           model: 'llama-3.3-70b-versatile',
           temperature: 0.3,
           max_tokens: 700,
         })
-        verdictText = verdictCompletion.choices[0].message.content || ''
-      } catch (e) {
-        console.error('auto_verdict groq error:', e)
-        verdictText = 'Nu am putut analiza mașina în acest moment. Încearcă din nou.'
-      }
-
-      return Response.json({
-        type: 'chat',
-        message: verdictText,
-      } satisfies ChatResponse)
+        verdictText = vc.choices[0].message.content || ''
+      } catch { verdictText = 'Nu am putut analiza mașina. Încearcă din nou.' }
+      return Response.json({ type: 'chat', message: verdictText } satisfies ChatResponse)
     }
 
-    // Intent "clarify" — pune întrebare fără căutare
     if (parsed.intent === 'clarify') {
-      return Response.json({
-        type: 'chat',
-        message: parsed.message || 'Ce anume cauți mai exact?',
-      } satisfies ChatResponse)
+      return Response.json({ type: 'chat', message: parsed.message || 'Ce anume cauți?' } satisfies ChatResponse)
     }
 
-    // PASUL 2: Daca intent este "search", cauta in Supabase
+    // ── Search ────────────────────────────────────────────────────────────────
     if (parsed.intent === 'search') {
-      // Folosim admin client pentru a bypassa RLS — search-ul trebuie să vadă toate anunțurile active
       const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
       const supabase = createSupabaseAdmin()
       const f = parsed.filters
+      const catId = getCatId(f.category)
 
-      // Detectează dacă e cerere de "alte oferte" — adaugă offset aleator pentru varietate
       const isMoreRequest = /alte|altele|altceva|mai mult|mai arat|mai caut|mai vezi|alte variante|alte optiuni|alte oferte/i.test(message)
-      const randomOffset = isMoreRequest ? Math.floor(Math.random() * 10) : 0
-
-      // Helper: obține categoryId valid sau null (evită bug-ul getCategoryIdBySlug care returnează 1 pentru null)
-      const getCatId = (cat: string | null): number | null => {
-        if (!cat) return null
-        const id = getCategoryIdBySlug(cat)
-        return id > 0 ? id : null
-      }
+      const randomOffset = isMoreRequest ? Math.floor(Math.random() * 8) : 0
 
       const SELECT = 'id, title, price, price_type, currency, city, images, created_at'
 
-      const base = () => supabase
-        .from('listings')
-        .select(SELECT)
-        .in('status', ['activ', 'bidding'])
-        .order('created_at', { ascending: false })
-
-      // Construieste query cu filtre progresive
-      const runQuery = async (opts: {
-        product?: string | null
-        useCity?: boolean
-        useCategory?: boolean
-        usePret?: boolean
-        useKeyword?: string | null
-        limit?: number
+      // Builder query cu toate filtrele disponibile
+      const buildQ = (opts: {
+        keyword?: string | null
+        withCity?: boolean
+        withCat?: boolean
+        withSubcat?: boolean
+        withBrand?: boolean
+        withNrCamere?: boolean
+        withPrice?: boolean
         offset?: number
       }) => {
-        let q = base().limit(opts.limit ?? 6)
-        if (opts.offset && opts.offset > 0) q = (q as any).range(opts.offset, opts.offset + (opts.limit ?? 6) - 1)
+        let q = supabase
+          .from('listings')
+          .select(SELECT)
+          .in('status', ['activ', 'bidding'])
+          .order('created_at', { ascending: false })
+          .limit(6)
 
-        const catId = getCatId(f.category)
-        if (opts.useCategory && catId) q = q.eq('category_id', catId)
-        if (opts.useCity && f.city) q = q.ilike('city', `%${f.city}%`)
-        if (opts.usePret) {
+        const off = opts.offset ?? randomOffset
+        if (off > 0) q = (q as any).range(off, off + 5)
+
+        if (opts.withCat && catId) q = q.eq('category_id', catId)
+        if (opts.withSubcat && f.subcategory) q = q.eq('metadata->>subcategory', f.subcategory)
+        if (opts.withBrand) {
+          if (f.brand) q = q.ilike('metadata->>brand', f.brand)
+          if (f.model) q = q.ilike('metadata->>model', `%${f.model}%`)
+          if (f.telefonBrand) q = q.ilike('metadata->>telefonBrand', f.telefonBrand)
+          if (f.laptopBrand) q = q.ilike('metadata->>laptopBrand', f.laptopBrand)
+        }
+        if (opts.withNrCamere && f.nrCamere) q = q.eq('metadata->>nrCamere', f.nrCamere)
+        if (opts.withCity && f.city) q = q.ilike('city', `%${f.city}%`)
+        if (opts.withPrice) {
           if (f.maxPrice && f.maxPrice > 0) q = q.lte('price', f.maxPrice)
           if (f.minPrice && f.minPrice > 0) q = q.gte('price', f.minPrice)
         }
-        if (opts.product) q = q.ilike('title', `%${opts.product}%`)
-        else if (opts.useKeyword) q = q.ilike('title', `%${opts.useKeyword}%`)
+        if (opts.keyword) q = q.ilike('title', `%${opts.keyword}%`)
+        return q
+      }
 
-        const { data, error: qErr } = await q
-        if (qErr) console.error('Supabase chat search error:', qErr)
+      const run = async (opts: Parameters<typeof buildQ>[0]) => {
+        const { data, error } = await buildQ(opts)
+        if (error) console.error('[chat search]', error)
         return data || []
       }
 
       let listings: any[] = []
 
-      // Pregătește termenul de căutare (product sau primul keyword)
-      const searchTerm = f.product || (f.keywords && f.keywords.length > 0 ? f.keywords[0] : null)
-      const catId = getCatId(f.category)
+      const hasBrand = !!(f.brand || f.telefonBrand || f.laptopBrand)
+      const keyword = f.product || (f.keywords?.length ? f.keywords[0] : null)
 
-      if (searchTerm) {
-        // Nivel 1: product + categorie + oraș + preț
-        listings = await runQuery({ product: searchTerm, useCategory: true, useCity: true, usePret: true, offset: randomOffset })
+      // ── Cu keyword/brand specific (BMW X5, iPhone, laptop Dell) ──
+      if (keyword || hasBrand) {
+        // 1. keyword + toți filtrii + oraș + preț
+        listings = await run({ keyword, withCat: true, withSubcat: true, withBrand: true, withNrCamere: true, withCity: true, withPrice: true })
 
-        // Nivel 2: product + categorie + preț (fără oraș)
-        if (!listings.length) {
-          listings = await runQuery({ product: searchTerm, useCategory: true, useCity: false, usePret: true })
-        }
+        // 2. keyword + categorie + brand + preț (fără subcategorie și fără oraș)
+        if (!listings.length)
+          listings = await run({ keyword, withCat: true, withSubcat: false, withBrand: true, withNrCamere: false, withCity: false, withPrice: true })
 
-        // Nivel 3: product + categorie (fără preț și fără oraș)
-        if (!listings.length) {
-          listings = await runQuery({ product: searchTerm, useCategory: true, useCity: false, usePret: false })
-        }
+        // 3. keyword + categorie (fără brand, fără preț, fără oraș)
+        if (!listings.length)
+          listings = await run({ keyword, withCat: true, withSubcat: false, withBrand: false, withNrCamere: false, withCity: false, withPrice: false })
 
-        // Nivel 4: product fără nicio restricție
-        if (!listings.length) {
-          listings = await runQuery({ product: searchTerm, useCategory: false, useCity: false, usePret: false })
-        }
+        // 4. keyword în titlu fără niciun filtru
+        if (!listings.length && keyword)
+          listings = await run({ keyword, withCat: false, withSubcat: false, withBrand: false, withNrCamere: false, withCity: false, withPrice: false })
 
-        // Nivel 5: keywords secundare în titlu
+        // 5. brand singur (fără keyword în titlu)
+        if (!listings.length && hasBrand)
+          listings = await run({ withCat: true, withSubcat: false, withBrand: true, withNrCamere: false, withCity: false, withPrice: false })
+
+        // 6. keywords alternative
         if (!listings.length && f.keywords && f.keywords.length > 1) {
           for (const kw of f.keywords.slice(1)) {
-            listings = await runQuery({ useKeyword: kw, useCategory: !!catId, useCity: false, usePret: false })
+            listings = await run({ keyword: kw, withCat: !!catId, withSubcat: false, withBrand: false, withNrCamere: false, withCity: false, withPrice: false })
             if (listings.length) break
           }
         }
       }
 
-      // Fără searchTerm (categorie generică: "casa", "masina")
+      // ── Fără keyword (termen generic: "casa", "masina", "bicicleta") ──
       if (!listings.length && catId) {
-        // Nivel 6: categorie + oraș + preț
-        listings = await runQuery({ useCategory: true, useCity: true, usePret: true, offset: randomOffset })
+        // 7. categorie + subcategorie + nrCamere + oraș + preț
+        listings = await run({ withCat: true, withSubcat: true, withBrand: false, withNrCamere: true, withCity: true, withPrice: true, offset: randomOffset })
 
-        // Nivel 7: categorie + preț (fără oraș)
-        if (!listings.length) {
-          listings = await runQuery({ useCategory: true, useCity: false, usePret: true })
-        }
+        // 8. categorie + subcategorie + nrCamere + preț (fără oraș)
+        if (!listings.length)
+          listings = await run({ withCat: true, withSubcat: true, withBrand: false, withNrCamere: true, withCity: false, withPrice: true })
 
-        // Nivel 8: doar categorie
-        if (!listings.length) {
-          listings = await runQuery({ useCategory: true, useCity: false, usePret: false })
-        }
+        // 9. categorie + subcategorie (fără nrCamere, fără preț, fără oraș)
+        if (!listings.length)
+          listings = await run({ withCat: true, withSubcat: true, withBrand: false, withNrCamere: false, withCity: false, withPrice: false })
+
+        // 10. categorie + nrCamere + city (fără subcategorie — poate nu e setată)
+        if (!listings.length)
+          listings = await run({ withCat: true, withSubcat: false, withBrand: false, withNrCamere: true, withCity: true, withPrice: false })
+
+        // 11. categorie + city
+        if (!listings.length)
+          listings = await run({ withCat: true, withSubcat: false, withBrand: false, withNrCamere: false, withCity: true, withPrice: false })
+
+        // 12. doar categorie
+        if (!listings.length)
+          listings = await run({ withCat: true, withSubcat: false, withBrand: false, withNrCamere: false, withCity: false, withPrice: false })
       }
 
-      // Nivel final: primele 6 anunțuri active (ultimă soluție)
-      if (!listings.length) {
-        listings = await runQuery({ useCategory: false, useCity: false, usePret: false })
-      }
-
-      const count = listings?.length ?? 0
+      const count = listings.length
       const cityText = f.city ? ` în ${f.city}` : ''
-      const priceText = f.maxPrice ? ` până la ${f.maxPrice} euro` : ''
+      const priceText = f.maxPrice ? ` până la ${f.maxPrice.toLocaleString('ro-RO')} EUR` : ''
 
-      const resultMessage =
-        count > 0
-          ? `${parsed.message || `Am găsit ${count} anunț${count !== 1 ? 'uri' : ''}${cityText}${priceText}.`} Vrei să cauți altceva?`
-          : `Nu am găsit nimic pentru "${f.product || f.keywords?.[0] || 'căutarea ta'}"${cityText}. Vrei să cauți altceva?`
+      const resultMessage = count > 0
+        ? `${parsed.message} ${count > 1 ? `(${count} anunțuri găsite)` : '(1 anunț găsit)'}`.trim()
+        : `Nu am găsit nimic pentru "${keyword || f.subcategory || f.category || 'căutarea ta'}"${cityText}${priceText}. Poate încerc cu alte criterii?`
 
-      return Response.json({
-        type: 'search',
-        message: resultMessage,
-        listings: listings ?? [],
-      } satisfies ChatResponse)
+      return Response.json({ type: 'search', message: resultMessage, listings } satisfies ChatResponse)
     }
 
-    // PASUL 3: Raspuns conversational
-    return Response.json({
-      type: 'chat',
-      message: parsed.message || 'Sunt aici să te ajut! Spune-mi ce cauți.',
-    } satisfies ChatResponse)
+    // ── Chat conversațional ───────────────────────────────────────────────────
+    return Response.json({ type: 'chat', message: parsed.message || 'Sunt aici să te ajut! Spune-mi ce cauți.' } satisfies ChatResponse)
+
   } catch (error) {
     console.error('Chat API error:', error)
     return Response.json({ error: 'Failed to process request' }, { status: 500 })
