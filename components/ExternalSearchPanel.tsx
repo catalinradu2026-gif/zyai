@@ -1,13 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-type ExternalResult = {
+type AIListing = {
+  id: string
+  title: string
+  price: string
   platform: string
-  emoji: string
-  url: string
-  tagline: string
-  aiNote: string
+  platformEmoji: string
+  platformUrl: string
+  specs: string[]
+  matchScore: number
+  aiReason: string
+  location: string
 }
 
 type ParsedFilters = {
@@ -22,6 +27,118 @@ type ParsedFilters = {
   keyword: string
 }
 
+function ScoreBar({ score }: { score: number }) {
+  const color = score >= 90 ? '#10b981' : score >= 80 ? '#3b82f6' : '#f59e0b'
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+        <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
+      </div>
+      <span style={{ fontSize: '11px', fontWeight: 700, color, minWidth: '32px' }}>{score}%</span>
+    </div>
+  )
+}
+
+function ListingCard({ listing, index }: { listing: AIListing; index: number }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <a
+      href={listing.platformUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        borderRadius: '14px',
+        border: `1px solid ${hovered ? 'rgba(139,92,246,0.5)' : 'var(--border-subtle)'}`,
+        background: hovered ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.03)',
+        padding: '14px',
+        transition: 'all 0.2s',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+        {/* Rank */}
+        <div style={{
+          minWidth: '28px', height: '28px', borderRadius: '50%',
+          background: index < 3 ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)' : 'rgba(255,255,255,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '12px', fontWeight: 800,
+          color: index < 3 ? 'white' : 'var(--text-secondary)',
+          flexShrink: 0,
+        }}>
+          {index + 1}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Platform badge - vizibil ca titlu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+            <span style={{
+              fontSize: '12px', fontWeight: 800,
+              padding: '2px 10px', borderRadius: '20px',
+              background: 'rgba(139,92,246,0.18)',
+              border: '1px solid rgba(139,92,246,0.35)',
+              color: '#c4b5fd',
+              letterSpacing: '0.3px',
+            }}>
+              {listing.platformEmoji} {listing.platform}
+            </span>
+          </div>
+          {/* Title */}
+          <div style={{ marginBottom: '4px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 700, lineHeight: 1.3 }}>{listing.title}</span>
+          </div>
+
+          {/* Price */}
+          <div style={{ marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '16px', fontWeight: 900,
+              background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>
+              {listing.price}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '6px' }}>
+              📍 {listing.location}
+            </span>
+          </div>
+
+          {/* Specs chips */}
+          {listing.specs.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+              {listing.specs.map((spec, i) => (
+                <span key={i} style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '20px',
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                }}>
+                  {spec}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Match score */}
+          <ScoreBar score={listing.matchScore} />
+
+          {/* AI reason + platform */}
+          <div style={{ marginTop: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#8B5CF6', fontStyle: 'italic' }}>
+              💡 {listing.aiReason}
+            </span>
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <span style={{ color: hovered ? '#8B5CF6' : 'var(--text-secondary)', fontSize: '16px', flexShrink: 0, transition: 'color 0.2s' }}>→</span>
+      </div>
+    </a>
+  )
+}
+
 export default function ExternalSearchPanel({
   query,
   filters,
@@ -31,217 +148,257 @@ export default function ExternalSearchPanel({
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<ExternalResult[]>([])
-  const [searched, setSearched] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [allResults, setAllResults] = useState<AIListing[]>([])
+  const [batch, setBatch] = useState(0)
+  const [stickyVisible, setStickyVisible] = useState(true)
 
-  async function fetchExternal() {
-    setLoading(true)
-    setOpen(true)
+  // Ascunde sticky când panoul e deschis
+  useEffect(() => {
+    setStickyVisible(!open)
+  }, [open])
+
+  const categoryLabel =
+    filters.categoryId === 3 ? 'Auto' :
+    filters.categoryId === 2 ? 'Imobiliare' :
+    filters.categoryId === 5 ? 'Electronice & Telefoane' :
+    'toate platformele'
+
+  async function doSearch(batchNum: number, isMore: boolean) {
+    if (isMore) setLoadingMore(true)
+    else { setLoading(true); setOpen(true) }
+
     try {
       const res = await fetch('/api/ai/external-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, filters }),
+        body: JSON.stringify({ query, filters, batch: batchNum }),
       })
       const data = await res.json()
-      if (data.results) setResults(data.results)
+      if (data.results) {
+        if (isMore) {
+          setAllResults(prev => [...prev, ...data.results])
+        } else {
+          setAllResults(data.results)
+        }
+        setBatch(batchNum + 1)
+      }
     } catch {}
-    setLoading(false)
-    setSearched(true)
-  }
 
-  async function searchAgain() {
-    setResults([])
-    setSearched(false)
-    await fetchExternal()
+    if (isMore) setLoadingMore(false)
+    else setLoading(false)
   }
-
-  const categoryLabel =
-    filters.categoryId === 3 ? 'auto' :
-    filters.categoryId === 2 ? 'imobiliare' :
-    filters.categoryId === 5 ? 'electronice' :
-    'toate categoriile'
 
   return (
-    <div style={{ marginTop: '32px' }}>
-      {/* Buton principal */}
+    <>
+      {/* ── STICKY BOTTOM BAR (mobil) / inline (desktop) ── */}
       {!open && (
-        <button
-          onClick={fetchExternal}
-          style={{
-            width: '100%',
-            padding: '16px 24px',
-            borderRadius: '16px',
-            border: '1.5px dashed rgba(139,92,246,0.5)',
-            background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#8B5CF6'; (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.15))' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139,92,246,0.5)'; (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))' }}
-        >
-          <span style={{ fontSize: '22px' }}>🌐</span>
-          <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px' }}>
-            Caută pe toate platformele românești de {categoryLabel}
-          </span>
-          <span style={{
-            background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
-            color: 'white',
-            fontSize: '11px',
-            fontWeight: 700,
-            padding: '3px 8px',
-            borderRadius: '20px',
-            letterSpacing: '0.5px',
-          }}>AI</span>
-        </button>
-      )}
-
-      {/* Panou rezultate externe */}
-      {open && (
-        <div style={{
-          borderRadius: '20px',
-          border: '1px solid rgba(139,92,246,0.3)',
-          background: 'var(--bg-card)',
-          overflow: 'hidden',
-        }}>
-          {/* Header panou */}
-          <div style={{
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.15))',
-            borderBottom: '1px solid rgba(139,92,246,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '20px' }}>🌐</span>
-              <div>
-                <p style={{ color: 'var(--text-primary)', fontWeight: 800, fontSize: '15px', margin: 0 }}>
-                  Platforme românești — <span style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>"{query}"</span>
-                </p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: '2px 0 0' }}>
-                  Top 5 surse externe selectate de AI
-                </p>
-              </div>
-            </div>
+        <>
+          {/* Desktop: inline după rezultate */}
+          <div
+            className="hidden sm:block"
+            style={{ marginTop: '32px' }}
+          >
             <button
-              onClick={() => setOpen(false)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '20px', lineHeight: 1 }}
+              onClick={() => doSearch(0, false)}
+              style={{
+                width: '100%',
+                padding: '18px 24px',
+                borderRadius: '16px',
+                border: '1.5px dashed rgba(139,92,246,0.5)',
+                background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+              }}
             >
-              ×
+              <span style={{ fontSize: '24px' }}>🌐</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ color: 'var(--text-primary)', fontWeight: 800, fontSize: '15px' }}>
+                  Caută pe OLX, Autovit, Imobiliare.ro și alte platforme
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>
+                  AI găsește 10 anunțuri reale pentru "{query}"
+                </div>
+              </div>
+              <span style={{
+                background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
+                color: 'white', fontSize: '11px', fontWeight: 700,
+                padding: '4px 10px', borderRadius: '20px', marginLeft: 'auto',
+              }}>
+                AI
+              </span>
             </button>
           </div>
 
-          {/* Loading */}
-          {loading && (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '50%',
-                border: '3px solid rgba(139,92,246,0.2)',
-                borderTopColor: '#8B5CF6',
-                animation: 'spin 0.8s linear infinite',
-                margin: '0 auto 12px',
-              }} />
-              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>AI caută pe platformele din România...</p>
-            </div>
-          )}
-
-          {/* Rezultate */}
-          {!loading && results.length > 0 && (
-            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {results.map((r, i) => (
-                <a
-                  key={i}
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid var(--border-subtle)',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(139,92,246,0.1)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(139,92,246,0.4)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border-subtle)' }}
-                >
-                  {/* Rank badge */}
-                  <span style={{
-                    minWidth: '28px', height: '28px',
-                    borderRadius: '50%',
-                    background: i === 0 ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)' : 'rgba(255,255,255,0.08)',
-                    color: i === 0 ? 'white' : 'var(--text-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '13px', fontWeight: 800,
-                  }}>
-                    {i + 1}
-                  </span>
-
-                  {/* Emoji + info */}
-                  <span style={{ fontSize: '24px', minWidth: '30px', textAlign: 'center' }}>{r.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '14px', margin: 0 }}>{r.platform}</p>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.tagline}</p>
-                    <p style={{
-                      color: '#8B5CF6', fontSize: '11px', margin: '4px 0 0',
-                      fontStyle: 'italic',
-                    }}>
-                      💡 {r.aiNote}
-                    </p>
-                  </div>
-
-                  {/* Arrow */}
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '18px', marginLeft: 'auto' }}>→</span>
-                </a>
-              ))}
-            </div>
-          )}
-
-          {/* Footer */}
-          {!loading && searched && (
-            <div style={{
-              padding: '12px 16px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderTop: '1px solid var(--border-subtle)',
-            }}>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: 0 }}>
-                Nu ai găsit ce cauți?
-              </p>
+          {/* Mobil: sticky bottom */}
+          {stickyVisible && (
+            <div
+              className="sm:hidden"
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0,
+                zIndex: 100,
+                padding: '12px 16px',
+                paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+                background: 'rgba(10,10,20,0.95)',
+                borderTop: '1px solid rgba(139,92,246,0.3)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
               <button
-                onClick={searchAgain}
+                onClick={() => doSearch(0, false)}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(139,92,246,0.4)',
-                  background: 'transparent',
-                  color: '#8B5CF6',
-                  fontSize: '13px',
-                  fontWeight: 700,
+                  width: '100%',
+                  padding: '14px 20px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  boxShadow: '0 4px 24px rgba(139,92,246,0.4)',
                 }}
               >
-                🔄 Caută din nou
+                <span style={{ fontSize: '20px' }}>🌐</span>
+                <span style={{ color: 'white', fontWeight: 800, fontSize: '15px' }}>
+                  Caută pe toate platformele
+                </span>
+                <span style={{
+                  background: 'rgba(255,255,255,0.25)',
+                  color: 'white', fontSize: '11px', fontWeight: 700,
+                  padding: '3px 8px', borderRadius: '20px',
+                }}>
+                  {categoryLabel}
+                </span>
               </button>
             </div>
           )}
+        </>
+      )}
+
+      {/* ── PANOU REZULTATE ── */}
+      {open && (
+        <div style={{ marginTop: '32px', marginBottom: '80px' }}>
+          {/* Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '16px',
+          }}>
+            <div>
+              <h2 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: '18px', margin: 0 }}>
+                🌐 Rezultate externe AI
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '4px 0 0' }}>
+                {allResults.length} anunțuri găsite pe platformele românești pentru{' '}
+                <span style={{ color: '#8B5CF6', fontWeight: 700 }}>"{query}"</span>
+              </p>
+            </div>
+            <button
+              onClick={() => { setOpen(false); setAllResults([]); setBatch(0) }}
+              style={{
+                background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)', cursor: 'pointer',
+                padding: '6px 12px', borderRadius: '8px', fontSize: '13px',
+              }}
+            >
+              ✕ Închide
+            </button>
+          </div>
+
+          {/* Loading initial */}
+          {loading ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '50%',
+                border: '3px solid rgba(139,92,246,0.2)',
+                borderTopColor: '#8B5CF6',
+                animation: 'spin 0.8s linear infinite',
+                margin: '0 auto 16px',
+              }} />
+              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+              <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>
+                🤖 AI caută pe platformele românești...
+              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                Autovit · OLX · Imobiliare.ro · AutoScout24 · Storia
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Grid rezultate */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {allResults.map((listing, i) => (
+                  <ListingCard key={listing.id} listing={listing} index={i % 10} />
+                ))}
+              </div>
+
+              {/* Buton încă 10 */}
+              <div style={{ marginTop: '20px' }}>
+                {loadingMore ? (
+                  <div style={{
+                    padding: '20px', textAlign: 'center',
+                    borderRadius: '14px', border: '1px dashed rgba(139,92,246,0.3)',
+                    background: 'rgba(139,92,246,0.05)',
+                  }}>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      border: '3px solid rgba(139,92,246,0.2)',
+                      borderTopColor: '#8B5CF6',
+                      animation: 'spin 0.8s linear infinite',
+                      margin: '0 auto 10px',
+                    }} />
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+                      AI caută încă 10 anunțuri...
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => doSearch(batch, true)}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '14px',
+                      border: '1.5px dashed rgba(139,92,246,0.4)',
+                      background: 'rgba(139,92,246,0.06)',
+                      cursor: 'pointer',
+                      color: '#a78bfa',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>🔄</span>
+                    Încă 10 anunțuri noi ({allResults.length} găsite până acum)
+                    <span style={{
+                      background: 'rgba(139,92,246,0.3)', color: '#c4b5fd',
+                      fontSize: '11px', fontWeight: 800, padding: '2px 8px', borderRadius: '20px',
+                    }}>
+                      Batch {batch + 1}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* Info footer */}
+              <p style={{
+                textAlign: 'center', color: 'var(--text-secondary)',
+                fontSize: '11px', marginTop: '16px', lineHeight: 1.5,
+              }}>
+                ℹ️ Rezultatele sunt generate de AI pe baza cunoștințelor despre piața românească.
+                Dă click pe orice anunț pentru a vedea oferte reale pe platformă.
+              </p>
+            </>
+          )}
         </div>
       )}
-    </div>
+    </>
   )
 }
