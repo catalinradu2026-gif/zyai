@@ -65,6 +65,8 @@ export default function AIHeaderBar() {
   const [voiceOn, setVoiceOn] = useState(true)
   const [placeholderIdx, setPlaceholderIdx] = useState(0)
   const [listening, setListening] = useState(false)
+  const [interimText, setInterimText] = useState('')
+  const [pendingTranscript, setPendingTranscript] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
@@ -154,27 +156,47 @@ export default function AIHeaderBar() {
     if (listening) {
       recognitionRef.current?.stop()
       setListening(false)
+      setInterimText('')
       return
     }
 
-    unlockAudio()  // deblochează audio element în contextul direct al tap-ului
+    unlockAudio()
+    setPendingTranscript('')
+    setInterimText('')
 
     const rec = new SpeechRecognition()
     rec.lang = 'ro-RO'
     rec.continuous = false
-    rec.interimResults = false
+    rec.interimResults = true
+    rec.maxAlternatives = 3
     recognitionRef.current = rec
 
     rec.onstart = () => setListening(true)
     rec.onresult = (e: any) => {
-      const transcript = e.results[0][0].transcript
-      setInput(transcript)
-      setListening(false)
-      setTimeout(() => sendMessage(transcript), 100)
+      let interim = ''
+      let final = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const text = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += text
+        else interim += text
+      }
+      if (interim) setInterimText(interim)
+      if (final) {
+        setInterimText('')
+        setPendingTranscript(final.trim())
+        setInput(final.trim())
+      }
     }
-    rec.onerror = () => setListening(false)
-    rec.onend = () => setListening(false)
+    rec.onerror = () => { setListening(false); setInterimText('') }
+    rec.onend = () => { setListening(false); setInterimText('') }
     rec.start()
+  }
+
+  function confirmVoiceSearch() {
+    const q = pendingTranscript || input
+    if (!q.trim()) return
+    setPendingTranscript('')
+    sendMessage(q.trim())
   }
 
   function navigateToSearch(query: string) {
@@ -403,11 +425,40 @@ export default function AIHeaderBar() {
 
           {/* Input */}
           <div className="px-4 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)', background: '#0F1629' }}>
+            {/* Feedback vocal în timp real */}
+            {(listening || interimText || pendingTranscript) && (
+              <div className="max-w-2xl mx-auto mb-3 px-4 py-2 rounded-xl text-sm"
+                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#C4B5FD' }}>
+                {listening && !interimText && !pendingTranscript && (
+                  <span style={{ opacity: 0.7 }}>🎤 Te ascult...</span>
+                )}
+                {interimText && (
+                  <span style={{ opacity: 0.7 }}>🎤 {interimText}</span>
+                )}
+                {pendingTranscript && !listening && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>🎤 &ldquo;{pendingTranscript}&rdquo;</span>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button onClick={confirmVoiceSearch}
+                        className="px-3 py-1 rounded-lg text-xs font-semibold"
+                        style={{ background: 'rgba(139,92,246,0.3)', color: '#E9D5FF' }}>
+                        ✓ Caută
+                      </button>
+                      <button onClick={() => { setPendingTranscript(''); setInput('') }}
+                        className="px-3 py-1 rounded-lg text-xs"
+                        style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <form onSubmit={handleSend} className="flex gap-3 max-w-2xl mx-auto">
               <input
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={e => { setInput(e.target.value); setPendingTranscript('') }}
                 placeholder={listening ? '🎤 Te ascult...' : 'Ce cauți?'}
                 disabled={loading}
                 className="flex-1 px-5 py-3 rounded-2xl text-sm outline-none"
