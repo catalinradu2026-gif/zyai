@@ -8,7 +8,7 @@ type AIListing = {
   price: string
   platform: string
   platformEmoji: string
-  platformUrl: string
+  url: string
   specs: string[]
   matchScore: number
   aiReason: string
@@ -43,7 +43,7 @@ function ListingCard({ listing, index }: { listing: AIListing; index: number }) 
   const [hovered, setHovered] = useState(false)
   return (
     <a
-      href={listing.platformUrl}
+      href={listing.url}
       target="_blank"
       rel="noopener noreferrer"
       style={{
@@ -91,7 +91,7 @@ function ListingCard({ listing, index }: { listing: AIListing; index: number }) 
             <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 700, lineHeight: 1.3 }}>{listing.title}</span>
           </div>
 
-          {/* Price */}
+          {/* Price + location */}
           <div style={{ marginBottom: '8px' }}>
             <span style={{
               fontSize: '16px', fontWeight: 900,
@@ -100,8 +100,20 @@ function ListingCard({ listing, index }: { listing: AIListing; index: number }) 
             }}>
               {listing.price}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '6px' }}>
-              📍 {listing.location}
+            {listing.location && (
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '6px' }}>
+                📍 {listing.location}
+              </span>
+            )}
+          </div>
+          {/* URL vizibil */}
+          <div style={{ marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '10px', color: 'var(--text-secondary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'block', maxWidth: '100%', opacity: 0.6,
+            }}>
+              🔗 {listing.url.replace(/^https?:\/\//, '').substring(0, 60)}{listing.url.length > 70 ? '…' : ''}
             </span>
           </div>
 
@@ -183,7 +195,9 @@ export default function ExternalSearchPanel({
         }
         setBatch(batchNum + 1)
       }
-    } catch {}
+    } catch {
+      // ignore fetch errors
+    }
 
     if (isMore) setLoadingMore(false)
     else setLoading(false)
@@ -329,6 +343,30 @@ export default function ExternalSearchPanel({
             </div>
           ) : (
             <>
+              {/* 0 rezultate */}
+              {allResults.length === 0 && (
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</p>
+                  <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>
+                    Nu am găsit rezultate pe platformele externe
+                  </p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
+                    Încearcă să reformulezi căutarea sau apasă din nou
+                  </p>
+                  <button
+                    onClick={() => doSearch(0, false)}
+                    style={{
+                      padding: '10px 20px', borderRadius: '20px',
+                      border: '1px solid rgba(139,92,246,0.4)',
+                      background: 'rgba(139,92,246,0.1)',
+                      color: '#a78bfa', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                    }}
+                  >
+                    🔄 Încearcă din nou
+                  </button>
+                </div>
+              )}
+
               {/* Grid rezultate */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {allResults.map((listing, i) => (
