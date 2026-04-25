@@ -5,6 +5,7 @@ import FavoriteButton from '@/components/listings/FavoriteButton'
 import SearchInline from '@/components/SearchInline'
 import SearchVoice from '@/components/SearchVoice'
 import BuyerAlertSetup from '@/components/listings/BuyerAlertSetup'
+import ExternalSearchPanel from '@/components/ExternalSearchPanel'
 import { getUser } from '@/lib/actions/auth'
 import { getFavoritedIds } from '@/lib/queries/favorites'
 
@@ -127,6 +128,7 @@ async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
   const admin = createSupabaseAdmin()
   const p = await parseQuery(query)
+  const parsedFilters = p
 
   const variants = [...new Set([p.keyword, ...p.variants])].filter(Boolean)
   const SELECT = 'id, title, price, price_type, currency, city, images, category_id, metadata, status'
@@ -167,22 +169,22 @@ async function searchListings(query: string) {
     for (const v of variants) {
       // 1. keyword + toți filtrii + oraș
       const r1 = await run({ city: true, subcategory: true, brand: true, nrCamere: true }, v)
-      if (r1.data.length) return { listings: r1.data, count: r1.count }
+      if (r1.data.length) return { listings: r1.data, count: r1.count, parsedFilters }
     }
     for (const v of variants) {
       // 2. keyword + categorie + brand, fără subcategorie și fără restricție de oraș
       const r2 = await run({ city: false, subcategory: false, brand: true, nrCamere: true }, v)
-      if (r2.data.length) return { listings: r2.data, count: r2.count }
+      if (r2.data.length) return { listings: r2.data, count: r2.count, parsedFilters }
     }
     for (const v of variants) {
       // 3. keyword + categorie + oraș, fără brand/model
       const r3 = await run({ city: true, subcategory: false, brand: false, nrCamere: false }, v)
-      if (r3.data.length) return { listings: r3.data, count: r3.count }
+      if (r3.data.length) return { listings: r3.data, count: r3.count, parsedFilters }
     }
     for (const v of variants) {
       // 4. keyword în titlu, fără niciun filtru
       const r4 = await run({}, v)
-      if (r4.data.length) return { listings: r4.data, count: r4.count }
+      if (r4.data.length) return { listings: r4.data, count: r4.count, parsedFilters }
     }
   }
 
@@ -190,26 +192,26 @@ async function searchListings(query: string) {
   if (p.categoryId) {
     // 5. categorie + subcategorie + brand + nrCamere + oraș
     const r5 = await run({ city: true, subcategory: true, brand: true, nrCamere: true })
-    if (r5.data.length) return { listings: r5.data, count: r5.count }
+    if (r5.data.length) return { listings: r5.data, count: r5.count, parsedFilters }
 
     // 6. categorie + brand + nrCamere + oraș (fără subcategorie — poate nu e salvată)
     const r6 = await run({ city: true, subcategory: false, brand: true, nrCamere: true })
-    if (r6.data.length) return { listings: r6.data, count: r6.count }
+    if (r6.data.length) return { listings: r6.data, count: r6.count, parsedFilters }
 
     // 7. categorie + nrCamere + oraș (fără brand)
     const r7 = await run({ city: true, subcategory: false, brand: false, nrCamere: true })
-    if (r7.data.length) return { listings: r7.data, count: r7.count }
+    if (r7.data.length) return { listings: r7.data, count: r7.count, parsedFilters }
 
     // 8. categorie + oraș (cel mai relaxat cu orașul)
     const r8 = await run({ city: true, subcategory: false, brand: false, nrCamere: false })
-    if (r8.data.length) return { listings: r8.data, count: r8.count }
+    if (r8.data.length) return { listings: r8.data, count: r8.count, parsedFilters }
 
     // 9. doar categorie, fără restricție de oraș
     const r9 = await run({ city: false, subcategory: false, brand: false, nrCamere: false })
-    if (r9.data.length) return { listings: r9.data, count: r9.count }
+    if (r9.data.length) return { listings: r9.data, count: r9.count, parsedFilters }
   }
 
-  return { listings: [], count: 0 }
+  return { listings: [], count: 0, parsedFilters }
 }
 
 
@@ -219,12 +221,14 @@ export default async function SearchPage({ searchParams }: Props) {
 
   let listings: any[] = []
   let count = 0
+  let parsedFilters: any = { categoryId: null, brand: null, model: null, maxPrice: null, minPrice: null, city: null, subcategory: null, nrCamere: null, keyword: query }
 
   if (query) {
     try {
       const result = await searchListings(query)
       listings = result.listings
       count = result.count
+      if (result.parsedFilters) parsedFilters = { ...result.parsedFilters, keyword: result.parsedFilters.keyword || query }
     } catch {}
   }
 
@@ -344,6 +348,11 @@ export default async function SearchPage({ searchParams }: Props) {
           <Link href="/" className="text-sm" style={{ color: '#8B5CF6' }}>← Înapoi la categorii</Link>
         </div>
       ) : null}
+
+      {/* Caută pe platforme externe românești */}
+      {query && (
+        <ExternalSearchPanel query={query} filters={parsedFilters} />
+      )}
     </main>
   )
 }
