@@ -1,5 +1,4 @@
 import Groq from 'groq-sdk'
-import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { getCategoryIdBySlug } from '@/lib/constants/categories'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
@@ -293,105 +292,112 @@ Structura răspunsului (respectă EXACT):
 
     // PASUL 2: Daca intent este "search", cauta in Supabase
     if (parsed.intent === 'search') {
-      const supabase = await createSupabaseServerClient()
+      // Folosim admin client pentru a bypassa RLS — search-ul trebuie să vadă toate anunțurile active
+      const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
+      const supabase = createSupabaseAdmin()
       const f = parsed.filters
 
       // Detectează dacă e cerere de "alte oferte" — adaugă offset aleator pentru varietate
       const isMoreRequest = /alte|altele|altceva|mai mult|mai arat|mai caut|mai vezi|alte variante|alte optiuni|alte oferte/i.test(message)
       const randomOffset = isMoreRequest ? Math.floor(Math.random() * 10) : 0
 
-      // Construieste query de baza
-      const buildQuery = (strict: boolean) => {
-        let q = supabase
-          .from('listings')
-          .select('id, title, price, price_type, currency, city, images, created_at')
-          .eq('status', 'activ')
-          .order('created_at', { ascending: false })
-          .range(randomOffset, randomOffset + 5)
-
-        // Filtru categorie
-        if (f.category) {
-          const categoryId = getCategoryIdBySlug(f.category)
-          if (categoryId) q = q.eq('category_id', categoryId)
-        }
-
-        // Filtru oras — cautare flexibila (Cluj → Cluj-Napoca)
-        if (f.city) {
-          q = q.ilike('city', `%${f.city}%`)
-        }
-
-        // Filtru pret
-        if (f.maxPrice && f.maxPrice > 0) q = q.lte('price', f.maxPrice)
-        if (f.minPrice && f.minPrice > 0) q = q.gte('price', f.minPrice)
-
-        // Filtru titlu — strict: product exact, relaxat: orice keyword
-        if (strict && f.product) {
-          q = q.ilike('title', `%${f.product}%`)
-        } else if (!strict && f.keywords && f.keywords.length > 0) {
-          // Incearca primul keyword
-          q = q.ilike('title', `%${f.keywords[0]}%`)
-        }
-
-        return q
+      // Helper: obține categoryId valid sau null (evită bug-ul getCategoryIdBySlug care returnează 1 pentru null)
+      const getCatId = (cat: string | null): number | null => {
+        if (!cat) return null
+        const id = getCategoryIdBySlug(cat)
+        return id > 0 ? id : null
       }
 
-      // Incercare 1: toate filtrele cu product
-      let { data: listings, error } = await buildQuery(true)
+      const SELECT = 'id, title, price, price_type, currency, city, images, created_at'
 
-      // Incercare 2: daca 0 rezultate, relaxeaza — scoate orasul
-      if (!listings || listings.length === 0) {
-        let q2 = supabase
-          .from('listings')
-          .select('id, title, price, price_type, currency, city, images, created_at')
-          .eq('status', 'activ')
-          .order('created_at', { ascending: false })
-          .limit(6)
+      const base = () => supabase
+        .from('listings')
+        .select(SELECT)
+        .in('status', ['activ', 'bidding'])
+        .order('created_at', { ascending: false })
 
-        if (f.category) {
-          const categoryId = getCategoryIdBySlug(f.category)
-          if (categoryId) q2 = q2.eq('category_id', categoryId)
+      // Construieste query cu filtre progresive
+      const runQuery = async (opts: {
+        product?: string | null
+        useCity?: boolean
+        useCategory?: boolean
+        usePret?: boolean
+        useKeyword?: string | null
+        limit?: number
+        offset?: number
+      }) => {
+        let q = base().limit(opts.limit ?? 6)
+        if (opts.offset && opts.offset > 0) q = (q as any).range(opts.offset, opts.offset + (opts.limit ?? 6) - 1)
+
+        const catId = getCatId(f.category)
+        if (opts.useCategory && catId) q = q.eq('category_id', catId)
+        if (opts.useCity && f.city) q = q.ilike('city', `%${f.city}%`)
+        if (opts.usePret) {
+          if (f.maxPrice && f.maxPrice > 0) q = q.lte('price', f.maxPrice)
+          if (f.minPrice && f.minPrice > 0) q = q.gte('price', f.minPrice)
         }
-        if (f.maxPrice && f.maxPrice > 0) q2 = q2.lte('price', f.maxPrice)
-        if (f.minPrice && f.minPrice > 0) q2 = q2.gte('price', f.minPrice)
-        if (f.product) q2 = q2.ilike('title', `%${f.product}%`)
+        if (opts.product) q = q.ilike('title', `%${opts.product}%`)
+        else if (opts.useKeyword) q = q.ilike('title', `%${opts.useKeyword}%`)
 
-        const { data: r2 } = await q2
-        listings = r2
+        const { data, error: qErr } = await q
+        if (qErr) console.error('Supabase chat search error:', qErr)
+        return data || []
       }
 
-      // Incercare 3: doar categorie + pret (fara text search)
-      if (!listings || listings.length === 0) {
-        let q3 = supabase
-          .from('listings')
-          .select('id, title, price, price_type, currency, city, images, created_at')
-          .eq('status', 'activ')
-          .order('created_at', { ascending: false })
-          .limit(6)
+      let listings: any[] = []
 
-        if (f.category) {
-          const categoryId = getCategoryIdBySlug(f.category)
-          if (categoryId) q3 = q3.eq('category_id', categoryId)
+      // Pregătește termenul de căutare (product sau primul keyword)
+      const searchTerm = f.product || (f.keywords && f.keywords.length > 0 ? f.keywords[0] : null)
+      const catId = getCatId(f.category)
+
+      if (searchTerm) {
+        // Nivel 1: product + categorie + oraș + preț
+        listings = await runQuery({ product: searchTerm, useCategory: true, useCity: true, usePret: true, offset: randomOffset })
+
+        // Nivel 2: product + categorie + preț (fără oraș)
+        if (!listings.length) {
+          listings = await runQuery({ product: searchTerm, useCategory: true, useCity: false, usePret: true })
         }
-        if (f.maxPrice && f.maxPrice > 0) q3 = q3.lte('price', f.maxPrice)
-        if (f.minPrice && f.minPrice > 0) q3 = q3.gte('price', f.minPrice)
 
-        const { data: r3 } = await q3
-        listings = r3
+        // Nivel 3: product + categorie (fără preț și fără oraș)
+        if (!listings.length) {
+          listings = await runQuery({ product: searchTerm, useCategory: true, useCity: false, usePret: false })
+        }
+
+        // Nivel 4: product fără nicio restricție
+        if (!listings.length) {
+          listings = await runQuery({ product: searchTerm, useCategory: false, useCity: false, usePret: false })
+        }
+
+        // Nivel 5: keywords secundare în titlu
+        if (!listings.length && f.keywords && f.keywords.length > 1) {
+          for (const kw of f.keywords.slice(1)) {
+            listings = await runQuery({ useKeyword: kw, useCategory: !!catId, useCity: false, usePret: false })
+            if (listings.length) break
+          }
+        }
       }
 
-      // Incercare 4: keyword fallback din lista keywords
-      if ((!listings || listings.length === 0) && f.keywords && f.keywords.length > 1) {
-        const { data: r4 } = await supabase
-          .from('listings')
-          .select('id, title, price, price_type, currency, city, images, created_at')
-          .eq('status', 'activ')
-          .ilike('title', `%${f.keywords[1]}%`)
-          .order('created_at', { ascending: false })
-          .limit(6)
-        listings = r4
+      // Fără searchTerm (categorie generică: "casa", "masina")
+      if (!listings.length && catId) {
+        // Nivel 6: categorie + oraș + preț
+        listings = await runQuery({ useCategory: true, useCity: true, usePret: true, offset: randomOffset })
+
+        // Nivel 7: categorie + preț (fără oraș)
+        if (!listings.length) {
+          listings = await runQuery({ useCategory: true, useCity: false, usePret: true })
+        }
+
+        // Nivel 8: doar categorie
+        if (!listings.length) {
+          listings = await runQuery({ useCategory: true, useCity: false, usePret: false })
+        }
       }
 
-      if (error) console.error('Supabase search error:', error)
+      // Nivel final: primele 6 anunțuri active (ultimă soluție)
+      if (!listings.length) {
+        listings = await runQuery({ useCategory: false, useCity: false, usePret: false })
+      }
 
       const count = listings?.length ?? 0
       const cityText = f.city ? ` în ${f.city}` : ''
