@@ -15,8 +15,20 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return { title: q ? `"${q}" - Căutare zyAI` : 'Căutare - zyAI' }
 }
 
-// categoryId map: auto=3, imobiliare=2, joburi=1, servicii=4, electronice=5, moda=6, casa-gradina=7, sport=8, animale=9, mama-copilul=10
-type ParsedQuery = { keyword: string; city: string; maxPrice: number | null; variants: string[]; categoryId: number | null }
+type ParsedQuery = {
+  keyword: string
+  city: string
+  maxPrice: number | null
+  minPrice: number | null
+  variants: string[]
+  categoryId: number | null
+  subcategory: string | null  // metadata->>subcategory
+  brand: string | null        // metadata->>brand (auto)
+  model: string | null        // metadata->>model (auto)
+  telefonBrand: string | null // metadata->>telefonBrand (electronice)
+  laptopBrand: string | null  // metadata->>laptopBrand (electronice)
+  nrCamere: string | null     // metadata->>nrCamere (imobiliare)
+}
 
 async function parseQuery(query: string): Promise<ParsedQuery> {
   try {
@@ -25,46 +37,64 @@ async function parseQuery(query: string): Promise<ParsedQuery> {
       messages: [
         {
           role: 'system',
-          content: `Ești un parser pentru un marketplace românesc. Query-ul poate fi din voce sau text, în română informală.
+          content: `Ești un parser precis pentru un marketplace românesc. Input-ul poate fi voce sau text informal.
 
-Extrage:
-- keyword: cuvântul cheie specific CORECT. Corectează greșeli fonetice de mărci: "bemveu/be em ve/bm vu"→"BMW", "aude/audde/ode"→"Audi", "mersedes/mertcedes"→"Mercedes", "datie"→"Dacia", "vw/folfsvagen"→"Volkswagen". Corectează produse: "labtop/latop"→"laptop", "telepon"→"telefon". Scoate cuvinte de umplutură: "caut/vreau/vand/găsesc/un/o/de". Dacă nu există keyword specific (ex: "caut masina") → keyword="".
-- city: orașul corect (ex: "craiova"→"Craiova", "bucuresti"→"București", "cluj"→"Cluj-Napoca") sau "" dacă nu e menționat.
-- maxPrice: prețul maxim ca număr sau null.
-- variants: variante de scris ale keyword-ului dacă keyword nu e gol (ex: ["BMW","bmw"], ["laptop","Laptop"], ["apartament","Apartament","ap"]). Max 4. Dacă keyword e gol → [].
-- categoryId: numărul categoriei detectate din context:
-  1=joburi (job/muncă/angajare/salariat/lucru)
-  2=imobiliare (apartament/casă/teren/garsonieră/chirie/imobil/bloc/vilă/ap/camere)
-  3=auto (mașină/masina/auto/BMW/Audi/Dacia/Volkswagen/Mercedes/Ford/Toyota/Opel/Renault/motocicletă/moto/camion/vehicul/bolid/rabla/autoturism/autoturisme)
-  4=servicii (service/reparații/curățenie/transport/IT/instalator/electrician/zugrav/meșter)
-  5=electronice (telefon/smartphone/iPhone/Samsung/laptop/PC/calculator/tabletă/TV/gaming/console)
-  6=moda (haine/îmbrăcăminte/pantofi/geantă/rochie/blugi/tricou/jachetă/bluză)
-  7=casa-gradina (mobilă/electrocasnic/frigider/aragaz/canapea/decoratiuni/unelte/grădină)
-  8=sport (bicicletă/fitness/fotbal/tenis/ski/echipament sportiv)
-  9=animale (câine/pisică/papagal/pești/hamster/animal)
-  10=mama-copilul (căruciор/jucărie/haine copii/mobilier copii/bebeluș)
-  null=dacă nu e clar
+Returnează DOAR JSON valid cu aceste câmpuri:
+- keyword: termenul specific (brand/model/produs concret). Corectează greșeli fonetice: "bemveu/be em ve"→"BMW","aude/ode/audi"→"Audi","mersedes/mertcedes"→"Mercedes","datie"→"Dacia","vw/folfsvagen"→"Volkswagen","labtop/latop"→"laptop","telepon"→"telefon". Scoate: "caut/vreau/găsesc/un/o/de/pe". Dacă termenul e generic (masina/casa/apartament/laptop) → "".
+- city: orașul (ex:"craiova"→"Craiova","bucuresti"→"București","cluj"→"Cluj-Napoca","timisoara"→"Timișoara"). "" dacă nu e menționat.
+- maxPrice: număr sau null
+- minPrice: număr sau null
+- variants: variante ale keyword (max 4, include cu/fără diacritice). [] dacă keyword="".
+- categoryId: 1=joburi|2=imobiliare|3=auto|4=servicii|5=electronice|6=moda|7=casa-gradina|8=sport|9=animale|10=mama-copilul|null
+- subcategory: slug exact sau null:
+  imobiliare→ "case"|"apartamente"|"terenuri"|"spatii-comerciale"|"birouri"|"garaje"|"cazare"
+  auto→ "autoturisme"|"autoutilitare"|"camioane"|"microbuze"|"rulote"|"motociclete"|"remorci"|"piese"|"agricole"|"barci"
+  electronice→ "telefoane"|"laptopuri"|"tablete"|"desktop"|"tv-audio"|"gaming"|"foto-video"|"componente-pc"
+  joburi→ "it"|"marketing"|"vanzari"|"contabilitate"|"transport"|"horeca"|"medical"|"educatie"|"constructii"|"muncitori"
+  servicii→ "reparatii"|"curatenie"|"transport-serviciu"|"it-serviciu"|"auto-service"|"frumusete"|"meditatii"
+  sport→ "fitness"|"biciclete"|"outdoor"|"running"|"tenis"|"sporturi-apa"|"sporturi-iarna"
+  animale→ "caini"|"pisici"|"pesti"|"pasari"|"rozatoare"
+  moda→ "haine-femei"|"haine-barbati"|"incaltaminte-femei"|"incaltaminte-barbati"|"genti-accesorii"|"bijuterii"
+  casa-gradina→ "mobila"|"electrocasnice"|"decoratiuni"|"gradina"|"unelte"|"bucatarie"
+- brand: marca auto (BMW/Audi/Dacia/Volkswagen/Mercedes/Ford/Toyota/Opel/Renault/Skoda/Seat/Hyundai/Kia/Peugeot/Citroën/Fiat/Nissan/Honda/Mazda/Volvo/Jeep/Land Rover/Porsche) sau null
+- model: modelul auto specific (X5/A4/Logan/Golf/Octavia/Focus/Clio/etc.) sau null
+- telefonBrand: Apple/Samsung/Huawei/Xiaomi/OnePlus/Oppo/Realme/Nokia/LG sau null
+- laptopBrand: Dell/HP/Lenovo/Asus/Acer/Apple/MSI/Toshiba sau null
+- nrCamere: "1" (garsonieră) / "2" / "3" / "4+" sau null
 
-Returnează DOAR JSON valid: {"keyword":"...","city":"...","maxPrice":null,"variants":[...],"categoryId":null}`,
+Exemple:
+"cauta casa in craiova" → {"keyword":"","city":"Craiova","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"case","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null}
+"cauta BMW X5" → {"keyword":"BMW X5","city":"","maxPrice":null,"minPrice":null,"variants":["BMW X5","bmw x5"],"categoryId":3,"subcategory":"autoturisme","brand":"BMW","model":"X5","telefonBrand":null,"laptopBrand":null,"nrCamere":null}
+"cauta laptop Dell sub 3000" → {"keyword":"Dell","city":"","maxPrice":3000,"minPrice":null,"variants":["Dell","dell"],"categoryId":5,"subcategory":"laptopuri","brand":null,"model":null,"telefonBrand":null,"laptopBrand":"Dell","nrCamere":null}
+"cauta apartament 2 camere bucuresti" → {"keyword":"","city":"București","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"2"}
+"cauta iPhone 15" → {"keyword":"iPhone 15","city":"","maxPrice":null,"minPrice":null,"variants":["iPhone 15","iphone 15"],"categoryId":5,"subcategory":"telefoane","brand":null,"model":null,"telefonBrand":"Apple","laptopBrand":null,"nrCamere":null}`,
         },
         { role: 'user', content: query },
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0,
-      max_tokens: 150,
+      max_tokens: 200,
     })
     const txt = (res.choices[0].message.content || '{}')
       .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    const parsed = JSON.parse(txt)
+    const jsonMatch = txt.match(/\{[\s\S]*\}/)
+    const p = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
     return {
-      keyword: parsed.keyword || '',
-      city: parsed.city || '',
-      maxPrice: parsed.maxPrice || null,
-      variants: Array.isArray(parsed.variants) ? parsed.variants : (parsed.keyword ? [parsed.keyword] : []),
-      categoryId: parsed.categoryId || null,
+      keyword: p.keyword || '',
+      city: p.city || '',
+      maxPrice: p.maxPrice || null,
+      minPrice: p.minPrice || null,
+      variants: Array.isArray(p.variants) ? p.variants : (p.keyword ? [p.keyword] : []),
+      categoryId: p.categoryId || null,
+      subcategory: p.subcategory || null,
+      brand: p.brand || null,
+      model: p.model || null,
+      telefonBrand: p.telefonBrand || null,
+      laptopBrand: p.laptopBrand || null,
+      nrCamere: p.nrCamere || null,
     }
   } catch {
-    return { keyword: query, city: '', maxPrice: null, variants: [query], categoryId: null }
+    return { keyword: query, city: '', maxPrice: null, minPrice: null, variants: [query], categoryId: null, subcategory: null, brand: null, model: null, telefonBrand: null, laptopBrand: null, nrCamere: null }
   }
 }
 
@@ -72,67 +102,90 @@ Returnează DOAR JSON valid: {"keyword":"...","city":"...","maxPrice":null,"vari
 async function searchListings(query: string) {
   const { createSupabaseAdmin } = await import('@/lib/supabase-admin')
   const admin = createSupabaseAdmin()
-  const parsed = await parseQuery(query)
+  const p = await parseQuery(query)
 
-  const kw = parsed.keyword.trim()
-  const city = parsed.city || ''
-  const maxPrice = parsed.maxPrice
-  const catId = parsed.categoryId
-  const variants = [...new Set([kw, ...parsed.variants])].filter(Boolean)
-
+  const variants = [...new Set([p.keyword, ...p.variants])].filter(Boolean)
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
-  const base = () => {
-    let q = admin
-      .from('listings')
-      .select(SELECT, { count: 'exact' })
-      .in('status', ['activ', 'bidding', 'vandut'])
-      .order('created_at', { ascending: false })
-      .limit(40)
-    if (maxPrice) q = q.lte('price', maxPrice)
+  const base = () => admin
+    .from('listings')
+    .select(SELECT, { count: 'exact' })
+    .in('status', ['activ', 'bidding', 'vandut'])
+    .order('created_at', { ascending: false })
+    .limit(40)
+
+  // Aplică filtrele în funcție de ce avem
+  const applyMeta = (q: any, opts: { city?: boolean; subcategory?: boolean; brand?: boolean; nrCamere?: boolean } = {}) => {
+    if (p.maxPrice) q = q.lte('price', p.maxPrice)
+    if (p.minPrice) q = q.gte('price', p.minPrice)
+    if (p.categoryId) q = q.eq('category_id', p.categoryId)
+    if (opts.subcategory && p.subcategory) q = q.eq('metadata->>subcategory', p.subcategory)
+    if (opts.brand) {
+      if (p.brand) q = q.ilike('metadata->>brand', p.brand)
+      if (p.model) q = q.ilike('metadata->>model', `%${p.model}%`)
+      if (p.telefonBrand) q = q.ilike('metadata->>telefonBrand', p.telefonBrand)
+      if (p.laptopBrand) q = q.ilike('metadata->>laptopBrand', p.laptopBrand)
+    }
+    if (opts.nrCamere && p.nrCamere) q = q.eq('metadata->>nrCamere', p.nrCamere)
+    if (opts.city && p.city) q = q.ilike('city', `%${p.city}%`)
     return q
   }
 
-  // Rulăm primele 3 seturi de queries în paralel
-  const titleCityQueries = variants.map(v => {
-    let q = base().ilike('title', `%${v}%`)
-    if (city) q = q.ilike('city', `%${city}%`)
-    return q
-  })
-  const descCityQueries = variants.map(v => {
-    let q = base().ilike('description', `%${v}%`)
-    if (city) q = q.ilike('city', `%${city}%`)
-    return q
-  })
-  const titleNoCityQueries = city ? variants.map(v => base().ilike('title', `%${v}%`)) : []
+  const run = async (opts: Parameters<typeof applyMeta>[1], kw?: string) => {
+    let q = applyMeta(base(), opts)
+    if (kw) q = q.ilike('title', `%${kw}%`)
+    const { data, count } = await q
+    return { data: (data || []) as any[], count: count || 0 }
+  }
 
-  const [titleCityResults, descCityResults, titleNoCityResults, catCityResult, catResult, recentResult] = await Promise.all([
-    Promise.all(titleCityQueries),
-    Promise.all(descCityQueries),
-    Promise.all(titleNoCityQueries),
-    catId ? (() => { let q = base().eq('category_id', catId); if (city) q = q.ilike('city', `%${city}%`); return q })() : Promise.resolve({ data: null, count: 0 }),
-    catId ? base().eq('category_id', catId) : Promise.resolve({ data: null, count: 0 }),
-    base(), // fallback: cele mai recente anunțuri
-  ])
+  // ── Cu keyword (brand/model specific: "BMW X5", "iPhone 15", "laptop Dell") ──
+  if (variants.length > 0) {
+    for (const v of variants) {
+      // 1. keyword + toți filtrii + oraș
+      const r1 = await run({ city: true, subcategory: true, brand: true, nrCamere: true }, v)
+      if (r1.data.length) return { listings: r1.data, count: r1.count }
+    }
+    for (const v of variants) {
+      // 2. keyword + categorie + brand, fără subcategorie și fără restricție de oraș
+      const r2 = await run({ city: false, subcategory: false, brand: true, nrCamere: true }, v)
+      if (r2.data.length) return { listings: r2.data, count: r2.count }
+    }
+    for (const v of variants) {
+      // 3. keyword + categorie + oraș, fără brand/model
+      const r3 = await run({ city: true, subcategory: false, brand: false, nrCamere: false }, v)
+      if (r3.data.length) return { listings: r3.data, count: r3.count }
+    }
+    for (const v of variants) {
+      // 4. keyword în titlu, fără niciun filtru
+      const r4 = await run({}, v)
+      if (r4.data.length) return { listings: r4.data, count: r4.count }
+    }
+  }
 
-  // 1. Keyword în titlu + oraș
-  for (const r of titleCityResults) {
-    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
+  // ── Fără keyword (termin generic: "casa", "masina", "laptop") ──
+  if (p.categoryId) {
+    // 5. categorie + subcategorie + brand + nrCamere + oraș
+    const r5 = await run({ city: true, subcategory: true, brand: true, nrCamere: true })
+    if (r5.data.length) return { listings: r5.data, count: r5.count }
+
+    // 6. categorie + brand + nrCamere + oraș (fără subcategorie — poate nu e salvată)
+    const r6 = await run({ city: true, subcategory: false, brand: true, nrCamere: true })
+    if (r6.data.length) return { listings: r6.data, count: r6.count }
+
+    // 7. categorie + nrCamere + oraș (fără brand)
+    const r7 = await run({ city: true, subcategory: false, brand: false, nrCamere: true })
+    if (r7.data.length) return { listings: r7.data, count: r7.count }
+
+    // 8. categorie + oraș (cel mai relaxat cu orașul)
+    const r8 = await run({ city: true, subcategory: false, brand: false, nrCamere: false })
+    if (r8.data.length) return { listings: r8.data, count: r8.count }
+
+    // 9. doar categorie, fără restricție de oraș
+    const r9 = await run({ city: false, subcategory: false, brand: false, nrCamere: false })
+    if (r9.data.length) return { listings: r9.data, count: r9.count }
   }
-  // 2. Keyword în descriere + oraș
-  for (const r of descCityResults) {
-    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
-  }
-  // 3. Keyword în titlu fără restricție de oraș
-  for (const r of titleNoCityResults) {
-    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
-  }
-  // 4. Categorie + oraș
-  if (catCityResult.data?.length) return { listings: catCityResult.data as any[], count: catCityResult.count || 0, usedKeyword: kw || query }
-  // 5. Categorie fără restricție de oraș
-  if (catResult.data?.length) return { listings: catResult.data as any[], count: catResult.count || 0, usedKeyword: kw || query }
-  // 6. Fallback final — cele mai recente anunțuri (niciodată pagină goală)
-  return { listings: (recentResult.data || []) as any[], count: recentResult.count || 0, usedKeyword: query }
+
+  return { listings: [], count: 0 }
 }
 
 type PriceStats = { p25: number; p75: number }
