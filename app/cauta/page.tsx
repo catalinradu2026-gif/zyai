@@ -105,7 +105,7 @@ async function searchListings(query: string) {
   const p = await parseQuery(query)
 
   const variants = [...new Set([p.keyword, ...p.variants])].filter(Boolean)
-  const SELECT = 'id, title, price, price_type, currency, city, images, category_id, metadata, status'
+  const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
   const base = () => admin
     .from('listings')
