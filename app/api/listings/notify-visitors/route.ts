@@ -4,12 +4,14 @@ import { getUser } from '@/lib/actions/auth'
 
 export const dynamic = 'force-dynamic'
 
+const ZYAI_SYSTEM_ID = '00000000-0000-0000-0000-000000000001'
+
 export async function POST(req: Request) {
   try {
     const user = await getUser()
     if (!user?.id) return NextResponse.json({ error: 'Neautentificat' }, { status: 401 })
 
-    const { listingId, note } = await req.json()
+    const { listingId } = await req.json()
     if (!listingId) return NextResponse.json({ error: 'listingId lipsă' }, { status: 400 })
 
     const admin = createSupabaseAdmin()
@@ -24,7 +26,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Acces interzis' }, { status: 403 })
     }
 
-    // Toți vizitatorii cu 2+ vizite (permite re-trimitere)
     const { data: visitors } = await admin
       .from('listing_user_views')
       .select('user_id, view_count')
@@ -35,54 +36,57 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, count: 0 })
     }
 
-    // Generează mesaj AI
-    const noteText = note ? `\n\nMesaj de la vânzător: "${note}"` : ''
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.7,
-        messages: [
-          {
-            role: 'system',
-            content: 'Ești un asistent al platformei zyai.ro. Generezi mesaje scurte, prietenoase în română.',
-          },
-          {
-            role: 'user',
-            content: `Generează un mesaj scurt (2-3 propoziții) de la zyai.ro către un utilizator care a vizitat anunțul "${listing.title}" (${listing.price ? listing.price.toLocaleString('ro-RO') + ' ' + listing.currency : 'preț negociabil'}). Anunțul este încă disponibil și vânzătorul vrea să ia legătura.${noteText ? ' ' + noteText : ''} Nu folosi salutare formale. Termină cu "— Echipa zyai.ro".`,
-          },
-        ],
-      }),
-    })
+    const siteUrl = 'https://zyai.ro'
+    const listingUrl = `${siteUrl}/anunt/${listingId}`
+    const priceText = listing.price
+      ? `${listing.price.toLocaleString('ro-RO')} ${listing.currency}`
+      : 'preț negociabil'
 
-    let messageContent = `Anunțul „${listing.title}" pe care l-ai vizitat pe zyai.ro este încă disponibil!${note ? ` ${note}` : ''} Vânzătorul este pregătit să discute — scrie-i acum. — Echipa zyai.ro`
+    // AI generează mesajul — vânzătorul nu scrie nimic
+    let content = `👀 Anunțul „${listing.title}" pe care l-ai vizitat pe zyai.ro este încă disponibil (${priceText}). Și alți utilizatori îl urmăresc acum — nu rata oportunitatea! ${listingUrl} — Echipa zyai.ro`
 
-    if (groqRes.ok) {
-      const groqData = await groqRes.json()
-      const generated = groqData.choices?.[0]?.message?.content?.trim()
-      if (generated) messageContent = generated
-    }
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.6,
+          messages: [
+            {
+              role: 'system',
+              content: 'Ești echipa zyai.ro. Scrii mesaje scurte, prietenoase, în română, către utilizatori care au vizitat un anunț. Nu ești un vânzător — ești platforma. Nu folosi "vânzătorul vrea" sau similar.',
+            },
+            {
+              role: 'user',
+              content: `Scrie un mesaj scurt (2-3 propoziții) pentru un utilizator care a vizitat de mai multe ori anunțul „${listing.title}" (${priceText}) pe zyai.ro. Folosește indicații subtile și naturale: anunțul e încă disponibil, alți utilizatori îl urmăresc în prezent, disponibilitatea nu e garantată pe termen lung. Tonul e prietenos, fără presiune. Mesajul vine de la echipa platformei, nu de la vânzător. Include linkul: ${listingUrl}. Termină cu "— Echipa zyai.ro".`,
+            },
+          ],
+        }),
+      })
 
-    const ZYAI_SYSTEM_ID = '00000000-0000-0000-0000-000000000001'
+      if (groqRes.ok) {
+        const groqData = await groqRes.json()
+        const generated = groqData.choices?.[0]?.message?.content?.trim()
+        if (generated) content = generated
+      }
+    } catch {}
 
-    // Trimite mesaj fiecărui vizitator — de la Echipa zyai.ro
     let sent = 0
     for (const visitor of visitors) {
       await admin.from('messages').insert({
         listing_id: listingId,
         sender_id: ZYAI_SYSTEM_ID,
         receiver_id: visitor.user_id,
-        content: messageContent,
+        content,
         read: false,
       })
       sent++
     }
 
-    // Update seller_notified_at
     await admin
       .from('listing_user_views')
       .update({ seller_notified_at: new Date().toISOString() })

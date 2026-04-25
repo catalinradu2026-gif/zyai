@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         listing_id: listingId,
         sender_id: ZYAI_SYSTEM_ID,
         receiver_id: userId,
-        content: `👋 Salut! Ai vizitat de câteva ori anunțul „${listingTitle}" pe zyai.ro — anunțul este încă disponibil! Dacă ești interesat, contactează vânzătorul acum. — Echipa zyai.ro`,
+        content: `👀 Ai vizitat de câteva ori anunțul „${listingTitle}" pe zyai.ro. Anunțul este încă disponibil, însă și alți utilizatori îl urmăresc în prezent. Disponibilitatea nu poate fi garantată — dacă ești interesat, e momentul potrivit să iei legătura. — Echipa zyai.ro`,
         read: false,
       })
       await admin.from('listing_user_views')
