@@ -26,12 +26,13 @@ export async function POST(req: Request) {
       { onConflict: 'listing_id,user_id', ignoreDuplicates: false }
     )
 
+    // La a 3-a vizită, trimite mesaj automat cumpărătorului
     if (newCount === 3 && !existing?.notified_at) {
       await admin.from('messages').insert({
         listing_id: listingId,
-        sender_id: userId,
-        receiver_id: sellerId,
-        content: `👀 Am vizitat anunțul tău „${listingTitle}" de 3 ori — sunt interesat! Poți să mă contactezi?`,
+        sender_id: sellerId,
+        receiver_id: userId,
+        content: `👋 Salut! Ai vizitat de câteva ori anunțul „${listingTitle}" pe zyai.ro — anunțul este încă disponibil! Dacă ești interesat, scrie-mi și stabilim detalii. — Echipa zyai.ro`,
         read: false,
       })
       await admin.from('listing_user_views')
