@@ -67,12 +67,14 @@ export async function POST(req: Request) {
       if (generated) messageContent = generated
     }
 
-    // Trimite mesaj fiecărui vizitator
+    const ZYAI_SYSTEM_ID = '00000000-0000-0000-0000-000000000001'
+
+    // Trimite mesaj fiecărui vizitator — de la Echipa zyai.ro
     let sent = 0
     for (const visitor of visitors) {
       await admin.from('messages').insert({
         listing_id: listingId,
-        sender_id: user.id,
+        sender_id: ZYAI_SYSTEM_ID,
         receiver_id: visitor.user_id,
         content: messageContent,
         read: false,
