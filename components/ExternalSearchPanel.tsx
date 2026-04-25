@@ -164,6 +164,7 @@ export default function ExternalSearchPanel({
   const [allResults, setAllResults] = useState<AIListing[]>([])
   const [batch, setBatch] = useState(0)
   const [stickyVisible, setStickyVisible] = useState(true)
+  const [noApiKey, setNoApiKey] = useState(false)
 
   // Ascunde sticky când panoul e deschis
   useEffect(() => {
@@ -187,7 +188,9 @@ export default function ExternalSearchPanel({
         body: JSON.stringify({ query, filters, batch: batchNum }),
       })
       const data = await res.json()
-      if (data.results) {
+      if (data.error === 'no_api_key') {
+        setNoApiKey(true)
+      } else if (data.results) {
         if (isMore) {
           setAllResults(prev => [...prev, ...data.results])
         } else {
@@ -323,8 +326,33 @@ export default function ExternalSearchPanel({
             </button>
           </div>
 
+          {/* Lipsește API key */}
+          {noApiKey && (
+            <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '36px', marginBottom: '12px' }}>🔑</p>
+              <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>
+                Lipsește cheia de căutare Google
+              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px', lineHeight: 1.6 }}>
+                Adaugă <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>SERPER_API_KEY</code> în Vercel → Settings → Environment Variables
+              </p>
+              <a
+                href="https://serper.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block', padding: '10px 20px', borderRadius: '20px',
+                  background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
+                  color: 'white', fontWeight: 700, fontSize: '13px', textDecoration: 'none',
+                }}
+              >
+                Obține gratuit pe serper.dev →
+              </a>
+            </div>
+          )}
+
           {/* Loading initial */}
-          {loading ? (
+          {!noApiKey && loading ? (
             <div style={{ padding: '60px 20px', textAlign: 'center' }}>
               <div style={{
                 width: '48px', height: '48px', borderRadius: '50%',
