@@ -1,0 +1,65 @@
+'use client'
+
+import { useState } from 'react'
+
+type Props = {
+  listingId: string
+}
+
+export default function NotifyVisitorsButton({ listingId }: Props) {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<{ count: number; message?: string } | null>(null)
+  const [error, setError] = useState('')
+
+  async function handleNotify() {
+    setLoading(true)
+    setError('')
+    setResult(null)
+    try {
+      const res = await fetch('/api/listings/notify-visitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setResult({ count: data.count, message: data.message })
+      } else {
+        setError(data.error || 'Eroare necunoscută')
+      }
+    } catch {
+      setError('Eroare de conexiune')
+    }
+    setLoading(false)
+  }
+
+  if (result !== null) {
+    return (
+      <div className="rounded-xl px-4 py-3 text-center text-sm font-semibold"
+        style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
+        {result.count > 0
+          ? `✅ Mesaj trimis către ${result.count} vizitator${result.count !== 1 ? 'i' : ''}`
+          : '👀 Niciun vizitator eligibil încă'}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={handleNotify}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}
+      >
+        {loading
+          ? <><div className="w-3 h-3 rounded-full border border-purple-400 border-t-transparent animate-spin" /> Trimit mesaje...</>
+          : '📣 Notifică vizitatorii interesați'}
+      </button>
+      {error && <p className="text-xs text-center" style={{ color: '#F87171' }}>⚠️ {error}</p>}
+      <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+        Trimite mesaj prin zyai.ro vizitatorilor care au intrat de 2+ ori pe anunț
+      </p>
+    </div>
+  )
+}

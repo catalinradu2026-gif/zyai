@@ -17,8 +17,9 @@ import AIVerdictPanel from '@/components/listings/AIVerdictPanel'
 import ScamDetectorPanel from '@/components/listings/ScamDetectorPanel'
 import FomoSignals from '@/components/listings/FomoSignals'
 import TrustScoreWidget from '@/components/listings/TrustScoreWidget'
-import BuyerAlertButton from '@/components/listings/BuyerAlertButton'
+import NotifyVisitorsButton from '@/components/listings/NotifyVisitorsButton'
 import NegotiateButton from '@/components/listings/NegotiateButton'
+import ViewNotifier from '@/components/listings/ViewNotifier'
 import MarkAsSoldButton from '@/components/listings/MarkAsSoldButton'
 import ReactivateButton from '@/components/listings/ReactivateButton'
 import BidPanel from '@/components/listings/BidPanel'
@@ -514,14 +515,7 @@ export default async function ListingDetailPage({ params }: Props) {
                       </div>
                     </div>
                     {listing.status === 'activ' && (
-                      <BuyerAlertButton
-                        listingId={id}
-                        listingTitle={listing.title}
-                        price={listing.price}
-                        currency={listing.currency || 'EUR'}
-                        city={listing.city || ''}
-                        category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
-                      />
+                      <NotifyVisitorsButton listingId={id} />
                     )}
 
                     {listing.status === 'vandut' ? (
@@ -584,6 +578,12 @@ export default async function ListingDetailPage({ params }: Props) {
                   </div>
                 ) : canContact ? (
                   <div className="space-y-2">
+                    <ViewNotifier
+                      listingId={id}
+                      userId={user!.id}
+                      sellerId={listing.user_id}
+                      listingTitle={listing.title}
+                    />
                     <Link href={`/cont/mesaje/${listing.id}?user=${listing.user_id}`} className="w-full block">
                       <Button variant="primary" size="lg" fullWidth icon="💬">Trimite mesaj</Button>
                     </Link>
