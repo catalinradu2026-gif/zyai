@@ -225,7 +225,7 @@ export async function deleteListing(id: string) {
     // Verify ownership first
     const { data: listing } = await admin
       .from('listings')
-      .select('id, user_id')
+      .select('id, user_id, images')
       .eq('id', id)
       .single()
 
@@ -238,6 +238,21 @@ export async function deleteListing(id: string) {
       .eq('id', id)
 
     if (error) return { error: error.message }
+
+    // Șterge imaginile din Storage
+    if (Array.isArray(listing.images) && listing.images.length > 0) {
+      const paths: string[] = []
+      for (const url of listing.images) {
+        const match = url.match(/\/storage\/v1\/object\/public\/listings\/(.+)$/)
+        if (match) {
+          paths.push(match[1])
+          paths.push(match[1].replace(/\.webp$/, '_thumb.webp'))
+        }
+      }
+      if (paths.length > 0) {
+        await admin.storage.from('listings').remove(paths).catch(() => {})
+      }
+    }
 
     revalidatePath('/cont/anunturi')
     return { deleted: true }
