@@ -69,7 +69,7 @@ export default function CompareBar() {
                   <>
                     {item.image && (
                       <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
-                        <Image src={item.image} alt={item.title} fill style={{ objectFit: 'cover' }} />
+                        <Image src={item.image} alt={item.title} fill sizes="36px" style={{ objectFit: 'cover' }} />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>

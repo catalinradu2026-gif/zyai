@@ -61,7 +61,7 @@ export default async function SoldListingsPage() {
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0"
                   style={{ background: 'var(--bg-card-hover)' }}>
                   {listing.images?.[0] ? (
-                    <Image src={listing.images[0]} alt={listing.title} fill className="object-cover brightness-75" />
+                    <Image src={listing.images[0]} alt={listing.title} fill sizes="80px" className="object-cover brightness-75" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-2xl">📷</span>

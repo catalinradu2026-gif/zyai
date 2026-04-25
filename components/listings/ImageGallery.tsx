@@ -48,6 +48,7 @@ export default function ImageGallery({ images, title, overlay }: ImageGalleryPro
           alt={`${title} - ${selectedIndex + 1}`}
           fill
           priority
+          sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover"
         />
 
@@ -123,6 +124,7 @@ export default function ImageGallery({ images, title, overlay }: ImageGalleryPro
                   src={img}
                   alt={`thumbnail-${i}`}
                   fill
+                  sizes="80px"
                   className="object-cover"
                 />
               </button>

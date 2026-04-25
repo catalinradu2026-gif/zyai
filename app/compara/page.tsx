@@ -100,7 +100,7 @@ export default async function ComparePage({ searchParams }: Props) {
               {/* Image */}
               <div style={{ position: 'relative', height: '160px', background: 'rgba(0,0,0,0.3)' }}>
                 {l.images?.[0] ? (
-                  <Image src={l.images[0]} alt={l.title} fill style={{ objectFit: 'cover' }} />
+                  <Image src={l.images[0]} alt={l.title} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span style={{ fontSize: '40px', opacity: 0.4 }}>📷</span>

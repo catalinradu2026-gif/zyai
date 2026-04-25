@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
+    minimumCacheTTL: 2592000, // 30 de zile — reduce re-fetch din Supabase după deploy
   },
   async headers() {
     return [
