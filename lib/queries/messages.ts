@@ -66,7 +66,7 @@ export async function getMessageThread(listingId: string, userId: string, otherU
 
   const { data, error } = await supabase
     .from('messages')
-    .select('*')
+    .select('id, listing_id, sender_id, receiver_id, content, read, created_at')
     .eq('listing_id', listingId)
     .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
     .order('created_at', { ascending: true })
@@ -94,7 +94,7 @@ export async function getUnreadCount(userId: string) {
 
   const { count, error } = await supabase
     .from('messages')
-    .select('*', { count: 'exact' })
+    .select('id', { count: 'exact', head: true })
     .eq('receiver_id', userId)
     .eq('read', false)
 

@@ -65,32 +65,35 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ListingDetailPage({ params }: Props) {
   const { id } = await params
-  const { data: listing, error } = await getListing(id)
-  const user = await getUser()
+
+  // getListing e wrapped în cache() — apelul din generateMetadata nu mai face un al doilea fetch
+  const [{ data: listing, error }, user] = await Promise.all([
+    getListing(id),
+    getUser(),
+  ])
 
   if (error || !listing) {
     notFound()
   }
 
-  let listingIsFavorited = false
-  if (user) {
-    const { isFavorited: fav } = await checkIsFavorited(user.id, id)
-    listingIsFavorited = fav
-  }
-
-  let phoneViews = 0
   const isOwnerCheck = user && user.id === listing!.user_id
-  if (isOwnerCheck) {
-    try {
-      const admin = createSupabaseAdmin()
-      const { data: pvData } = await admin
-        .from('listings')
-        .select('phone_views')
-        .eq('id', id)
-        .single()
-      phoneViews = (pvData as any)?.phone_views ?? 0
-    } catch { phoneViews = 0 }
-  }
+  const admin = createSupabaseAdmin()
+
+  // Toate query-urile dependente de listing+user rulează în paralel
+  const [favResult, phoneViewsResult, sellerListingsResult] = await Promise.all([
+    user ? checkIsFavorited(user.id, id) : Promise.resolve({ isFavorited: false }),
+    isOwnerCheck
+      ? admin.from('listings').select('phone_views').eq('id', id).single()
+      : Promise.resolve({ data: null }),
+    admin
+      .from('listings')
+      .select('id, images, created_at')
+      .eq('user_id', listing.user_id)
+      .in('status', ['activ', 'vandut', 'bidding']),
+  ])
+
+  const listingIsFavorited = favResult.isFavorited ?? false
+  const phoneViews = (phoneViewsResult.data as any)?.phone_views ?? 0
 
   const profileRaw = listing.profiles as any
   const profile = Array.isArray(profileRaw) ? profileRaw[0] : profileRaw
@@ -99,21 +102,14 @@ export default async function ListingDetailPage({ params }: Props) {
   let sellerListingCount = 0
   let sellerJoinedDaysAgo = 0
   let sellerAvgImages = 0
-  try {
-    const admin2 = createSupabaseAdmin()
-    const { data: sellerListings } = await admin2
-      .from('listings')
-      .select('id, images, created_at')
-      .eq('user_id', listing.user_id)
-      .in('status', ['activ', 'vandut', 'bidding'])
-    if (sellerListings?.length) {
-      sellerListingCount = sellerListings.length
-      const oldest = sellerListings.reduce((a: any, b: any) => new Date(a.created_at) < new Date(b.created_at) ? a : b)
-      sellerJoinedDaysAgo = Math.floor((Date.now() - new Date(oldest.created_at).getTime()) / 86400000)
-      const totalImages = sellerListings.reduce((sum: number, l: any) => sum + ((l.images as any[] | null)?.length || 0), 0)
-      sellerAvgImages = Math.round(totalImages / sellerListings.length)
-    }
-  } catch {}
+  const sellerListings = sellerListingsResult.data
+  if (sellerListings?.length) {
+    sellerListingCount = sellerListings.length
+    const oldest = sellerListings.reduce((a: any, b: any) => new Date(a.created_at) < new Date(b.created_at) ? a : b)
+    sellerJoinedDaysAgo = Math.floor((Date.now() - new Date(oldest.created_at).getTime()) / 86400000)
+    const totalImages = sellerListings.reduce((sum: number, l: any) => sum + ((l.images as any[] | null)?.length || 0), 0)
+    sellerAvgImages = Math.round(totalImages / sellerListings.length)
+  }
 
   const listingMetadata = (listing.metadata as any) || {}
   const contactPhone: string | null = listingMetadata.contactPhone || profile?.phone || null

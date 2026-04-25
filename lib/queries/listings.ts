@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export type ListingFilters = {
@@ -169,7 +170,7 @@ export async function getListings(filters: ListingFilters = {}) {
   return { data: data ?? [], error: null, count: count || 0 }
 }
 
-export async function getListing(id: string) {
+export const getListing = cache(async function getListing(id: string) {
   // Use admin client to bypass RLS — sold listings must be readable too
   const admin = createSupabaseAdmin()
 
@@ -218,7 +219,7 @@ export async function getListing(id: string) {
   }
 
   return { data, error: null }
-}
+})
 
 export async function getUserListings(userId: string) {
   // Folosim admin client pentru a bypassa RLS și vedea toate statusurile (activ, vandut, inactiv)
@@ -226,7 +227,7 @@ export async function getUserListings(userId: string) {
 
   const { data, error } = await admin
     .from('listings')
-    .select('*')
+    .select('id, title, price, price_type, currency, city, images, status, category_id, metadata, created_at, bidding_end_time')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 

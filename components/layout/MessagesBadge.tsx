@@ -18,8 +18,7 @@ export default function MessagesBadge() {
 
   useEffect(() => {
     fetchUnread()
-    // Poll la fiecare 30 secunde
-    const interval = setInterval(fetchUnread, 30000)
+    const interval = setInterval(fetchUnread, 120000) // 2 minute
     return () => clearInterval(interval)
   }, [])
 

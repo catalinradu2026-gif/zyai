@@ -56,7 +56,7 @@ export default function BidPanel({
 
   useEffect(() => {
     fetchBids()
-    const interval = setInterval(fetchBids, 15000)
+    const interval = setInterval(fetchBids, 60000) // 1 minut
     return () => clearInterval(interval)
   }, [fetchBids])
 
