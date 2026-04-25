@@ -81,13 +81,28 @@ async function searchListings(query: string) {
     return q
   }
 
-  // Încearcă fiecare variantă (keyword + diacritice + sinonime) în titlu
+  // 1. Titlu + filtre (oraș, preț)
   for (const variant of variants) {
     const { data, count } = await applyFilters(buildBase().ilike('title', `%${variant}%`))
     if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
   }
 
-  // Niciun rezultat — returnează gol (nu fallback agresiv "toate din oraș")
+  // 2. Descriere + filtre
+  for (const variant of variants) {
+    const { data, count } = await applyFilters(buildBase().ilike('description', `%${variant}%`))
+    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
+  }
+
+  // 3. Dacă era filtru de oraș, caută titlu fără restricție de oraș
+  if (city) {
+    for (const variant of variants) {
+      let q = buildBase().ilike('title', `%${variant}%`)
+      if (maxPrice) q = q.lte('price', maxPrice)
+      const { data, count } = await q
+      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: variant }
+    }
+  }
+
   return { listings: [], count: 0, usedKeyword: kw }
 }
 
