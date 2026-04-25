@@ -92,7 +92,7 @@ async function searchSerper(
         num: 10,
         page,
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined,
     })
 
     if (!res.ok) return []
@@ -145,9 +145,9 @@ Returnează DOAR JSON array cu ${rawResults.length} obiecte:
       },
       { role: 'user', content: inputText },
     ],
-    model: 'llama-3.3-70b-versatile',
+    model: 'llama-3.1-8b-instant',
     temperature: 0.1,
-    max_tokens: 2000,
+    max_tokens: 1500,
   })
 
   let enriched: any[] = []
@@ -213,8 +213,28 @@ export async function POST(req: Request) {
       })
     }
 
-    // ── Agent 2: Groq structurează datele reale ──
-    const enriched = await enrichWithGroq(rawResults, query, filters.categoryId, groq)
+    // ── Agent 2: Groq structurează datele reale (cu fallback direct) ──
+    let enriched: AIListing[]
+    try {
+      enriched = await enrichWithGroq(rawResults, query, filters.categoryId, groq)
+    } catch {
+      // Groq rate limit sau eroare — returnăm direct rezultatele Serper
+      enriched = rawResults.map((r, i) => {
+        const { name, emoji } = getPlatformFromUrl(r.url)
+        return {
+          id: `${i}-${Date.now()}`,
+          title: r.title.replace(/\s*[-|]\s*(Autovit|OLX|Imobiliare|Storia|Publi24|eMag|Okazii).*$/i, '').trim(),
+          price: r.snippet.match(/[\d\s.,]+\s*(EUR|RON|€|lei)/i)?.[0]?.trim() || 'Preț la cerere',
+          platform: name,
+          platformEmoji: emoji,
+          url: r.url,
+          specs: [],
+          matchScore: 82,
+          aiReason: 'Găsit pe Google',
+          location: '',
+        }
+      })
+    }
 
     return Response.json({ results: enriched, batch, query, total: rawResults.length })
   } catch (e: any) {
