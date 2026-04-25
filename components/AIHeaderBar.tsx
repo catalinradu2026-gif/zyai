@@ -196,7 +196,7 @@ export default function AIHeaderBar() {
     const q = pendingTranscript || input
     if (!q.trim()) return
     setPendingTranscript('')
-    sendMessage(q.trim())
+    navigateToSearch(q.trim())
   }
 
   function navigateToSearch(query: string) {
