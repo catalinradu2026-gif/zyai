@@ -4,7 +4,6 @@ import { getUser } from '@/lib/actions/auth'
 
 export const dynamic = 'force-dynamic'
 
-const ZYAI_SYSTEM_ID = '00000000-0000-0000-0000-000000000001'
 
 export async function POST(req: Request) {
   try {
@@ -79,9 +78,10 @@ export async function POST(req: Request) {
     for (const visitor of visitors) {
       await admin.from('messages').insert({
         listing_id: listingId,
-        sender_id: ZYAI_SYSTEM_ID,
+        sender_id: user.id,
         receiver_id: visitor.user_id,
         content,
+        is_system: true,
         read: false,
       })
       sent++

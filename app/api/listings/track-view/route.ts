@@ -26,15 +26,14 @@ export async function POST(req: Request) {
       { onConflict: 'listing_id,user_id', ignoreDuplicates: false }
     )
 
-    const ZYAI_SYSTEM_ID = '00000000-0000-0000-0000-000000000001'
-
     // La a 3-a vizită, trimite mesaj automat cumpărătorului
     if (newCount === 3 && !existing?.notified_at) {
       await admin.from('messages').insert({
         listing_id: listingId,
-        sender_id: ZYAI_SYSTEM_ID,
+        sender_id: sellerId,
         receiver_id: userId,
         content: `👀 Ai vizitat de câteva ori anunțul „${listingTitle}" pe zyai.ro. Anunțul este încă disponibil, însă și alți utilizatori îl urmăresc în prezent. Disponibilitatea nu poate fi garantată — dacă ești interesat, e momentul potrivit să iei legătura. — Echipa zyai.ro`,
+        is_system: true,
         read: false,
       })
       await admin.from('listing_user_views')

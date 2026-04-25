@@ -13,6 +13,7 @@ interface Message {
   receiver_id: string
   created_at: string
   read: boolean
+  is_system?: boolean
 }
 
 interface MessageThreadProps {
@@ -149,7 +150,30 @@ export default function MessageThread({
           </div>
         ) : (
           messages.map((msg) => {
-            const isOwn = msg.sender_id === currentUserId
+            const isOwn = msg.sender_id === currentUserId && !msg.is_system
+            const isSystem = msg.is_system
+
+            if (isSystem) {
+              return (
+                <div key={msg.id} className="flex justify-start gap-2 items-start">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1"
+                    style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: 'white' }}>
+                    Z
+                  </div>
+                  <div className="max-w-xs">
+                    <p className="text-xs font-semibold mb-1" style={{ color: '#A78BFA' }}>Echipa zyai.ro</p>
+                    <div className="px-4 py-2 rounded-lg rounded-bl-none"
+                      style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: 'var(--text-primary)' }}>
+                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        {new Date(msg.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={msg.id}
