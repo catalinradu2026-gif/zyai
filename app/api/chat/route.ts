@@ -77,12 +77,13 @@ auto=3, imobiliare=2, joburi=1, servicii=4, electronice=5, moda=6, casa-gradina=
 - mama-copilul: "carucioare" | "mobilier-copii" | "haine-bebe" | "jucarii" | "ingrijire"
 
 ## Normalizare input:
-- Mărci auto (corectează voce): "bemveu/be em ve/bm vu"→BMW, "aude/ode"→Audi, "mersedes"→Mercedes, "datie"→Dacia, "vw/folfsvagen"→Volkswagen, "opel"→Opel, "ford"→Ford, "toyota"→Toyota, "skoda"→Skoda, "seat"→Seat, "renault/reno"→Renault, "peugeot"→Peugeot, "kia"→KIA, "hyundai"→Hyundai
-- Telefoane: "aifor/aifon/iphone"→Apple, "samsung/samson"→Samsung, "xiaomi/siomi"→Xiaomi
-- Laptop: "labtop/latop"→laptop, "dell"→Dell, "hp"→HP, "lenovo"→Lenovo, "asus"→Asus
-- "masina/bolid/rabla/auto"→autoturisme, "garso/garsoniera"→apartamente, "ap/apartament"→apartamente, "casa/casuta"→case, "teren/lot"→terenuri
-- Orașe: "buc/bucuresti"→București, "cluj"→Cluj-Napoca, "timisoara/tm"→Timișoara, "craiova"→Craiova, "iasi"→Iași, "brasov"→Brașov, "constanta"→Constanța
-- "chirie/inchiriere/de inchiriat"→listingType:inchiriere, "vanzare/cumpar/de vanzare"→listingType:vanzare
+- Mărci auto (corectează voce): "bemveu/be em ve/bm vu"→BMW, "aude/ode"→Audi, "mersedes/mertcedes"→Mercedes, "datie"→Dacia, "vw/folfsvagen/folsvagen"→Volkswagen, "opel"→Opel, "ford"→Ford, "toyota"→Toyota, "skoda"→Skoda, "seat"→Seat, "renault/reno"→Renault, "peugeot/peugeo"→Peugeot, "kia"→Kia, "hyundai/hundai"→Hyundai, "porsche/porse"→Porsche, "volvo"→Volvo, "tesla"→Tesla
+- Modele auto: "seria 3/seria3/s3"→"Seria 3", "seria 5/seria5/s5"→"Seria 5", "seria 7/seria7"→"Seria 7", "a3/a4/a6/a8/q5/q7"→păstrează, "golf/polo/passat/tiguan/touareg"→păstrează, "logan/sandero/duster/jogger"→păstrează, "520d/520/320d/730d"→include seria în model
+- Telefoane: "aifor/aifon/iphone/ios"→telefonBrand:Apple, "samsung/samson/galax"→Samsung, "xiaomi/siomi/redmi"→Xiaomi, "huawei/huavei"→Huawei
+- Laptop: "labtop/latop/notebook"→laptopuri, "dell"→Dell, "hp/hewlett"→HP, "lenovo/lenova"→Lenovo, "asus"→Asus, "acer"→Acer, "msi"→MSI, "macbook/mac"→Apple
+- Imobiliare: "masina/bolid/rabla/auto/autoturism"→autoturisme, "garso/garsoniera/garsonieră/studio/1 camera"→subcategory:apartamente+nrCamere:"1", "ap 2/apartament 2/2 camere/doua camere"→apartamente+nrCamere:"2", "ap 3/3 camere/trei camere"→apartamente+nrCamere:"3", "4 camere/4c/5 camere/patru camere"→apartamente+nrCamere:"4+", "casa/casuta/vila"→case, "teren/lot/parcela"→terenuri, "birou/office"→birouri, "spatiu comercial/spatiu/depozit"→spatii-comerciale, "garaj/parcare/loc parcare"→garaje
+- Orașe: "buc/bucuresti/bucharest"→București, "cluj/cluj napoca"→Cluj-Napoca, "timisoara/tm/timis"→Timișoara, "craiova"→Craiova, "iasi/iași"→Iași, "brasov/brașov"→Brașov, "constanta/constanța"→Constanța, "galati/galați"→Galați, "ploiesti/ploiești"→Ploiești, "oradea"→Oradea, "sibiu"→Sibiu, "pitesti/pitești"→Pitești
+- "chirie/inchiriere/de inchiriat/rent"→listingType:inchiriere, "vanzare/cumpar/de vanzare/vand"→listingType:vanzare
 
 ## Reguli comportament:
 1. Orice marcă auto, model, categorie sau produs specific → intent:"search" IMEDIAT. NICIODATĂ "clarify" pentru cuvinte concrete.
@@ -114,7 +115,7 @@ REGULA DE AUR: "apartament", "audi", "bmw", "casa", "laptop", "telefon" singure 
     "model": "modelul auto (X5/A4/Logan/Golf/Octavia/Focus/Clio/308/Sandero/Passat/Tiguan etc.) sau null",
     "telefonBrand": "Apple/Samsung/Huawei/Xiaomi/OnePlus/Nokia sau null",
     "laptopBrand": "Dell/HP/Lenovo/Asus/Acer/Apple/MSI sau null",
-    "nrCamere": "1/2/3/4+ sau null",
+    "nrCamere": "1=garsonieră|2=2 camere|3=3 camere|4+=4 sau mai multe camere|null=fără filtru. REGULI: garsonieră/garsoniera/studio/1 cameră→"1", 2 camere/2c→"2", 3 camere/3c→"3", 4 camere/4c/5 camere/5c/6+→"4+", fără mențiune→null",
     "listingType": "vanzare"|"inchiriere"|null,
     "keywords": ["cuvinte", "cheie"]
   }
@@ -144,6 +145,15 @@ REGULA DE AUR: "apartament", "audi", "bmw", "casa", "laptop", "telefon" singure 
 
 "apartament"
 → {"intent":"search","message":"Caut apartamente disponibile. Câte camere și ce buget ai în vedere?","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":null,"keywords":["apartament"]}}
+
+"apartament 2 camere"
+→ {"intent":"search","message":"Caut apartamente cu 2 camere. Ai un buget sau o zonă preferată?","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"2","listingType":null,"keywords":["apartament","2 camere"]}}
+
+"garsoniera"
+→ {"intent":"search","message":"Caut garsoniere disponibile. Ai un buget sau o zonă preferată?","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"1","listingType":null,"keywords":["garsoniera"]}}
+
+"apartament 4 camere"
+→ {"intent":"search","message":"Caut apartamente cu 4+ camere disponibile. Ce zonă și buget ai?","filters":{"product":null,"city":null,"maxPrice":null,"minPrice":null,"category":"imobiliare","subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"4+","listingType":null,"keywords":["apartament","4 camere"]}}
 
 "audi"
 → {"intent":"search","message":"Caut Audi disponibile. Ce model și an de fabricație preferi?","filters":{"product":"Audi","city":null,"maxPrice":null,"minPrice":null,"category":"auto","subcategory":"autoturisme","brand":"Audi","model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null,"listingType":null,"keywords":["Audi"]}}`

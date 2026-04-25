@@ -42,14 +42,20 @@ async function parseQuery(query: string): Promise<ParsedQuery> {
           content: `Ești un parser precis pentru un marketplace românesc. Input-ul poate fi voce sau text informal.
 
 Returnează DOAR JSON valid cu aceste câmpuri:
-- keyword: termenul specific (brand/model/produs concret). Corectează greșeli fonetice: "bemveu/be em ve"→"BMW","aude/ode/audi"→"Audi","mersedes/mertcedes"→"Mercedes","datie"→"Dacia","vw/folfsvagen"→"Volkswagen","labtop/latop"→"laptop","telepon"→"telefon". Scoate: "caut/vreau/găsesc/un/o/de/pe". Dacă termenul e generic (masina/casa/apartament/laptop) → "".
-- city: orașul (ex:"craiova"→"Craiova","bucuresti"→"București","cluj"→"Cluj-Napoca","timisoara"→"Timișoara"). "" dacă nu e menționat.
-- maxPrice: număr sau null
-- minPrice: număr sau null
-- variants: variante ale keyword (max 4, include cu/fără diacritice). [] dacă keyword="".
+
+- keyword: brand/model/produs concret. Generic (masina/casa/apartament/laptop/telefon/bicicleta) → "". Corectează voce: "bemveu/be em ve/bm vu"→"BMW", "aude/ode"→"Audi", "mersedes"→"Mercedes", "datie"→"Dacia", "vw/folfsvagen/golf/passat"→păstrează modelul, "labtop/latop"→"laptop", "telepon/aifor/aifon"→"telefon"/"iPhone". Scoate: "caut/vreau/găsesc/un/o/de/pe/cauta".
+
+- city: "Craiova"|"București"|"Cluj-Napoca"|"Timișoara"|"Iași"|"Brașov"|"Constanța"|"Galați"|"Ploiești"|"Oradea" sau "" dacă lipsește.
+
+- maxPrice: număr sau null. "sub X"/"pana la X"→maxPrice=X.
+- minPrice: număr sau null. "de la X"/"minim X"→minPrice=X.
+
+- variants: max 3 variante ale keyword (cu/fără diacritice). [] dacă keyword="".
+
 - categoryId: 1=joburi|2=imobiliare|3=auto|4=servicii|5=electronice|6=moda|7=casa-gradina|8=sport|9=animale|10=mama-copilul|null
-- subcategory: slug exact sau null:
-  imobiliare→ "case"|"apartamente"|"terenuri"|"spatii-comerciale"|"birouri"|"garaje"|"cazare"
+
+- subcategory (slug EXACT):
+  imobiliare→ "apartamente"|"case"|"terenuri"|"spatii-comerciale"|"birouri"|"garaje"|"cazare"
   auto→ "autoturisme"|"autoutilitare"|"camioane"|"microbuze"|"rulote"|"motociclete"|"remorci"|"piese"|"agricole"|"barci"
   electronice→ "telefoane"|"laptopuri"|"tablete"|"desktop"|"tv-audio"|"gaming"|"foto-video"|"componente-pc"
   joburi→ "it"|"marketing"|"vanzari"|"contabilitate"|"transport"|"horeca"|"medical"|"educatie"|"constructii"|"muncitori"
@@ -58,18 +64,34 @@ Returnează DOAR JSON valid cu aceste câmpuri:
   animale→ "caini"|"pisici"|"pesti"|"pasari"|"rozatoare"
   moda→ "haine-femei"|"haine-barbati"|"incaltaminte-femei"|"incaltaminte-barbati"|"genti-accesorii"|"bijuterii"
   casa-gradina→ "mobila"|"electrocasnice"|"decoratiuni"|"gradina"|"unelte"|"bucatarie"
-- brand: marca auto (BMW/Audi/Dacia/Volkswagen/Mercedes/Ford/Toyota/Opel/Renault/Skoda/Seat/Hyundai/Kia/Peugeot/Citroën/Fiat/Nissan/Honda/Mazda/Volvo/Jeep/Land Rover/Porsche) sau null
-- model: modelul auto specific (X5/A4/Logan/Golf/Octavia/Focus/Clio/etc.) sau null
-- telefonBrand: Apple/Samsung/Huawei/Xiaomi/OnePlus/Oppo/Realme/Nokia/LG sau null
-- laptopBrand: Dell/HP/Lenovo/Asus/Acer/Apple/MSI/Toshiba sau null
-- nrCamere: "1" (garsonieră) / "2" / "3" / "4+" sau null
+  mama-copilul→ "carucioare"|"mobilier-copii"|"haine-bebe"|"jucarii"|"ingrijire"
+
+- brand: BMW|Audi|Dacia|Volkswagen|Mercedes|Ford|Toyota|Opel|Renault|Skoda|Seat|Hyundai|Kia|Peugeot|Fiat|Nissan|Honda|Mazda|Volvo|Jeep|Porsche|Subaru|Tesla sau null
+
+- model: modelul exact (X5/A4/A6/Logan/Golf/Octavia/Focus/Clio/308/Sandero/Passat/Tiguan/Duster/Corsa/Astra/Mokka/Seria3/Seria5/520d/320d etc.) sau null
+
+- telefonBrand: Apple|Samsung|Huawei|Xiaomi|OnePlus|Oppo|Realme|Nokia|LG sau null. "iPhone/iphone/aifor/aifon"→Apple.
+
+- laptopBrand: Dell|HP|Lenovo|Asus|Acer|Apple|MSI|Toshiba|Samsung sau null.
+
+- nrCamere (EXACT):
+  "garsoniera/garsonieră/studio/1 camera/1c" → "1"
+  "2 camere/2c/doua camere" → "2"
+  "3 camere/3c/trei camere" → "3"
+  "4 camere/4c/patru camere/5 camere/5c/6 camere" → "4+"
+  fără mențiune camere → null
 
 Exemple:
 "cauta casa in craiova" → {"keyword":"","city":"Craiova","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"case","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null}
-"cauta BMW X5" → {"keyword":"BMW X5","city":"","maxPrice":null,"minPrice":null,"variants":["BMW X5","bmw x5"],"categoryId":3,"subcategory":"autoturisme","brand":"BMW","model":"X5","telefonBrand":null,"laptopBrand":null,"nrCamere":null}
-"cauta laptop Dell sub 3000" → {"keyword":"Dell","city":"","maxPrice":3000,"minPrice":null,"variants":["Dell","dell"],"categoryId":5,"subcategory":"laptopuri","brand":null,"model":null,"telefonBrand":null,"laptopBrand":"Dell","nrCamere":null}
-"cauta apartament 2 camere bucuresti" → {"keyword":"","city":"București","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"2"}
-"cauta iPhone 15" → {"keyword":"iPhone 15","city":"","maxPrice":null,"minPrice":null,"variants":["iPhone 15","iphone 15"],"categoryId":5,"subcategory":"telefoane","brand":null,"model":null,"telefonBrand":"Apple","laptopBrand":null,"nrCamere":null}`,
+"apartament 2 camere" → {"keyword":"","city":"","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"2"}
+"apartament 3 camere bucuresti sub 500 euro" → {"keyword":"","city":"București","maxPrice":500,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"3"}
+"garsoniera craiova" → {"keyword":"","city":"Craiova","maxPrice":null,"minPrice":null,"variants":[],"categoryId":2,"subcategory":"apartamente","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":"1"}
+"BMW X5" → {"keyword":"BMW X5","city":"","maxPrice":null,"minPrice":null,"variants":["BMW X5","bmw x5"],"categoryId":3,"subcategory":"autoturisme","brand":"BMW","model":"X5","telefonBrand":null,"laptopBrand":null,"nrCamere":null}
+"audi a6 craiova sub 20000" → {"keyword":"Audi A6","city":"Craiova","maxPrice":20000,"minPrice":null,"variants":["Audi A6","audi a6"],"categoryId":3,"subcategory":"autoturisme","brand":"Audi","model":"A6","telefonBrand":null,"laptopBrand":null,"nrCamere":null}
+"laptop Dell sub 3000" → {"keyword":"Dell","city":"","maxPrice":3000,"minPrice":null,"variants":["Dell","dell"],"categoryId":5,"subcategory":"laptopuri","brand":null,"model":null,"telefonBrand":null,"laptopBrand":"Dell","nrCamere":null}
+"iPhone 15" → {"keyword":"iPhone 15","city":"","maxPrice":null,"minPrice":null,"variants":["iPhone 15","iphone 15"],"categoryId":5,"subcategory":"telefoane","brand":null,"model":null,"telefonBrand":"Apple","laptopBrand":null,"nrCamere":null}
+"masina sub 5000 craiova" → {"keyword":"","city":"Craiova","maxPrice":5000,"minPrice":null,"variants":[],"categoryId":3,"subcategory":"autoturisme","brand":null,"model":null,"telefonBrand":null,"laptopBrand":null,"nrCamere":null}
+"golf 7" → {"keyword":"Golf 7","city":"","maxPrice":null,"minPrice":null,"variants":["Golf 7","VW Golf 7","golf 7"],"categoryId":3,"subcategory":"autoturisme","brand":"Volkswagen","model":"Golf 7","telefonBrand":null,"laptopBrand":null,"nrCamere":null}`,
         },
         { role: 'user', content: query },
       ],
