@@ -17,9 +17,15 @@ export default function MessagesBadge() {
   }
 
   useEffect(() => {
+    // Fetch o dată la mount
     fetchUnread()
-    const interval = setInterval(fetchUnread, 120000) // 2 minute
-    return () => clearInterval(interval)
+
+    // Fetch din nou când userul revine pe tab (nu polling)
+    function onVisible() {
+      if (document.visibilityState === 'visible') fetchUnread()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   return (

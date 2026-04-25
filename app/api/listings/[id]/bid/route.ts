@@ -14,7 +14,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     .limit(20)
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json({ bids: bids ?? [] })
+  return Response.json({ bids: bids ?? [] }, {
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }
 
 // POST /api/listings/[id]/bid — place a bid

@@ -38,7 +38,8 @@ export default function BuyerAlertButton({ listingId, listingTitle, price, curre
     if (!phone.trim() || !message) return
     setError('')
     try {
-      const res = await fetch('http://localhost:3001/send', {
+      const bridgeUrl = process.env.NEXT_PUBLIC_WHATSAPP_BRIDGE_URL || 'http://localhost:3001'
+      const res = await fetch(`${bridgeUrl}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -19,5 +19,7 @@ export async function GET() {
     return NextResponse.json({ count: 0 })
   }
 
-  return NextResponse.json({ count: count || 0 })
+  return NextResponse.json({ count: count || 0 }, {
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }

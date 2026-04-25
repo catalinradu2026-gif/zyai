@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BidTimer from './BidTimer'
 
@@ -43,7 +43,7 @@ export default function BidPanel({
   const msLeft = Math.max(0, new Date(biddingEndTime).getTime() - Date.now())
   const hoursLeft = Math.ceil(msLeft / 3600000)
 
-  const fetchBids = useCallback(async () => {
+  async function fetchBids() {
     try {
       const res = await fetch(`/api/listings/${listingId}/bid`)
       if (res.ok) {
@@ -52,13 +52,18 @@ export default function BidPanel({
         if (data.bids?.[0]) setTopBid(data.bids[0].amount)
       }
     } catch { /* ignore */ }
-  }, [listingId])
+  }
 
+  // Fetch o dată la mount + când userul revine pe tab
   useEffect(() => {
     fetchBids()
-    const interval = setInterval(fetchBids, 60000) // 1 minut
-    return () => clearInterval(interval)
-  }, [fetchBids])
+    function onVisible() {
+      if (document.visibilityState === 'visible') fetchBids()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleBid(customAmount?: number) {
     const bidAmount = customAmount ?? Number(amount)

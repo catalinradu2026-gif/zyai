@@ -62,5 +62,7 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Failed to fetch listings' }, { status: 500 })
   }
 
-  return Response.json({ data, count, page: filters.page })
+  return Response.json({ data, count, page: filters.page }, {
+    headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=120' },
+  })
 }

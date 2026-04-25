@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ListingCard from './ListingCard'
 import { CompareProvider } from '@/components/compare/CompareContext'
@@ -59,57 +59,68 @@ export default function InfiniteListingGrid({
     setHasMore(initialListings.length < initialCount)
   }, [searchParams.toString(), initialListings, initialCount])
 
-  const loadMore = useCallback(async () => {
-    const nextPage = page + 1
-    if (loading || !hasMore || loadedPages.current.has(nextPage)) return
+  // Ref pentru starea curentă — evită recrearea observer-ului la fiecare render
+  const stateRef = useRef({ page, loading, hasMore, listings, searchParams, category })
+  useEffect(() => {
+    stateRef.current = { page, loading, hasMore, listings, searchParams, category }
+  })
+
+  async function loadMore() {
+    const { page: p, loading: l, hasMore: hm, listings: ls, searchParams: sp, category: cat } = stateRef.current
+    const nextPage = p + 1
+    if (l || !hm || loadedPages.current.has(nextPage)) return
     loadedPages.current.add(nextPage)
     setLoading(true)
 
     try {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('category', category)
+      const params = new URLSearchParams(sp.toString())
+      params.set('category', cat)
       params.set('page', String(nextPage))
 
       const res = await fetch(`/api/listings?${params.toString()}`)
       const json = await res.json()
-      const newListings: Listing[] = (json.data || []).map((l: any) => ({
-        ...l,
-        category: l.category ?? CATEGORY_SLUGS[l.category_id] ?? undefined,
-        metadata: l.metadata ?? null,
+      const newListings: Listing[] = (json.data || []).map((item: any) => ({
+        ...item,
+        category: item.category ?? CATEGORY_SLUGS[item.category_id] ?? undefined,
+        metadata: item.metadata ?? null,
       }))
 
       if (newListings.length === 0) {
         setHasMore(false)
       } else {
         setListings(prev => {
-          const existingIds = new Set(prev.map(l => l.id))
-          const deduped = newListings.filter(l => !existingIds.has(l.id))
+          const existingIds = new Set(prev.map(item => item.id))
+          const deduped = newListings.filter(item => !existingIds.has(item.id))
           return [...prev, ...deduped]
         })
         setPage(nextPage)
-        setHasMore(listings.length + newListings.length < (json.count || 0))
+        setHasMore(ls.length + newListings.length < (json.count || 0))
       }
     } catch {
       loadedPages.current.delete(nextPage)
     } finally {
       setLoading(false)
     }
-  }, [page, loading, hasMore, searchParams, category, listings.length])
+  }
 
-  // IntersectionObserver — declanșează loadMore când sentinelul devine vizibil
+  const loadMoreRef = useRef(loadMore)
+  useEffect(() => { loadMoreRef.current = loadMore })
+
+  // IntersectionObserver — montat o singură dată, nu se recreează la fiecare render
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore()
+        if (entries[0].isIntersecting) loadMoreRef.current()
       },
       { rootMargin: '300px' }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [loadMore])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (listings.length === 0 && !loading) return null
 
