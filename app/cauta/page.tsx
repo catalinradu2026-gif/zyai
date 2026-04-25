@@ -82,7 +82,7 @@ async function searchListings(query: string) {
 
   const SELECT = 'id, title, description, price, price_type, currency, city, images, category_id, metadata, status'
 
-  const buildBase = () => {
+  const base = () => {
     let q = admin
       .from('listings')
       .select(SELECT, { count: 'exact' })
@@ -93,49 +93,46 @@ async function searchListings(query: string) {
     return q
   }
 
-  // 1. Keyword în titlu + oraș
-  if (variants.length > 0) {
-    for (const v of variants) {
-      let q = buildBase().ilike('title', `%${v}%`)
-      if (city) q = q.ilike('city', `%${city}%`)
-      const { data, count } = await q
-      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
-    }
-  }
-
-  // 2. Keyword în descriere + oraș
-  if (variants.length > 0) {
-    for (const v of variants) {
-      let q = buildBase().ilike('description', `%${v}%`)
-      if (city) q = q.ilike('city', `%${city}%`)
-      const { data, count } = await q
-      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
-    }
-  }
-
-  // 3. Keyword în titlu fără restricție de oraș
-  if (variants.length > 0 && city) {
-    for (const v of variants) {
-      const { data, count } = await buildBase().ilike('title', `%${v}%`)
-      if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: v }
-    }
-  }
-
-  // 4. Categorie + oraș (pentru "caut masina in craiova", "caut apartament in cluj")
-  if (catId) {
-    let q = buildBase().eq('category_id', catId)
+  // Rulăm primele 3 seturi de queries în paralel
+  const titleCityQueries = variants.map(v => {
+    let q = base().ilike('title', `%${v}%`)
     if (city) q = q.ilike('city', `%${city}%`)
-    const { data, count } = await q
-    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw || query }
-  }
+    return q
+  })
+  const descCityQueries = variants.map(v => {
+    let q = base().ilike('description', `%${v}%`)
+    if (city) q = q.ilike('city', `%${city}%`)
+    return q
+  })
+  const titleNoCityQueries = city ? variants.map(v => base().ilike('title', `%${v}%`)) : []
 
+  const [titleCityResults, descCityResults, titleNoCityResults, catCityResult, catResult, recentResult] = await Promise.all([
+    Promise.all(titleCityQueries),
+    Promise.all(descCityQueries),
+    Promise.all(titleNoCityQueries),
+    catId ? (() => { let q = base().eq('category_id', catId); if (city) q = q.ilike('city', `%${city}%`); return q })() : Promise.resolve({ data: null, count: 0 }),
+    catId ? base().eq('category_id', catId) : Promise.resolve({ data: null, count: 0 }),
+    base(), // fallback: cele mai recente anunțuri
+  ])
+
+  // 1. Keyword în titlu + oraș
+  for (const r of titleCityResults) {
+    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
+  }
+  // 2. Keyword în descriere + oraș
+  for (const r of descCityResults) {
+    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
+  }
+  // 3. Keyword în titlu fără restricție de oraș
+  for (const r of titleNoCityResults) {
+    if (r.data?.length) return { listings: r.data as any[], count: r.count || 0, usedKeyword: kw }
+  }
+  // 4. Categorie + oraș
+  if (catCityResult.data?.length) return { listings: catCityResult.data as any[], count: catCityResult.count || 0, usedKeyword: kw || query }
   // 5. Categorie fără restricție de oraș
-  if (catId) {
-    const { data, count } = await buildBase().eq('category_id', catId)
-    if (data?.length) return { listings: data as any[], count: count || 0, usedKeyword: kw || query }
-  }
-
-  return { listings: [], count: 0, usedKeyword: kw || query }
+  if (catResult.data?.length) return { listings: catResult.data as any[], count: catResult.count || 0, usedKeyword: kw || query }
+  // 6. Fallback final — cele mai recente anunțuri (niciodată pagină goală)
+  return { listings: (recentResult.data || []) as any[], count: recentResult.count || 0, usedKeyword: query }
 }
 
 type PriceStats = { p25: number; p75: number }

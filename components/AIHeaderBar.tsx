@@ -168,27 +168,62 @@ export default function AIHeaderBar() {
     rec.lang = 'ro-RO'
     rec.continuous = false
     rec.interimResults = true
-    rec.maxAlternatives = 3
+    rec.maxAlternatives = 5
     recognitionRef.current = rec
+
+    let capturedFinal = ''
 
     rec.onstart = () => setListening(true)
     rec.onresult = (e: any) => {
       let interim = ''
       let final = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const text = e.results[i][0].transcript
-        if (e.results[i].isFinal) final += text
-        else interim += text
+        // ia cea mai bună alternativă cu cel mai mare confidence
+        let best = e.results[i][0].transcript
+        let bestConf = e.results[i][0].confidence || 0
+        for (let a = 1; a < e.results[i].length; a++) {
+          if ((e.results[i][a].confidence || 0) > bestConf) {
+            best = e.results[i][a].transcript
+            bestConf = e.results[i][a].confidence
+          }
+        }
+        if (e.results[i].isFinal) final += best
+        else interim += best
       }
       if (interim) setInterimText(interim)
       if (final) {
+        capturedFinal = final.trim()
         setInterimText('')
-        setPendingTranscript(final.trim())
-        setInput(final.trim())
+        setPendingTranscript(capturedFinal)
+        setInput(capturedFinal)
       }
     }
-    rec.onerror = () => { setListening(false); setInterimText('') }
-    rec.onend = () => { setListening(false); setInterimText('') }
+    rec.onerror = (e: any) => {
+      setListening(false)
+      setInterimText('')
+      // dacă eroare de rețea/no-speech, încearcă cu lang=ro
+      if (e.error === 'no-speech' || e.error === 'network') {
+        const rec2 = new SpeechRecognition()
+        rec2.lang = 'ro'
+        rec2.interimResults = false
+        rec2.maxAlternatives = 3
+        rec2.onresult = (e2: any) => {
+          const t = e2.results[0]?.[0]?.transcript?.trim()
+          if (t) { setInput(t); navigateToSearch(t) }
+        }
+        rec2.onerror = () => {}
+        try { rec2.start() } catch {}
+      }
+    }
+    rec.onend = () => {
+      setListening(false)
+      setInterimText('')
+      // Auto-caută imediat dacă a capturat ceva — nu mai necesită click pe "✓ Caută"
+      if (capturedFinal.trim()) {
+        setPendingTranscript('')
+        navigateToSearch(capturedFinal.trim())
+      }
+    }
     rec.start()
   }
 
