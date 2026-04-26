@@ -227,7 +227,7 @@ export async function getUserListings(userId: string) {
 
   const { data, error } = await admin
     .from('listings')
-    .select('id, title, price, price_type, currency, city, images, status, category_id, metadata, created_at, bidding_end_time')
+    .select('id, title, price, price_type, currency, city, images, status, category_id, metadata, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
