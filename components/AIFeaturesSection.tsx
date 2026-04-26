@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const features = [
   {
@@ -51,8 +51,24 @@ function FeatureCard({ f }: { f: typeof features[0] }) {
   const [open, setOpen] = useState(false)
   const [hovered, setHovered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const showTooltip = open || hovered
+
+  useEffect(() => {
+    if (!open) return
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [open])
 
   function handleMouseEnter() {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -67,6 +83,7 @@ function FeatureCard({ f }: { f: typeof features[0] }) {
 
   return (
     <div
+      ref={cardRef}
       className="relative rounded-2xl p-4 md:p-5 text-center glass glass-hover transition-all cursor-pointer select-none"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -203,7 +220,23 @@ function RoleCard({
   const [open, setOpen] = useState(false)
   const [hovered, setHovered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const showTooltip = open || hovered
+
+  useEffect(() => {
+    if (!open) return
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [open])
 
   function handleMouseEnter() {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -215,6 +248,7 @@ function RoleCard({
 
   return (
     <div
+      ref={cardRef}
       className="relative rounded-2xl p-5 cursor-pointer transition-all"
       style={{ background: accentBg, border: `1px solid ${accentBorder}` }}
       onMouseEnter={handleMouseEnter}
