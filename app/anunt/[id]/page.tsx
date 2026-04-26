@@ -450,6 +450,8 @@ export default async function ListingDetailPage({ params }: Props) {
                                 currency={listing.currency || 'EUR'}
                                 sellerPhone={contactPhone}
                                 sellerName={profile?.full_name || 'Vânzător'}
+                                listingId={id}
+                                sellerId={listing.user_id}
                               />
                             )}
                             {contactPhone && <PhoneRevealButton listingId={id} userId={user?.id} />}
