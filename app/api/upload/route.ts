@@ -42,12 +42,15 @@ export async function POST(req: NextRequest) {
 
     const fullBuffer = await sharp(inputBuffer)
       .rotate()
+      .normalize()
+      .sharpen({ sigma: 0.6 })
       .resize({ width: FULL_MAX_WIDTH, withoutEnlargement: true })
       .webp({ quality: FULL_QUALITY })
       .toBuffer()
 
     const thumbBuffer = await sharp(inputBuffer)
       .rotate()
+      .normalize()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
       .webp({ quality: THUMB_QUALITY })
       .toBuffer()

@@ -26,6 +26,7 @@ import BidPanel from '@/components/listings/BidPanel'
 import BidTimer from '@/components/listings/BidTimer'
 import ActivateBiddingButton from '@/components/listings/ActivateBiddingButton'
 import StopBiddingButton from '@/components/listings/StopBiddingButton'
+import PriceVerdictBadge from '@/components/listings/PriceVerdictBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -364,9 +365,19 @@ export default async function ListingDetailPage({ params }: Props) {
               <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 0 24px rgba(139,92,246,0.1)' }}>
                 <p className="text-xs uppercase font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>PREȚ</p>
                 <h2 className="text-4xl font-black mb-1 price-text">{formattedPrice}</h2>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                   {listing.price_type === 'negociabil' ? 'Negociabil' : listing.price_type === 'gratuit' ? 'Ofertă gratuită' : 'Preț fix'}
                 </p>
+                {listing.price && listing.price > 0 && (
+                  <PriceVerdictBadge
+                    title={listing.title}
+                    price={listing.price}
+                    currency={listing.currency || 'RON'}
+                    category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                    city={listing.city || ''}
+                    description={listing.description || ''}
+                  />
+                )}
               </div>
 
               {/* Contact Card */}
