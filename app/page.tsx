@@ -7,6 +7,7 @@ import LiveStats from '@/components/LiveStats'
 import SwipeableRow from '@/components/listings/SwipeableRow'
 import PersonalizedSection from '@/components/listings/PersonalizedSection'
 import Button from '@/components/ui/Button'
+import AIFeaturesSection from '@/components/AIFeaturesSection'
 import type { Metadata } from 'next'
 import { getListings } from '@/lib/queries/listings'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
@@ -214,22 +215,8 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ========== AI FEATURES 3 CARDURI ========== */}
-        <section className="max-w-4xl mx-auto mb-10 md:mb-14">
-          <div className="grid grid-cols-3 gap-3 md:gap-5">
-            {[
-              { icon: '🤖', title: 'AI creează anunțul', text: 'Încarci o poză și AI face tot' },
-              { icon: '📊', title: 'AI Verdict', text: 'Bun, ok sau scump — instant' },
-              { icon: '🔥', title: 'Licitație automată', text: 'Mai mulți cumpărători → preț mai mare' },
-            ].map((f, i) => (
-              <div key={i} className="rounded-2xl p-4 md:p-5 text-center glass glass-hover transition-all">
-                <div className="text-3xl md:text-4xl mb-2">{f.icon}</div>
-                <p className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>{f.title}</p>
-                <p className="text-xs hidden md:block" style={{ color: 'var(--text-secondary)' }}>{f.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* ========== AI FEATURES – toate 7 cu tooltips ========== */}
+        <AIFeaturesSection />
 
         {/* ========== CATEGORIES (existent, funcțional) ========== */}
         <section className="max-w-6xl mx-auto mb-12">
