@@ -162,14 +162,6 @@ export default function AIFeaturesSection() {
             accent="#8B5CF6"
             accentBg="rgba(139,92,246,0.1)"
             accentBorder="rgba(139,92,246,0.35)"
-            steps={[
-              '📸 Faci o poză produsului',
-              '🤖 AI creează titlul, descrierea și prețul',
-              '✨ AI optimizează poza automat',
-              '🔥 Activezi licitația pentru preț mai mare',
-              '📊 AI Verdict îți arată dacă prețul e corect',
-              '🎉 Vinzi mai repede și mai scump',
-            ]}
             tooltip={[
               { icon: '📸', title: 'Faci o poză', text: 'Încarci o singură poză din telefon sau calculator.' },
               { icon: '🤖', title: 'AI face anunțul', text: 'AI-ul generează automat titlu profesional, descriere completă și preț recomandat bazat pe piață. Zero efort din partea ta.' },
@@ -184,14 +176,6 @@ export default function AIFeaturesSection() {
             accent="#3B82F6"
             accentBg="rgba(59,130,246,0.1)"
             accentBorder="rgba(59,130,246,0.35)"
-            steps={[
-              '🎤 Cauți vocal sau în text ce vrei',
-              '🔍 AI caută pe zyAI + OLX + Autovit + eMag',
-              '📊 AI Verdict îți spune dacă prețul e bun',
-              '🤝 AI negociază prețul în locul tău',
-              '🔔 Alertă când apare prețul dorit',
-              '🎉 Cumperi mai ieftin și mai sigur',
-            ]}
             tooltip={[
               { icon: '🎤', title: 'Caută vocal', text: 'Spui ce vrei — „Audi A6 sub 10.000 EUR în Craiova" — și AI înțelege tot: marcă, model, preț, oraș.' },
               { icon: '🔍', title: 'Căutare pe toate platformele', text: 'AI caută simultan pe zyAI, OLX, Autovit, Imobiliare.ro, eMag și alte platforme românești. Toate rezultatele într-un singur loc.' },
@@ -207,14 +191,13 @@ export default function AIFeaturesSection() {
 }
 
 function RoleCard({
-  icon, role, accent, accentBg, accentBorder, steps, tooltip,
+  icon, role, accent, accentBg, accentBorder, tooltip,
 }: {
   icon: string
   role: string
   accent: string
   accentBg: string
   accentBorder: string
-  steps: string[]
   tooltip: { icon: string; title: string; text: string }[]
 }) {
   const [open, setOpen] = useState(false)
@@ -255,24 +238,11 @@ function RoleCard({
       onMouseLeave={handleMouseLeave}
       onClick={() => setOpen(p => !p)}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-3xl">{icon}</span>
-        <div>
-          <p className="font-black text-base" style={{ color: 'var(--text-primary)' }}>{role}</p>
-          <p className="text-xs" style={{ color: accent }}>hover / atinge pentru detalii</p>
-        </div>
+      <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+        <span className="text-5xl">{icon}</span>
+        <p className="font-black text-xl" style={{ color: 'var(--text-primary)' }}>{role}</p>
+        <p className="text-sm" style={{ color: accent }}>atinge pentru a vedea cum te ajută AI</p>
       </div>
-      <ul className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-              style={{ background: accent }}>
-              {i + 1}
-            </span>
-            {s}
-          </li>
-        ))}
-      </ul>
 
       {showTooltip && (
         <div
