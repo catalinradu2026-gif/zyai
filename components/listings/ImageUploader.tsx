@@ -15,6 +15,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
   const [images, setImages] = useState<string[]>(initialImages)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [rotatingIdx, setRotatingIdx] = useState<number | null>(null)
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +109,56 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
     },
     [images, onImagesChange]
   )
+
+  async function rotateImage(url: string, idx: number) {
+    setRotatingIdx(idx)
+    setUploadError('')
+    try {
+      const img = new window.Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+        img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now()
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalHeight
+      canvas.height = img.naturalWidth
+      const ctx = canvas.getContext('2d')!
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate(Math.PI / 2)
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2)
+
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', 0.9)
+      )
+
+      const fd = new FormData()
+      fd.append('file', new File([blob], 'rotated.jpg', { type: 'image/jpeg' }))
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
+
+      // Delete old image
+      if (url.includes('supabase.co')) {
+        await fetch('/api/delete-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: url }),
+        })
+      }
+
+      const updated = images.map((u, i) => i === idx ? data.url : u)
+      setImages(updated)
+      onImagesChange(updated)
+    } catch (err) {
+      console.error('Rotate error:', err)
+      setUploadError('Nu s-a putut roti imaginea. Încearcă din nou.')
+    } finally {
+      setRotatingIdx(null)
+    }
+  }
 
   async function removeImage(url: string) {
     try {
@@ -204,13 +255,29 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
                 height={150}
                 className="w-full h-28 object-cover rounded-lg"
               />
-              <button
-                type="button"
-                onClick={() => removeImage(url)}
-                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg"
-              >
-                <span className="text-white text-xl">🗑️</span>
-              </button>
+              {/* Overlay cu butoane */}
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => rotateImage(url, i)}
+                  disabled={rotatingIdx === i}
+                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
+                  title="Rotește 90°"
+                >
+                  {rotatingIdx === i
+                    ? <span className="text-white text-xs animate-spin inline-block">↻</span>
+                    : <span className="text-white text-lg">↻</span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeImage(url)}
+                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition"
+                  title="Șterge"
+                >
+                  <span className="text-white text-base">🗑️</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
