@@ -381,8 +381,8 @@ export default async function ListingDetailPage({ params }: Props) {
               {/* Favorite */}
               <FavoriteButton listingId={id} userId={user?.id} initialFavorited={listingIsFavorited} showLabel />
 
-              {/* Price Card */}
-              <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 0 24px rgba(139,92,246,0.1)' }}>
+              {/* Price Card — ascuns pe mobil, apare sus sub titlu */}
+              <div className="hidden lg:block rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: '0 0 24px rgba(139,92,246,0.1)' }}>
                 <p className="text-xs uppercase font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>PREȚ</p>
                 <h2 className="text-4xl font-black mb-1 price-text">{formattedPrice}</h2>
                 <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
