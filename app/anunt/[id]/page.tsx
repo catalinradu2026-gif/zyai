@@ -260,9 +260,29 @@ export default async function ListingDetailPage({ params }: Props) {
 
             {/* Title + Meta */}
             <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-              <h1 className="text-2xl md:text-3xl font-bold mb-5" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
                 {listing.title}
               </h1>
+
+              {/* Preț vizibil pe mobil — sidebar-ul e jos pe telefon */}
+              <div className="lg:hidden mb-4 pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <p className="text-3xl font-black price-text">{formattedPrice}</p>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  {listing.price_type === 'negociabil' ? 'Negociabil' : listing.price_type === 'gratuit' ? 'Gratuit' : 'Preț fix'}
+                </p>
+                {listing.price && listing.price > 0 && (
+                  <div className="mt-2">
+                    <PriceVerdictBadge
+                      title={listing.title}
+                      price={listing.price}
+                      currency={listing.currency || 'RON'}
+                      category={CATEGORY_SLUGS_MAP[listing.category_id] || ''}
+                      city={listing.city || ''}
+                      description={listing.description || ''}
+                    />
+                  </div>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 {[
