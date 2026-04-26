@@ -45,6 +45,18 @@ const features = [
     short: 'Te anunță când apare prețul dorit',
     tooltip: 'Setezi un produs și prețul maxim pe care ești dispus să-l plătești. Când apare un anunț nou la acel preț sau mai mic, primești notificare instant. Nu mai trebuie să verifici manual în fiecare zi.',
   },
+  {
+    icon: '⚖️',
+    title: 'AI Comparare anunțuri',
+    short: 'Compară până la 3 anunțuri simultan',
+    tooltip: 'Selectezi până la 3 anunțuri și AI generează un raport complet de comparație cu tabel, scoruri din 10 pentru fiecare produs, pro & contra detaliate și o recomandare clară cu preț de negociere. Nu mai alegi la noroc.',
+  },
+  {
+    icon: '🛡️',
+    title: 'AI Detectare fraudă',
+    short: 'Scor de încredere pentru fiecare anunț',
+    tooltip: 'AI analizează fiecare anunț după semnale de risc: preț prea mic față de piață, descriere suspectă, cont nou, poze generice sau lips ă detalii. Primești un scor de încredere și avertismente clare înainte să trimiți banii.',
+  },
 ]
 
 function FeatureCard({ f }: { f: typeof features[0] }) {

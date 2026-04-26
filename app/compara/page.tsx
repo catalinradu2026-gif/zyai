@@ -2,6 +2,7 @@ import { getListing } from '@/lib/queries/listings'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import AICompareReport from '@/components/compare/AICompareReport'
 
 type Props = {
   searchParams: Promise<{ ids?: string }>
@@ -177,6 +178,21 @@ export default async function ComparePage({ searchParams }: Props) {
             )
           })}
         </div>
+
+        {/* AI Compare Report */}
+        <AICompareReport listings={listings.map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          price: l.price ?? null,
+          currency: l.currency || 'RON',
+          price_type: l.price_type || '',
+          city: l.city || '',
+          description: l.description || '',
+          category: CATEGORY_NAMES[l.category_id] || 'General',
+          source: 'zyAI',
+          url: `https://zyai.ro/anunt/${l.id}`,
+          metadata: l.metadata || {},
+        }))} />
 
       </div>
     </main>
