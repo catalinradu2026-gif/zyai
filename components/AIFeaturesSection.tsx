@@ -133,29 +133,148 @@ export default function AIFeaturesSection() {
         ))}
       </div>
 
-      {/* Cum folosești zyAI */}
-      <div className="rounded-2xl p-6 md:p-8" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-        <h3 className="text-lg md:text-xl font-black mb-6 text-center" style={{ color: 'var(--text-primary)' }}>
+      {/* Cum folosești zyAI — 2 carduri cu tooltip */}
+      <div>
+        <h3 className="text-lg md:text-xl font-black mb-5 text-center" style={{ color: 'var(--text-primary)' }}>
           Cum folosești zyAI
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { step: '1', icon: '📸', text: 'Faci o poză sau cauți vocal ce vrei' },
-            { step: '2', icon: '🤖', text: 'AI generează anunțul sau găsește ofertele' },
-            { step: '3', icon: '👆', text: 'Alegi oferta potrivită cu ajutorul AI' },
-            { step: '4', icon: '🎉', text: 'Vinzi sau cumperi mai inteligent' },
-          ].map(s => (
-            <div key={s.step} className="flex flex-col items-center text-center gap-2">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm text-white flex-shrink-0"
-                style={{ background: 'var(--gradient-main)' }}>
-                {s.step}
-              </div>
-              <span className="text-2xl">{s.icon}</span>
-              <p className="text-xs md:text-sm leading-snug" style={{ color: 'var(--text-secondary)' }}>{s.text}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <RoleCard
+            icon="🏷️"
+            role="Vânzător"
+            accent="#8B5CF6"
+            accentBg="rgba(139,92,246,0.1)"
+            accentBorder="rgba(139,92,246,0.35)"
+            steps={[
+              '📸 Faci o poză produsului',
+              '🤖 AI creează titlul, descrierea și prețul',
+              '✨ AI optimizează poza automat',
+              '🔥 Activezi licitația pentru preț mai mare',
+              '📊 AI Verdict îți arată dacă prețul e corect',
+              '🎉 Vinzi mai repede și mai scump',
+            ]}
+            tooltip={[
+              { icon: '📸', title: 'Faci o poză', text: 'Încarci o singură poză din telefon sau calculator.' },
+              { icon: '🤖', title: 'AI face anunțul', text: 'AI-ul generează automat titlu profesional, descriere completă și preț recomandat bazat pe piață. Zero efort din partea ta.' },
+              { icon: '✨', title: 'Poze mai frumoase', text: 'AI îmbunătățește luminozitatea, contrastul și claritatea pozelor tale. Produsul arată mai atractiv în rezultate.' },
+              { icon: '🔥', title: 'Licitație automată', text: 'Activezi licitația cu un click. Cumpărătorii concurează între ei, prețul crește automat — tu vinzi mai scump fără să negociezi.' },
+              { icon: '📊', title: 'AI Verdict preț', text: 'AI compară prețul tău cu sute de anunțuri similare și îți spune dacă ești competitiv sau poți cere mai mult.' },
+            ]}
+          />
+          <RoleCard
+            icon="🛒"
+            role="Cumpărător"
+            accent="#3B82F6"
+            accentBg="rgba(59,130,246,0.1)"
+            accentBorder="rgba(59,130,246,0.35)"
+            steps={[
+              '🎤 Cauți vocal sau în text ce vrei',
+              '🔍 AI caută pe zyAI + OLX + Autovit + eMag',
+              '📊 AI Verdict îți spune dacă prețul e bun',
+              '🤝 AI negociază prețul în locul tău',
+              '🔔 Alertă când apare prețul dorit',
+              '🎉 Cumperi mai ieftin și mai sigur',
+            ]}
+            tooltip={[
+              { icon: '🎤', title: 'Caută vocal', text: 'Spui ce vrei — „Audi A6 sub 10.000 EUR în Craiova" — și AI înțelege tot: marcă, model, preț, oraș.' },
+              { icon: '🔍', title: 'Căutare pe toate platformele', text: 'AI caută simultan pe zyAI, OLX, Autovit, Imobiliare.ro, eMag și alte platforme românești. Toate rezultatele într-un singur loc.' },
+              { icon: '📊', title: 'AI Verdict', text: 'La fiecare anunț văd dacă prețul e ieftin, corect sau scump față de piață. Iei decizii informate, nu ghicite.' },
+              { icon: '🤝', title: 'AI negociază pentru tine', text: 'Îi spui bugetul maxim și AI trimite oferte progresive vânzătorului. Obții prețul cel mai mic posibil fără stres.' },
+              { icon: '🔔', title: 'Alertă preț', text: 'Setezi produsul și prețul dorit. Când apare un anunț nou la acel preț sau mai mic, primești notificare instant.' },
+            ]}
+          />
         </div>
       </div>
     </section>
+  )
+}
+
+function RoleCard({
+  icon, role, accent, accentBg, accentBorder, steps, tooltip,
+}: {
+  icon: string
+  role: string
+  accent: string
+  accentBg: string
+  accentBorder: string
+  steps: string[]
+  tooltip: { icon: string; title: string; text: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showTooltip = open || hovered
+
+  function handleMouseEnter() {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setHovered(true)
+  }
+  function handleMouseLeave() {
+    timerRef.current = setTimeout(() => setHovered(false), 200)
+  }
+
+  return (
+    <div
+      className="relative rounded-2xl p-5 cursor-pointer transition-all"
+      style={{ background: accentBg, border: `1px solid ${accentBorder}` }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => setOpen(p => !p)}
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-3xl">{icon}</span>
+        <div>
+          <p className="font-black text-base" style={{ color: 'var(--text-primary)' }}>{role}</p>
+          <p className="text-xs" style={{ color: accent }}>hover / atinge pentru detalii</p>
+        </div>
+      </div>
+      <ul className="space-y-2">
+        {steps.map((s, i) => (
+          <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+              style={{ background: accent }}>
+              {i + 1}
+            </span>
+            {s}
+          </li>
+        ))}
+      </ul>
+
+      {showTooltip && (
+        <div
+          className="absolute z-50 left-0 right-0 sm:left-1/2 sm:-translate-x-1/2 sm:w-80 bottom-[calc(100%+12px)] rounded-2xl p-5 shadow-2xl"
+          style={{
+            background: 'var(--bg-card)',
+            border: `1px solid ${accentBorder}`,
+            boxShadow: `0 0 32px ${accentBg}`,
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <p className="font-black text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            {icon} Cum funcționează — {role}
+          </p>
+          <div className="space-y-3">
+            {tooltip.map((t, i) => (
+              <div key={i} className="flex gap-3">
+                <span className="text-lg flex-shrink-0">{t.icon}</span>
+                <div>
+                  <p className="font-semibold text-xs mb-0.5" style={{ color: accent }}>{t.title}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{t.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-full w-3 h-3 rotate-45"
+            style={{
+              background: 'var(--bg-card)',
+              borderRight: `1px solid ${accentBorder}`,
+              borderBottom: `1px solid ${accentBorder}`,
+              marginTop: '-6px',
+            }}
+          />
+        </div>
+      )}
+    </div>
   )
 }
