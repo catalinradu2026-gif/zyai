@@ -43,11 +43,18 @@ function getPlatformFromUrl(url: string): { name: string; emoji: string } {
   }
 }
 
-function getSiteList(categoryId: number | null): string {
+function getSiteList(categoryId: number | null, hasPrice: boolean): string {
   if (categoryId === 3) {
+    // Cu preț — caută direct în anunțuri individuale pe autovit
+    if (hasPrice) {
+      return 'site:autovit.ro/autoturisme/anunt OR site:olx.ro/d/oferta OR site:autoscout24.ro/lst OR site:publi24.ro/anunturi/auto'
+    }
     return 'site:autovit.ro OR site:olx.ro OR site:autoscout24.ro OR site:publi24.ro OR site:autouncle.ro'
   }
   if (categoryId === 2) {
+    if (hasPrice) {
+      return 'site:imobiliare.ro/vanzare OR site:storia.ro/ro/rezultate OR site:olx.ro/d/oferta OR site:publi24.ro/anunturi/imobiliare'
+    }
     return 'site:imobiliare.ro OR site:storia.ro OR site:olx.ro OR site:publi24.ro OR site:anuntul.ro'
   }
   if (categoryId === 5) {
@@ -64,9 +71,176 @@ function buildSearchQuery(filters: any, rawQuery: string): string {
   if (filters.laptopBrand) parts.push(filters.laptopBrand)
   if (parts.length === 0 && filters.keyword) parts.push(filters.keyword)
   if (parts.length === 0) parts.push(rawQuery)
-  if (filters.maxPrice) parts.push(`sub ${filters.maxPrice}`)
+  // Nu adăugăm prețul în query — Google nu filtrează după el, confuzie
   if (filters.city) parts.push(filters.city)
   return parts.join(' ')
+}
+
+// Generează linkuri directe cu filtre de preț pentru fiecare platformă
+function buildPriceFilteredLinks(filters: any): AIListing[] {
+  const { brand, model, minPrice, maxPrice, categoryId } = filters
+  if (!minPrice && !maxPrice) return []
+
+  const BRAND_SLUGS: Record<string, string> = {
+    'BMW': 'bmw', 'Audi': 'audi', 'Dacia': 'dacia', 'Volkswagen': 'volkswagen',
+    'Mercedes': 'mercedes-benz', 'Ford': 'ford', 'Toyota': 'toyota', 'Opel': 'opel',
+    'Renault': 'renault', 'Skoda': 'skoda', 'Seat': 'seat', 'Hyundai': 'hyundai',
+    'Kia': 'kia', 'Peugeot': 'peugeot', 'Fiat': 'fiat', 'Nissan': 'nissan',
+  }
+
+  const results: AIListing[] = []
+  const brandSlug = brand ? (BRAND_SLUGS[brand] || brand.toLowerCase()) : ''
+  const modelSlug = model ? model.toLowerCase().replace(/\s+/g, '-') : ''
+  const priceLabel = minPrice && maxPrice
+    ? `${minPrice.toLocaleString('ro-RO')}–${maxPrice.toLocaleString('ro-RO')} EUR`
+    : maxPrice ? `sub ${maxPrice.toLocaleString('ro-RO')} EUR`
+    : `de la ${minPrice?.toLocaleString('ro-RO')} EUR`
+
+  if (categoryId === 3) {
+    // Autovit cu preț
+    let autovitUrl = `https://www.autovit.ro/autoturisme`
+    if (brandSlug) autovitUrl += `/${brandSlug}`
+    if (modelSlug) autovitUrl += `/${modelSlug.replace(/-/g, '_')}`
+    const av = new URLSearchParams()
+    if (minPrice) { av.set('search[filter_float_price:from]', String(minPrice)); av.set('search[filter_enum_currency]', 'EUR') }
+    if (maxPrice) { av.set('search[filter_float_price:to]', String(maxPrice)); av.set('search[filter_enum_currency]', 'EUR') }
+    results.push({
+      id: `direct-autovit-${Date.now()}`,
+      title: `${brand || ''} ${model || ''} — filtre preț ${priceLabel}`.trim(),
+      price: priceLabel,
+      platform: 'Autovit.ro',
+      platformEmoji: '🚗',
+      url: autovitUrl + (av.toString() ? '?' + av : ''),
+      specs: ['Filtrat după preț', 'Toate rezultatele', 'Sortare: relevanță'],
+      matchScore: 99,
+      aiReason: `Caută direct cu filtru ${priceLabel}`,
+      location: filters.city || 'România',
+    })
+
+    // OLX cu preț
+    const olxQ = [brand, model].filter(Boolean).join(' ')
+    const olxP = new URLSearchParams()
+    if (olxQ) olxP.set('q', olxQ)
+    if (minPrice) olxP.set('search[filter_float_price:from]', String(minPrice))
+    if (maxPrice) olxP.set('search[filter_float_price:to]', String(maxPrice))
+    results.push({
+      id: `direct-olx-${Date.now()}`,
+      title: `${brand || ''} ${model || ''} pe OLX — ${priceLabel}`.trim(),
+      price: priceLabel,
+      platform: 'OLX.ro',
+      platformEmoji: '🟠',
+      url: `https://www.olx.ro/auto-masini-moto-ambarcatiuni/autoturisme/` + (olxP.toString() ? '?' + olxP : ''),
+      specs: ['Filtrat după preț', 'Anunțuri particulari', 'Fără comision'],
+      matchScore: 97,
+      aiReason: `Filtru exact ${priceLabel} aplicat`,
+      location: filters.city || 'România',
+    })
+  }
+
+  if (categoryId === 2) {
+    const { subcategory, nrCamere, city } = filters
+    const CITY_SLUGS: Record<string, string> = {
+      'București': 'bucuresti', 'Craiova': 'craiova', 'Cluj-Napoca': 'cluj-napoca',
+      'Timișoara': 'timisoara', 'Iași': 'iasi', 'Brașov': 'brasov',
+      'Constanța': 'constanta', 'Galați': 'galati', 'Ploiești': 'ploiesti', 'Oradea': 'oradea',
+    }
+    const citySlug = city ? (CITY_SLUGS[city] || city.toLowerCase().replace(/[^a-z0-9]/g, '-')) : 'romania'
+    const action = subcategory === 'cazare' ? 'inchiriere' : 'vanzare'
+    const type = subcategory === 'case' ? 'case' : nrCamere === '1' ? 'garsoniere' : 'apartamente'
+    const camereLabel = nrCamere === '1' ? 'garsonieră' : nrCamere ? `${nrCamere} camere` : ''
+    const titleBase = [camereLabel, city].filter(Boolean).join(' în ')
+
+    const imobP = new URLSearchParams()
+    if (nrCamere && nrCamere !== '1') imobP.set('camere', nrCamere === '4+' ? '4' : nrCamere)
+    if (maxPrice) imobP.set('pret_max', String(maxPrice))
+    if (minPrice) imobP.set('pret_min', String(minPrice))
+    results.push({
+      id: `direct-imobiliare-${Date.now()}`,
+      title: `${titleBase || 'Imobil'} — filtrat ${priceLabel}`,
+      price: priceLabel,
+      platform: 'Imobiliare.ro',
+      platformEmoji: '🏠',
+      url: `https://www.imobiliare.ro/${action}-${type}/${citySlug}/` + (imobP.toString() ? '?' + imobP : ''),
+      specs: [camereLabel || type, city || 'România', 'Filtrat după preț'].filter(Boolean),
+      matchScore: 99,
+      aiReason: `Filtru exact aplicat — ${priceLabel}`,
+      location: city || 'România',
+    })
+
+    results.push({
+      id: `direct-storia-${Date.now()}`,
+      title: `${titleBase || 'Apartament'} pe Storia — ${priceLabel}`,
+      price: priceLabel,
+      platform: 'Storia.ro',
+      platformEmoji: '🏡',
+      url: `https://www.storia.ro/ro/rezultate/${action}/${type === 'case' ? 'casa' : type === 'garsoniere' ? 'garsoniera' : 'apartament'}/${citySlug}`,
+      specs: [camereLabel || type, city || 'România', 'Poze HD + tur virtual'].filter(Boolean),
+      matchScore: 96,
+      aiReason: 'Căutare directă cu filtre aplicate',
+      location: city || 'România',
+    })
+  }
+
+  // Electronice (categoryId 5) sau general
+  if (categoryId === 5 || (!categoryId && (filters.telefonBrand || filters.laptopBrand || filters.keyword))) {
+    const q = encodeURIComponent([filters.telefonBrand, filters.laptopBrand, filters.keyword, brand, model].filter(Boolean).join(' '))
+    const olxP = new URLSearchParams()
+    if (q) olxP.set('q', decodeURIComponent(q))
+    if (minPrice) olxP.set('search[filter_float_price:from]', String(minPrice))
+    if (maxPrice) olxP.set('search[filter_float_price:to]', String(maxPrice))
+    results.push({
+      id: `direct-olx-el-${Date.now()}`,
+      title: `${filters.telefonBrand || filters.laptopBrand || filters.keyword || 'Electronice'} — ${priceLabel}`,
+      price: priceLabel,
+      platform: 'OLX.ro',
+      platformEmoji: '🟠',
+      url: `https://www.olx.ro/electronice-electrocasnice/` + (olxP.toString() ? '?' + olxP : ''),
+      specs: ['Filtrat după preț', 'Nou și second-hand', 'Toată România'],
+      matchScore: 96,
+      aiReason: `Filtru ${priceLabel} aplicat pe OLX`,
+      location: filters.city || 'România',
+    })
+
+    const emagQ = encodeURIComponent([filters.telefonBrand, filters.laptopBrand, filters.keyword].filter(Boolean).join(' '))
+    const emagP = new URLSearchParams()
+    if (maxPrice) emagP.set('price_filter_max', String(maxPrice))
+    if (minPrice) emagP.set('price_filter_min', String(minPrice))
+    results.push({
+      id: `direct-emag-${Date.now()}`,
+      title: `${filters.telefonBrand || filters.laptopBrand || 'Electronice'} pe eMag — ${priceLabel}`,
+      price: priceLabel,
+      platform: 'eMag.ro',
+      platformEmoji: '🛍️',
+      url: `https://www.emag.ro/search/${emagQ}` + (emagP.toString() ? '?' + emagP : ''),
+      specs: ['Produse noi', 'Garanție oficială', 'Livrare rapidă'],
+      matchScore: 94,
+      aiReason: 'Produse noi cu garanție la preț filtrat',
+      location: 'România',
+    })
+  }
+
+  // General / Servicii
+  if (!categoryId || categoryId === 4) {
+    const q = encodeURIComponent(filters.keyword || brand || '')
+    const olxP = new URLSearchParams()
+    if (q) olxP.set('q', decodeURIComponent(q))
+    if (minPrice) olxP.set('search[filter_float_price:from]', String(minPrice))
+    if (maxPrice) olxP.set('search[filter_float_price:to]', String(maxPrice))
+    results.push({
+      id: `direct-olx-gen-${Date.now()}`,
+      title: `${filters.keyword || 'Căutare'} — ${priceLabel}`,
+      price: priceLabel,
+      platform: 'OLX.ro',
+      platformEmoji: '🟠',
+      url: `https://www.olx.ro/oferte/` + (olxP.toString() ? '?' + olxP : ''),
+      specs: ['Filtrat după preț', 'Toată România'],
+      matchScore: 95,
+      aiReason: `Filtru ${priceLabel} pe OLX`,
+      location: filters.city || 'România',
+    })
+  }
+
+  return results
 }
 
 // ── AGENT 1: Google Search via Serper.dev ──
@@ -198,7 +372,8 @@ export async function POST(req: Request) {
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
     const searchQuery = buildSearchQuery(filters, query)
-    const siteFilter = getSiteList(filters.categoryId)
+    const hasPrice = !!(filters.minPrice || filters.maxPrice)
+    const siteFilter = getSiteList(filters.categoryId, hasPrice)
     const page = batch + 1
 
     // ── Agent 1: Google Search real ──
@@ -212,6 +387,9 @@ export async function POST(req: Request) {
         message: 'Nu am găsit rezultate. Încearcă o căutare diferită.',
       })
     }
+
+    // Linkuri directe cu filtre de preț (puse primele)
+    const priceLinks = buildPriceFilteredLinks(filters)
 
     // ── Agent 2: Groq structurează datele reale (cu fallback direct) ──
     let enriched: AIListing[]
@@ -236,7 +414,9 @@ export async function POST(req: Request) {
       })
     }
 
-    return Response.json({ results: enriched, batch, query, total: rawResults.length })
+    // Combină: linkuri cu preț filtrat (primele) + rezultate Serper îmbogățite
+    const combined = [...priceLinks, ...enriched].slice(0, 10)
+    return Response.json({ results: combined, batch, query, total: combined.length })
   } catch (e: any) {
     console.error('external-search error:', e)
     return Response.json({ error: 'Failed', results: [] }, { status: 500 })
