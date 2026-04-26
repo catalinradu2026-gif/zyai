@@ -27,23 +27,53 @@ export default function CompareBar() {
         borderTop: '1px solid rgba(139,92,246,0.4)',
         backdropFilter: 'blur(12px)',
         boxShadow: '0 -4px 30px rgba(139,92,246,0.2)',
-        padding: '12px 16px',
+        padding: '10px 12px',
       }}
     >
-      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-        {/* Label */}
-        <div style={{ flexShrink: 0 }}>
+        {/* Row 1: label + buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <p style={{ color: '#A78BFA', fontWeight: 700, fontSize: '13px', margin: 0 }}>
-            ⚖️ Comparare
+            ⚖️ Comparare <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{count}/3</span>
           </p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '11px', margin: 0 }}>
-            {count}/3 produse
-          </p>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={clear}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              Golește
+            </button>
+            <button
+              onClick={goCompare}
+              disabled={count < 2}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: count >= 2 ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)' : 'rgba(255,255,255,0.05)',
+                border: 'none',
+                color: count >= 2 ? '#fff' : 'var(--text-secondary)',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: count >= 2 ? 'pointer' : 'default',
+                boxShadow: count >= 2 ? '0 0 20px rgba(139,92,246,0.4)' : 'none',
+              }}
+            >
+              ⚖️ Compară {count >= 2 ? `(${count})` : ''}
+            </button>
+          </div>
         </div>
 
-        {/* Slots */}
-        <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
+        {/* Row 2: slots */}
+        <div style={{ display: 'flex', gap: '6px' }}>
           {slots.map(i => {
             const item = items[i]
             return (
@@ -51,7 +81,7 @@ export default function CompareBar() {
                 key={i}
                 style={{
                   flex: 1,
-                  height: '52px',
+                  height: '44px',
                   borderRadius: '10px',
                   border: item
                     ? '1px solid rgba(139,92,246,0.5)'
@@ -59,7 +89,7 @@ export default function CompareBar() {
                   background: item ? 'rgba(139,92,246,0.1)' : 'rgba(255,255,255,0.03)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '6px',
                   padding: '0 8px',
                   overflow: 'hidden',
                   position: 'relative',
@@ -68,28 +98,23 @@ export default function CompareBar() {
                 {item ? (
                   <>
                     {item.image && (
-                      <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
-                        <Image src={item.image} alt={item.title} fill sizes="36px" style={{ objectFit: 'cover' }} />
+                      <div style={{ width: '28px', height: '28px', flexShrink: 0, borderRadius: '5px', overflow: 'hidden', position: 'relative' }}>
+                        <Image src={item.image} alt={item.title} fill sizes="28px" style={{ objectFit: 'cover' }} />
                       </div>
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: 'var(--text-primary)', fontSize: '11px', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.title}
-                      </p>
-                      <p style={{ color: '#4ADE80', fontSize: '11px', margin: 0, fontWeight: 700 }}>
-                        {item.price ? `${item.price.toLocaleString('ro-RO')} ${item.currency}` : item.priceType}
-                      </p>
-                    </div>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '11px', fontWeight: 600, margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.title}
+                    </p>
                     <button
                       onClick={() => remove(item.id)}
                       style={{
                         flexShrink: 0,
-                        width: '18px', height: '18px',
+                        width: '16px', height: '16px',
                         borderRadius: '50%',
                         background: 'rgba(239,68,68,0.3)',
                         border: 'none',
                         color: '#fca5a5',
-                        fontSize: '11px',
+                        fontSize: '10px',
                         cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
@@ -105,41 +130,6 @@ export default function CompareBar() {
               </div>
             )
           })}
-        </div>
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-          <button
-            onClick={clear}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-subtle)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            Golește
-          </button>
-          <button
-            onClick={goCompare}
-            disabled={count < 2}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              background: count >= 2 ? 'linear-gradient(135deg,#8B5CF6,#3B82F6)' : 'rgba(255,255,255,0.05)',
-              border: 'none',
-              color: count >= 2 ? '#fff' : 'var(--text-secondary)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: count >= 2 ? 'pointer' : 'default',
-              boxShadow: count >= 2 ? '0 0 20px rgba(139,92,246,0.4)' : 'none',
-            }}
-          >
-            ⚖️ Compară {count >= 2 ? `(${count})` : ''}
-          </button>
         </div>
 
       </div>
