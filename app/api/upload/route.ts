@@ -41,11 +41,13 @@ export async function POST(req: NextRequest) {
     const uid = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
     const fullBuffer = await sharp(inputBuffer)
+      .rotate()
       .resize({ width: FULL_MAX_WIDTH, withoutEnlargement: true })
       .webp({ quality: FULL_QUALITY })
       .toBuffer()
 
     const thumbBuffer = await sharp(inputBuffer)
+      .rotate()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
       .webp({ quality: THUMB_QUALITY })
       .toBuffer()
