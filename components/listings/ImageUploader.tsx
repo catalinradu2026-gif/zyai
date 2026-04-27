@@ -227,13 +227,15 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
 
       setProStatus('Se elimină fundalul...')
 
-      // Descarcă imaginea originală ca blob
-      const imgRes = await fetch(url)
+      // Proxy imaginea prin server pentru a evita CORS din worker
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+      const imgRes = await fetch(proxyUrl)
       const imgBlob = await imgRes.blob()
 
-      // Elimină fundalul (rulează în browser via WASM)
+      // Elimină fundalul — publicPath spre CDN ca să găsească fișierele WASM
       const transparentBlob = await removeBackground(imgBlob, {
         output: { format: 'image/png', quality: 0.9 },
+        publicPath: 'https://unpkg.com/@imgly/background-removal@1.7.0/dist/',
       })
 
       setProStatus('Se aplică fundalul profesional...')
