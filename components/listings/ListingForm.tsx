@@ -1587,7 +1587,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                   </div>
                 )}
 
-                {/* Descriere — imediat după titlu */}
+                {/* Descriere — sus de tot */}
                 {mainCat && (
                   <div>
                     {lbl('Descriere detaliată', true)}
@@ -1598,13 +1598,68 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                   </div>
                 )}
 
-                {/* Câmpuri specifice categoriei */}
-                {mainCat && (
-                  <div className="rounded-xl p-4" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                    <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>
-                      {MAIN_CATS.find(c => c.slug === mainCat)?.icon} {subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name} — detalii
-                    </h3>
-                    {renderStep2Fields()}
+                {/* AI Price Suggestion — imediat sub descriere */}
+                {mainCat && mainCat !== 'joburi' && mainCat !== 'imobiliare' && title && (
+                  <div>
+                    {!aiPrice && !aiPriceLoading && (
+                      <button type="button" onClick={suggestPrice}
+                        className="w-full py-2.5 rounded-xl font-semibold text-sm transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                        style={{ background: 'rgba(139,92,246,0.1)', border: '1px dashed rgba(139,92,246,0.5)', color: '#A78BFA' }}>
+                        🤖 Generează preț AI
+                      </button>
+                    )}
+                    {aiPriceLoading && (
+                      <div className="py-3 text-center rounded-xl" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                        <span style={{ color: '#A78BFA', fontSize: '13px' }}>⏳ zyAI calculează prețul corect pentru piața română...</span>
+                      </div>
+                    )}
+                    {aiPrice && (
+                      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(139,92,246,0.4)', boxShadow: '0 0 20px rgba(139,92,246,0.1)' }}>
+                        <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>
+                          <span className="text-white text-base">💡</span>
+                          <span className="text-white font-bold text-sm">Sugestie preț — piața română 2025</span>
+                        </div>
+                        <div className="p-4 space-y-3" style={{ background: 'var(--bg-card)' }}>
+                          <div className="flex items-center justify-between">
+                            <div className="text-center">
+                              <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Minim</p>
+                              <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.min} {aiPrice.currency}</p>
+                            </div>
+                            <div className="text-center px-4 py-2 rounded-xl" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)' }}>
+                              <p className="text-xs mb-1" style={{ color: '#A78BFA' }}>Preț recomandat</p>
+                              <p className="text-2xl font-black price-text">{aiPrice.suggested} {aiPrice.currency}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Maxim</p>
+                              <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.max} {aiPrice.currency}</p>
+                            </div>
+                          </div>
+                          <p className="text-xs italic text-center" style={{ color: 'var(--text-secondary)' }}>💬 {aiPrice.reasoning}</p>
+                          {aiPrice.tips?.length > 0 && (
+                            <div className="space-y-1.5">
+                              {aiPrice.tips.map((tip, i) => (
+                                <p key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+                                  <span style={{ color: '#4ADE80' }}>✓</span> {tip}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2 pt-1">
+                            <button type="button"
+                              onClick={() => { setPrice(String(aiPrice.suggested)); setCurrency(aiPrice.currency) }}
+                              className="flex-1 py-2 rounded-lg text-xs font-bold text-white transition hover:scale-105"
+                              style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
+                              ✓ Folosește {aiPrice.suggested} {aiPrice.currency}
+                            </button>
+                            <button type="button" onClick={() => setAiPrice(null)}
+                              className="px-3 py-2 rounded-lg text-xs transition"
+                              style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}>
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1637,71 +1692,16 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                         </select>
                       </div>
                     </div>
+                  </div>
+                )}
 
-                    {/* AI Price Suggestion */}
-                    {mainCat !== 'joburi' && mainCat !== 'imobiliare' && title && (
-                      <div>
-                        {!aiPrice && !aiPriceLoading && (
-                          <button type="button" onClick={suggestPrice}
-                            className="w-full py-2.5 rounded-xl font-semibold text-sm transition hover:scale-[1.02] flex items-center justify-center gap-2"
-                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px dashed rgba(139,92,246,0.5)', color: '#A78BFA' }}>
-                            🤖 Sugerează preț corect cu AI
-                          </button>
-                        )}
-                        {aiPriceLoading && (
-                          <div className="py-3 text-center rounded-xl" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                            <span style={{ color: '#A78BFA', fontSize: '13px' }}>⏳ zyAI calculează prețul corect pentru piața română...</span>
-                          </div>
-                        )}
-                        {aiPrice && (
-                          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(139,92,246,0.4)', boxShadow: '0 0 20px rgba(139,92,246,0.1)' }}>
-                            <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)' }}>
-                              <span className="text-white text-base">💡</span>
-                              <span className="text-white font-bold text-sm">Sugestie preț — piața română 2025</span>
-                            </div>
-                            <div className="p-4 space-y-3" style={{ background: 'var(--bg-card)' }}>
-                              <div className="flex items-center justify-between">
-                                <div className="text-center">
-                                  <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Minim</p>
-                                  <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.min} {aiPrice.currency}</p>
-                                </div>
-                                <div className="text-center px-4 py-2 rounded-xl" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)' }}>
-                                  <p className="text-xs mb-1" style={{ color: '#A78BFA' }}>Preț recomandat</p>
-                                  <p className="text-2xl font-black price-text">{aiPrice.suggested} {aiPrice.currency}</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Maxim</p>
-                                  <p className="text-lg font-black" style={{ color: '#60A5FA' }}>{aiPrice.max} {aiPrice.currency}</p>
-                                </div>
-                              </div>
-                              <p className="text-xs italic text-center" style={{ color: 'var(--text-secondary)' }}>💬 {aiPrice.reasoning}</p>
-                              {aiPrice.tips?.length > 0 && (
-                                <div className="space-y-1.5">
-                                  {aiPrice.tips.map((tip, i) => (
-                                    <p key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                                      <span style={{ color: '#4ADE80' }}>✓</span> {tip}
-                                    </p>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="flex gap-2 pt-1">
-                                <button type="button"
-                                  onClick={() => { setPrice(String(aiPrice.suggested)); setCurrency(aiPrice.currency) }}
-                                  className="flex-1 py-2 rounded-lg text-xs font-bold text-white transition hover:scale-105"
-                                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
-                                  ✓ Folosește {aiPrice.suggested} {aiPrice.currency}
-                                </button>
-                                <button type="button" onClick={() => setAiPrice(null)}
-                                  className="px-3 py-2 rounded-lg text-xs transition"
-                                  style={{ border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-input)' }}>
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                {/* Câmpuri specifice categoriei — jos, după scroll */}
+                {mainCat && (
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                    <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>
+                      {MAIN_CATS.find(c => c.slug === mainCat)?.icon} {subs.find(s => s.slug === subCat)?.name || MAIN_CATS.find(c => c.slug === mainCat)?.name} — detalii extra
+                    </h3>
+                    {renderStep2Fields()}
                   </div>
                 )}
 
