@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
       'https://unpkg.com',
       'https://staticimgly.com',
       'https://*.staticimgly.com',
+      'https://rembg-service-fqko.onrender.com',
       r2Pattern,
     ].filter(Boolean).join(' ')
 
