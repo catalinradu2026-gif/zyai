@@ -5,6 +5,7 @@ const r2Host = r2PublicUrl ? (() => { try { return new URL(r2PublicUrl).hostname
 const r2Pattern = r2Host ? `https://${r2Host}` : ''
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['sharp', '@gradio/client', '@huggingface/inference'],
   images: {
     remotePatterns: [
       {

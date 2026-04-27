@@ -20,6 +20,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
   const [rotatingIdx, setRotatingIdx] = useState<number | null>(null)
   const [proIdx, setProIdx] = useState<number | null>(null)
   const [proStatus, setProStatus] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,6 +179,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
   }
 
   async function professionalizeImage(url: string, idx: number) {
+    console.log('[Pro] start', { url, idx, category })
     setProIdx(idx)
     setUploadError('')
     setProStatus('Se procesează...')
@@ -188,15 +190,20 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         body: JSON.stringify({ imageUrl: url, category: category || 'general' }),
       })
       const data = await res.json()
+      console.log('[Pro] response', res.status, data)
       if (!res.ok || data.error) throw new Error(data.error || 'Server error')
 
       deleteStoredImage(url)
-      const updated = images.map((u, i) => i === idx ? data.url : u)
+      const newUrl = data.url + '?t=' + Date.now()
+      const updated = images.map((u, i) => i === idx ? newUrl : u)
       setImages(updated)
       onImagesChange(updated)
+      setSuccessMsg('✅ Imagine procesată Pro!')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      console.log('[Pro] done, new url:', data.url)
     } catch (err: any) {
-      console.error('Pro error:', err)
-      setUploadError('Eroare: ' + (err.message || 'necunoscută'))
+      console.error('[Pro] error:', err)
+      setUploadError('❌ Pro eroare: ' + (err.message || 'necunoscută'))
     } finally {
       setProIdx(null)
       setProStatus('')
@@ -272,7 +279,10 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       </div>
 
       {uploadError && (
-        <p className="text-sm font-semibold" style={{ color: '#f87171' }}>❌ {uploadError}</p>
+        <p className="text-sm font-semibold" style={{ color: '#f87171' }}>{uploadError}</p>
+      )}
+      {successMsg && (
+        <p className="text-sm font-semibold" style={{ color: '#4ade80' }}>{successMsg}</p>
       )}
 
       {images.length > 0 && (
@@ -286,13 +296,20 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
                     Principală
                   </span>
                 )}
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={url}
                   alt={`imagine ${i + 1}`}
-                  width={200}
-                  height={150}
                   className="w-full h-28 object-cover rounded-lg"
                 />
+                {/* Overlay Pro processing */}
+                {proIdx === i && (
+                  <div className="absolute inset-0 rounded-lg flex flex-col items-center justify-center gap-1"
+                    style={{ background: 'rgba(139,92,246,0.75)' }}>
+                    <span className="text-white text-2xl animate-spin inline-block">✦</span>
+                    <span className="text-white text-xs font-bold">Se procesează...</span>
+                  </div>
+                )}
                 {/* Overlay hover: rotire + ștergere */}
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition rounded-lg">
                   <button
@@ -321,7 +338,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
               {/* Buton Prezintă Pro — mereu vizibil sub imagine */}
               <button
                 type="button"
-                onClick={() => professionalizeImage(url, i)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); professionalizeImage(url, i) }}
                 disabled={proIdx !== null}
                 className="w-full py-1.5 rounded-lg text-xs font-bold transition"
                 style={{

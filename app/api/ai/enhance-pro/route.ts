@@ -5,45 +5,75 @@ import { isR2Configured, uploadToR2 } from '@/lib/r2'
 
 export const maxDuration = 60
 
+const REMBG_URL = process.env.REMBG_SERVICE_URL || 'http://localhost:8002'
+
 export async function POST(req: Request) {
   try {
     const { imageUrl, category } = await req.json()
     if (!imageUrl) return NextResponse.json({ error: 'imageUrl required' }, { status: 400 })
 
-    const imgRes = await fetch(imageUrl)
-    if (!imgRes.ok) return NextResponse.json({ error: 'Cannot fetch image' }, { status: 400 })
-    const inputBuffer = Buffer.from(await imgRes.arrayBuffer())
+    // ── Elimină fundalul via serviciul local rembg ────────────────
+    const rbRes = await fetch(`${REMBG_URL}/remove-bg`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_url: imageUrl }),
+    })
 
-    const meta = await sharp(inputBuffer).metadata()
-    const w = meta.width || 900
-    const h = meta.height || 900
+    if (!rbRes.ok) {
+      const err = await rbRes.json().catch(() => ({ error: 'rembg error' }))
+      throw new Error(err.error || `rembg error ${rbRes.status}`)
+    }
+
+    const noBgBuffer = Buffer.from(await rbRes.arrayBuffer())
+
+    const subjectMeta = await sharp(noBgBuffer).metadata()
+    const sw = subjectMeta.width || 900
+    const sh = subjectMeta.height || 900
+
     const isAuto = (category || '').toLowerCase() === 'auto'
 
-    // ── Fundal profesional generat cu SVG ──────────────────────────
-    const floorY = Math.round(h * 0.67)
+    // ── Fundal profesional SVG ─────────────────────────────────────
+    const floorY = Math.round(sh * 0.67)
+    const podiumY = Math.round(sh * 0.72)
+    const podiumW = Math.round(sw * 0.7)
+    const podiumH = Math.round(sh * 0.06)
+    const fontSize = Math.round(sh * 0.028)
+
     const bgSvg = isAuto
-      ? `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      ? `<svg width="${sw}" height="${sh}" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="wall" x1="0" y1="0" x2="0" y2="${floorY}" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#0d0d1a"/>
               <stop offset="55%" stop-color="#141428"/>
               <stop offset="100%" stop-color="#0a0a15"/>
             </linearGradient>
-            <linearGradient id="floor" x1="0" y1="${floorY}" x2="0" y2="${h}" gradientUnits="userSpaceOnUse">
+            <linearGradient id="floor" x1="0" y1="${floorY}" x2="0" y2="${sh}" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#1a1a38"/>
               <stop offset="100%" stop-color="#05050f"/>
             </linearGradient>
             <radialGradient id="spot" cx="50%" cy="0%" r="70%">
-              <stop offset="0%" stop-color="#5050c0" stop-opacity="0.2"/>
+              <stop offset="0%" stop-color="#5050c0" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#0d0d1a" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="podGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2a2a6a"/>
+              <stop offset="100%" stop-color="#111130"/>
+            </linearGradient>
+            <radialGradient id="podGlow" cx="50%" cy="0%" r="60%">
+              <stop offset="0%" stop-color="#4444cc" stop-opacity="0.4"/>
               <stop offset="100%" stop-color="#0d0d1a" stop-opacity="0"/>
             </radialGradient>
           </defs>
-          <rect width="${w}" height="${floorY}" fill="url(#wall)"/>
-          <rect y="${floorY}" width="${w}" height="${h - floorY}" fill="url(#floor)"/>
-          <rect width="${w}" height="${floorY}" fill="url(#spot)"/>
-          <line x1="0" y1="${floorY}" x2="${w}" y2="${floorY}" stroke="#3535b0" stroke-width="1.5" stroke-opacity="0.3"/>
+          <rect width="${sw}" height="${floorY}" fill="url(#wall)"/>
+          <rect y="${floorY}" width="${sw}" height="${sh - floorY}" fill="url(#floor)"/>
+          <rect width="${sw}" height="${floorY}" fill="url(#spot)"/>
+          <line x1="0" y1="${floorY}" x2="${sw}" y2="${floorY}" stroke="#3535b0" stroke-width="1" stroke-opacity="0.25"/>
+          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="url(#podGrad)"/>
+          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="url(#podGlow)"/>
+          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="none" stroke="#5555dd" stroke-width="1" stroke-opacity="0.5"/>
+          <text x="${sw / 2}" y="${sh - Math.round(sh * 0.025)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#ffffff" fill-opacity="0.18" letter-spacing="2">zy.ai</text>
         </svg>`
-      : `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      : `<svg width="${sw}" height="${sh}" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <radialGradient id="studio" cx="50%" cy="30%" r="65%">
               <stop offset="0%" stop-color="#ffffff"/>
@@ -51,33 +81,15 @@ export async function POST(req: Request) {
               <stop offset="100%" stop-color="#e0e0ea"/>
             </radialGradient>
           </defs>
-          <rect width="${w}" height="${h}" fill="url(#studio)"/>
+          <rect width="${sw}" height="${sh}" fill="url(#studio)"/>
+          <text x="${sw / 2}" y="${sh - Math.round(sh * 0.025)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#000000" fill-opacity="0.12" letter-spacing="2">zy.ai</text>
         </svg>`
 
     const bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer()
 
-    // ── Optimizare imagine originală ───────────────────────────────
-    const enhanced = await sharp(inputBuffer)
-      .rotate()
-      .resize({ width: 900, height: 900, fit: 'inside', withoutEnlargement: true })
-      .normalize()
-      .modulate({ saturation: 1.12, brightness: 1.03 })
-      .sharpen({ sigma: 0.8 })
-      .toBuffer()
-
-    const enhancedMeta = await sharp(enhanced).metadata()
-    const ew = enhancedMeta.width || w
-    const eh = enhancedMeta.height || h
-
-    // ── Compune: centrăm produsul pe fundal ────────────────────────
-    // Fundal redimensionat la dimensiunea produsului
-    const bgResized = await sharp(bgBuffer)
-      .resize(ew, eh, { fit: 'cover' })
-      .toBuffer()
-
-    const result = await sharp(bgResized)
-      .composite([{ input: enhanced, blend: 'over', gravity: 'centre' }])
-      .webp({ quality: 60, effort: 6, smartSubsample: true })
+    const result = await sharp(bgBuffer)
+      .composite([{ input: noBgBuffer, blend: 'over', gravity: 'centre' }])
+      .webp({ quality: 82, effort: 4 })
       .toBuffer()
 
     const now = new Date()
