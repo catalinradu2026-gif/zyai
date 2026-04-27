@@ -12,61 +12,6 @@ interface ImageUploaderProps {
   category?: string
 }
 
-function drawProfessionalBackground(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  category: string
-) {
-  if (category === 'auto') {
-    const floorY = Math.round(height * 0.67)
-
-    const wallGrad = ctx.createLinearGradient(0, 0, 0, floorY)
-    wallGrad.addColorStop(0, '#0d0d1a')
-    wallGrad.addColorStop(0.55, '#141428')
-    wallGrad.addColorStop(1, '#0a0a15')
-    ctx.fillStyle = wallGrad
-    ctx.fillRect(0, 0, width, floorY)
-
-    const floorGrad = ctx.createLinearGradient(0, floorY, 0, height)
-    floorGrad.addColorStop(0, '#1a1a38')
-    floorGrad.addColorStop(1, '#05050f')
-    ctx.fillStyle = floorGrad
-    ctx.fillRect(0, floorY, width, height - floorY)
-
-    const spotlight = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, width * 0.7)
-    spotlight.addColorStop(0, 'rgba(80,80,200,0.22)')
-    spotlight.addColorStop(1, 'rgba(13,13,26,0)')
-    ctx.fillStyle = spotlight
-    ctx.fillRect(0, 0, width, floorY)
-
-    const floorGlow = ctx.createRadialGradient(width / 2, floorY, 0, width / 2, floorY, width * 0.55)
-    floorGlow.addColorStop(0, 'rgba(37,37,160,0.28)')
-    floorGlow.addColorStop(1, 'rgba(5,5,15,0)')
-    ctx.fillStyle = floorGlow
-    ctx.fillRect(0, floorY, width, height - floorY)
-
-    ctx.beginPath()
-    ctx.moveTo(0, floorY)
-    ctx.lineTo(width, floorY)
-    ctx.strokeStyle = 'rgba(53,53,176,0.35)'
-    ctx.lineWidth = 1.5
-    ctx.stroke()
-  } else {
-    const grad = ctx.createRadialGradient(width / 2, height * 0.3, 0, width / 2, height * 0.3, width * 0.65)
-    grad.addColorStop(0, '#ffffff')
-    grad.addColorStop(0.65, '#f2f2f7')
-    grad.addColorStop(1, '#e2e2ec')
-    ctx.fillStyle = grad
-    ctx.fillRect(0, 0, width, height)
-
-    const shadow = ctx.createRadialGradient(width / 2, height * 1.05, 0, width / 2, height * 1.05, width * 0.5)
-    shadow.addColorStop(0, 'rgba(200,200,216,0.45)')
-    shadow.addColorStop(1, 'rgba(232,232,242,0)')
-    ctx.fillStyle = shadow
-    ctx.fillRect(0, 0, width, height)
-  }
-}
 
 export default function ImageUploader({ onImagesChange, initialImages = [], category }: ImageUploaderProps) {
   const [images, setImages] = useState<string[]>(initialImages)
@@ -235,59 +180,15 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
   async function professionalizeImage(url: string, idx: number) {
     setProIdx(idx)
     setUploadError('')
-    setProStatus('Se încarcă modelul AI...')
+    setProStatus('Se procesează...')
     try {
-      let { removeBackground } = await import('@imgly/background-removal')
-        .catch(e => { throw new Error('Import failed: ' + e.message) })
-
-      setProStatus('Se descarcă imaginea...')
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
-      const imgRes = await fetch(proxyUrl)
-      if (!imgRes.ok) throw new Error('Proxy failed: ' + imgRes.status)
-      const imgBlob = await imgRes.blob()
-
-      setProStatus('Se elimină fundalul... (prima oară ~20s)')
-      const transparentBlob = await removeBackground(imgBlob, {
-        output: { format: 'image/png', quality: 0.9 },
-      }).catch(e => { throw new Error('AI failed: ' + e.message) })
-
-      setProStatus('Se aplică fundalul profesional...')
-      const transparentUrl = URL.createObjectURL(transparentBlob)
-      const subject = new window.Image()
-      await new Promise<void>((resolve, reject) => {
-        subject.onload = () => resolve()
-        subject.onerror = () => reject(new Error('Subject image load failed'))
-        subject.src = transparentUrl
+      const res = await fetch('/api/ai/enhance-pro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: url, category: category || 'general' }),
       })
-
-      const canvas = document.createElement('canvas')
-      canvas.width = subject.naturalWidth
-      canvas.height = subject.naturalHeight
-      const ctx = canvas.getContext('2d')!
-      drawProfessionalBackground(ctx, canvas.width, canvas.height, category || 'general')
-      ctx.drawImage(subject, 0, 0)
-      URL.revokeObjectURL(transparentUrl)
-
-      setProStatus('Se uploadează...')
-      // Reducem la max 900px înainte de upload — serverul recomprimă oricum la WebP
-      const MAX_W = 900
-      let uploadCanvas = canvas
-      if (canvas.width > MAX_W) {
-        uploadCanvas = document.createElement('canvas')
-        const r = MAX_W / canvas.width
-        uploadCanvas.width = MAX_W
-        uploadCanvas.height = Math.round(canvas.height * r)
-        uploadCanvas.getContext('2d')!.drawImage(canvas, 0, 0, uploadCanvas.width, uploadCanvas.height)
-      }
-      const resultBlob = await new Promise<Blob>((resolve, reject) =>
-        uploadCanvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.7)
-      )
-
-      const fd = new FormData()
-      fd.append('file', new File([resultBlob], 'pro.jpg', { type: 'image/jpeg' }))
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
-      if (!res.ok || data.error) throw new Error('Upload failed: ' + (data.error || res.status))
+      if (!res.ok || data.error) throw new Error(data.error || 'Server error')
 
       deleteStoredImage(url)
       const updated = images.map((u, i) => i === idx ? data.url : u)
