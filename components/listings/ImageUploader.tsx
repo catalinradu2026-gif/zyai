@@ -12,12 +12,69 @@ interface ImageUploaderProps {
   category?: string
 }
 
+function drawProfessionalBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  category: string
+) {
+  if (category === 'auto') {
+    const floorY = Math.round(height * 0.67)
+
+    const wallGrad = ctx.createLinearGradient(0, 0, 0, floorY)
+    wallGrad.addColorStop(0, '#0d0d1a')
+    wallGrad.addColorStop(0.55, '#141428')
+    wallGrad.addColorStop(1, '#0a0a15')
+    ctx.fillStyle = wallGrad
+    ctx.fillRect(0, 0, width, floorY)
+
+    const floorGrad = ctx.createLinearGradient(0, floorY, 0, height)
+    floorGrad.addColorStop(0, '#1a1a38')
+    floorGrad.addColorStop(1, '#05050f')
+    ctx.fillStyle = floorGrad
+    ctx.fillRect(0, floorY, width, height - floorY)
+
+    const spotlight = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, width * 0.7)
+    spotlight.addColorStop(0, 'rgba(80,80,200,0.22)')
+    spotlight.addColorStop(1, 'rgba(13,13,26,0)')
+    ctx.fillStyle = spotlight
+    ctx.fillRect(0, 0, width, floorY)
+
+    const floorGlow = ctx.createRadialGradient(width / 2, floorY, 0, width / 2, floorY, width * 0.55)
+    floorGlow.addColorStop(0, 'rgba(37,37,160,0.28)')
+    floorGlow.addColorStop(1, 'rgba(5,5,15,0)')
+    ctx.fillStyle = floorGlow
+    ctx.fillRect(0, floorY, width, height - floorY)
+
+    ctx.beginPath()
+    ctx.moveTo(0, floorY)
+    ctx.lineTo(width, floorY)
+    ctx.strokeStyle = 'rgba(53,53,176,0.35)'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+  } else {
+    const grad = ctx.createRadialGradient(width / 2, height * 0.3, 0, width / 2, height * 0.3, width * 0.65)
+    grad.addColorStop(0, '#ffffff')
+    grad.addColorStop(0.65, '#f2f2f7')
+    grad.addColorStop(1, '#e2e2ec')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, width, height)
+
+    const shadow = ctx.createRadialGradient(width / 2, height * 1.05, 0, width / 2, height * 1.05, width * 0.5)
+    shadow.addColorStop(0, 'rgba(200,200,216,0.45)')
+    shadow.addColorStop(1, 'rgba(232,232,242,0)')
+    ctx.fillStyle = shadow
+    ctx.fillRect(0, 0, width, height)
+  }
+}
+
 export default function ImageUploader({ onImagesChange, initialImages = [], category }: ImageUploaderProps) {
   const [images, setImages] = useState<string[]>(initialImages)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [rotatingIdx, setRotatingIdx] = useState<number | null>(null)
   const [proIdx, setProIdx] = useState<number | null>(null)
+  const [proStatus, setProStatus] = useState('')
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +114,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const newUrls: string[] = []
       let errorCount = 0
 
-      // Uploadăm doar primul fișier (limita gratuită)
       const filesToUpload = files.slice(0, FREE_LIMIT - images.length)
 
       for (let i = 0; i < filesToUpload.length; i++) {
@@ -142,7 +198,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
 
-      // Delete old image
       if (url.includes('supabase.co')) {
         await fetch('/api/delete-image', {
           method: 'POST',
@@ -165,22 +220,62 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
   async function professionalizeImage(url: string, idx: number) {
     setProIdx(idx)
     setUploadError('')
+    setProStatus('Se încarcă modelul AI...')
     try {
-      const res = await fetch('/api/ai/remove-bg', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: url, category: category || 'general' }),
+      // Dynamic import — nu se încarcă dacă nu e folosit
+      const { removeBackground } = await import('@imgly/background-removal')
+
+      setProStatus('Se elimină fundalul...')
+
+      // Descarcă imaginea originală ca blob
+      const imgRes = await fetch(url)
+      const imgBlob = await imgRes.blob()
+
+      // Elimină fundalul (rulează în browser via WASM)
+      const transparentBlob = await removeBackground(imgBlob, {
+        output: { format: 'image/png', quality: 0.9 },
       })
+
+      setProStatus('Se aplică fundalul profesional...')
+
+      // Desenează pe canvas cu fundal profesional
+      const transparentUrl = URL.createObjectURL(transparentBlob)
+      const subject = new window.Image()
+      await new Promise<void>((resolve, reject) => {
+        subject.onload = () => resolve()
+        subject.onerror = reject
+        subject.src = transparentUrl
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = subject.naturalWidth
+      canvas.height = subject.naturalHeight
+      const ctx = canvas.getContext('2d')!
+
+      drawProfessionalBackground(ctx, canvas.width, canvas.height, category || 'general')
+      ctx.drawImage(subject, 0, 0)
+      URL.revokeObjectURL(transparentUrl)
+
+      setProStatus('Se uploadează...')
+      const resultBlob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.88)
+      )
+
+      const fd = new FormData()
+      fd.append('file', new File([resultBlob], 'pro.jpg', { type: 'image/jpeg' }))
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || 'Eroare procesare')
+      if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
+
       const updated = images.map((u, i) => i === idx ? data.url : u)
       setImages(updated)
       onImagesChange(updated)
     } catch (err: any) {
       console.error('Pro error:', err)
-      setUploadError('Nu s-a putut procesa imaginea. Verifică cheia REMOVE_BG_API_KEY.')
+      setUploadError('Nu s-a putut procesa imaginea. Încearcă din nou.')
     } finally {
       setProIdx(null)
+      setProStatus('')
     }
   }
 
@@ -213,7 +308,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         </label>
 
         {atFreeLimit ? (
-          /* Banner upgrade — apare când limita gratuită e atinsă */
           <div className="rounded-xl p-5 text-center space-y-2"
             style={{
               background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.12))',
@@ -266,61 +360,66 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {images.map((url, i) => (
-            <div key={url} className="relative group">
-              {i === 0 && (
-                <span className="absolute top-1 left-1 z-10 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                  Principală
-                </span>
-              )}
-              <Image
-                src={url}
-                alt={`imagine ${i + 1}`}
-                width={200}
-                height={150}
-                className="w-full h-28 object-cover rounded-lg"
-              />
-              {/* Overlay cu butoane */}
-              <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition rounded-lg p-2">
-                <div className="flex gap-2">
+            <div key={url} className="flex flex-col gap-1">
+              {/* Image + top-right buttons overlay */}
+              <div className="relative group">
+                {i === 0 && (
+                  <span className="absolute top-1 left-1 z-10 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                    Principală
+                  </span>
+                )}
+                <Image
+                  src={url}
+                  alt={`imagine ${i + 1}`}
+                  width={200}
+                  height={150}
+                  className="w-full h-28 object-cover rounded-lg"
+                />
+                {/* Overlay hover: rotire + ștergere */}
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition rounded-lg">
                   <button
                     type="button"
                     onClick={() => rotateImage(url, i)}
                     disabled={rotatingIdx === i}
-                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
+                    className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
                     title="Rotește 90°"
                   >
                     {rotatingIdx === i
                       ? <span className="text-white text-xs animate-spin inline-block">↻</span>
-                      : <span className="text-white text-base">↻</span>
+                      : <span className="text-white text-lg">↻</span>
                     }
                   </button>
                   <button
                     type="button"
                     onClick={() => removeImage(url)}
-                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition"
+                    className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition"
                     title="Șterge"
                   >
-                    <span className="text-white text-sm">🗑️</span>
+                    <span className="text-white text-base">🗑️</span>
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => professionalizeImage(url, i)}
-                  disabled={proIdx === i}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition"
-                  style={{
-                    background: proIdx === i ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.85)',
-                    color: '#fff',
-                    border: '1px solid rgba(168,139,250,0.6)',
-                  }}
-                  title="Elimină fundalul și aplică fundal profesional"
-                >
-                  {proIdx === i
-                    ? <><span className="animate-spin inline-block">⏳</span> Se procesează...</>
-                    : <>✨ Prezintă Pro</>
-                  }
-                </button>
               </div>
+
+              {/* Buton Prezintă Pro — mereu vizibil sub imagine */}
+              <button
+                type="button"
+                onClick={() => professionalizeImage(url, i)}
+                disabled={proIdx !== null}
+                className="w-full py-1.5 rounded-lg text-xs font-bold transition"
+                style={{
+                  background: proIdx === i
+                    ? 'rgba(139,92,246,0.4)'
+                    : 'rgba(139,92,246,0.15)',
+                  border: '1px solid rgba(139,92,246,0.45)',
+                  color: '#C4B5FD',
+                  opacity: proIdx !== null && proIdx !== i ? 0.5 : 1,
+                }}
+              >
+                {proIdx === i
+                  ? proStatus || '⏳ Se procesează...'
+                  : '✨ Prezintă Pro'
+                }
+              </button>
             </div>
           ))}
         </div>
