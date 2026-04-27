@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
-const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-  : '*.supabase.co'
+const r2PublicUrl = process.env.R2_PUBLIC_URL || ''
+const r2Host = r2PublicUrl ? (() => { try { return new URL(r2PublicUrl).hostname } catch { return '' } })() : ''
+const r2Pattern = r2Host ? `https://${r2Host}` : ''
 
 const nextConfig: NextConfig = {
   images: {
@@ -14,15 +14,38 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '*.r2.dev',
+      },
+      ...(r2Host ? [{ protocol: 'https' as const, hostname: r2Host }] : []),
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
       },
     ],
-    minimumCacheTTL: 2592000, // 30 de zile — reduce re-fetch din Supabase după deploy
+    minimumCacheTTL: 2592000,
   },
   async headers() {
+    const imgSrc = [
+      "'self'", 'data:', 'blob:',
+      'https://*.supabase.co',
+      'https://*.r2.dev',
+      r2Pattern,
+      'https://images.unsplash.com',
+    ].filter(Boolean).join(' ')
+
+    const connectSrc = [
+      "'self'",
+      'https://*.supabase.co',
+      'wss://*.supabase.co',
+      'https://api.groq.com',
+      'wss://speech.platform.bing.com',
+      'https://unpkg.com',
+      'https://staticimgly.com',
+      r2Pattern,
+    ].filter(Boolean).join(' ')
+
     return [
       {
-        // Paginile dinamice nu se cacheaza niciodata
         source: '/(cauta|anunt|marketplace|cont)(.*)',
         headers: [
           { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate' },
@@ -36,15 +59,19 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), geolocation=()' },
+          // camera=(self) permite accesul la cameră pe paginile proprii
+          { key: 'Permissions-Policy', value: 'camera=(self), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              `img-src 'self' data: https://*.supabase.co https://images.unsplash.com`,
-              `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.groq.com wss://speech.platform.bing.com`,
+              // blob: necesar pentru web workers (WASM background removal)
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+              // worker-src blob: permite crearea web workers din blob URLs
+              "worker-src blob: 'self'",
+              `img-src ${imgSrc}`,
+              `connect-src ${connectSrc}`,
               "font-src 'self' https://fonts.gstatic.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "media-src 'self' data: blob:",

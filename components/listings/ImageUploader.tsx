@@ -101,14 +101,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         return
       }
 
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-      const invalidFiles = files.filter(f => !allowedTypes.includes(f.type))
-      if (invalidFiles.length > 0) {
-        setUploadError(`Formate neacceptate. Folosește: JPG, PNG, WebP, GIF`)
-        e.target.value = ''
-        return
-      }
-
       setUploading(true)
       setUploadError('')
       const newUrls: string[] = []
@@ -117,7 +109,28 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const filesToUpload = files.slice(0, FREE_LIMIT - images.length)
 
       for (let i = 0; i < filesToUpload.length; i++) {
-        const file = filesToUpload[i]
+        let file = filesToUpload[i]
+
+        // Convertim HEIC/HEIF (poze directe iOS) la JPEG via canvas
+        const isHeic = file.type === 'image/heic' || file.type === 'image/heif' ||
+          (file.type === '' && file.name.toLowerCase().match(/\.(heic|heif)$/))
+        if (isHeic || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+          try {
+            const bmp = await createImageBitmap(file)
+            const cvs = document.createElement('canvas')
+            cvs.width = bmp.width
+            cvs.height = bmp.height
+            cvs.getContext('2d')!.drawImage(bmp, 0, 0)
+            const blob = await new Promise<Blob>((res, rej) =>
+              cvs.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/jpeg', 0.92)
+            )
+            file = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+          } catch {
+            errorCount++
+            continue
+          }
+        }
+
         let retries = 3
 
         while (retries > 0) {
