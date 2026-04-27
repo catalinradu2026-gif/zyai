@@ -21,11 +21,25 @@ export async function POST(req: Request) {
     })
 
     if (!rbRes.ok) {
-      const err = await rbRes.json().catch(() => ({ error: 'rembg error' }))
-      throw new Error(err.error || `rembg error ${rbRes.status}`)
+      const errText = await rbRes.text().catch(() => 'rembg error')
+      let errMsg = errText
+      try { errMsg = JSON.parse(errText).error || errText } catch {}
+      throw new Error(errMsg || `rembg error ${rbRes.status}`)
     }
 
-    const noBgBuffer = Buffer.from(await rbRes.arrayBuffer())
+    const contentType = rbRes.headers.get('content-type') || ''
+    if (!contentType.includes('image/')) {
+      const errText = await rbRes.text().catch(() => '')
+      throw new Error(`rembg non-image response: ${errText.slice(0, 200)}`)
+    }
+
+    const rawBuffer = Buffer.from(await rbRes.arrayBuffer())
+    if (rawBuffer.length < 100) {
+      throw new Error(`rembg returned empty buffer (${rawBuffer.length} bytes)`)
+    }
+
+    // Normalize PNG from OpenCV (may have non-standard channel order) to RGBA
+    const noBgBuffer = await sharp(rawBuffer).ensureAlpha().png().toBuffer()
 
     const subjectMeta = await sharp(noBgBuffer).metadata()
     const sw = subjectMeta.width || 900
