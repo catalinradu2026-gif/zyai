@@ -181,6 +181,14 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
     [images, onImagesChange]
   )
 
+  function deleteStoredImage(url: string) {
+    fetch('/api/delete-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: url }),
+    }).catch(() => {})
+  }
+
   async function rotateImage(url: string, idx: number) {
     setRotatingIdx(idx)
     setUploadError('')
@@ -211,13 +219,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
 
-      if (url.includes('supabase.co')) {
-        await fetch('/api/delete-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: url }),
-        })
-      }
+      deleteStoredImage(url)
 
       const updated = images.map((u, i) => i === idx ? data.url : u)
       setImages(updated)
@@ -282,6 +284,8 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
 
+      deleteStoredImage(url)
+
       const updated = images.map((u, i) => i === idx ? data.url : u)
       setImages(updated)
       onImagesChange(updated)
@@ -296,13 +300,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
 
   async function removeImage(url: string) {
     try {
-      if (url.includes('supabase.co')) {
-        await fetch('/api/delete-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: url }),
-        })
-      }
+      deleteStoredImage(url)
 
       const updated = images.filter((img) => img !== url)
       setImages(updated)

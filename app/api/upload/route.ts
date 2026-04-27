@@ -7,10 +7,10 @@ import { isR2Configured, uploadToR2 } from '@/lib/r2'
 export const maxDuration = 60
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const FULL_MAX_WIDTH = 1000
-const FULL_QUALITY = 70
-const THUMB_WIDTH = 300
-const THUMB_QUALITY = 65
+const FULL_MAX_WIDTH = 900
+const FULL_QUALITY = 58
+const THUMB_WIDTH = 240
+const THUMB_QUALITY = 48
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,16 +43,16 @@ export async function POST(req: NextRequest) {
     const fullBuffer = await sharp(inputBuffer)
       .rotate()
       .normalize()
-      .sharpen({ sigma: 0.6 })
+      .sharpen({ sigma: 0.5 })
       .resize({ width: FULL_MAX_WIDTH, withoutEnlargement: true })
-      .webp({ quality: FULL_QUALITY })
+      .webp({ quality: FULL_QUALITY, effort: 6, smartSubsample: true })
       .toBuffer()
 
     const thumbBuffer = await sharp(inputBuffer)
       .rotate()
       .normalize()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
-      .webp({ quality: THUMB_QUALITY })
+      .webp({ quality: THUMB_QUALITY, effort: 6, smartSubsample: true })
       .toBuffer()
 
     const fullPath = `${folder}/${uid}.webp`
