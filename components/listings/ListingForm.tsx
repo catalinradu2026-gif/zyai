@@ -1434,6 +1434,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                       if (imgs.length > 0 && !aiAnalysis) analyzeImages(imgs)
                     }}
                     initialImages={images}
+                    category={mainCat}
                   />
                 </div>
 
@@ -1586,6 +1587,17 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                   </div>
                 )}
 
+                {/* Descriere — imediat după titlu */}
+                {mainCat && (
+                  <div>
+                    {lbl('Descriere detaliată', true)}
+                    <textarea value={description} onChange={e => setDescription(e.target.value)}
+                      placeholder="Descrie în detaliu oferta ta..."
+                      rows={5} style={{ ...ss, width: '100%', resize: 'vertical' }}
+                      className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                  </div>
+                )}
+
                 {/* Câmpuri specifice categoriei */}
                 {mainCat && (
                   <div className="rounded-xl p-4" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
@@ -1693,22 +1705,11 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                   </div>
                 )}
 
-                {/* Descriere — ULTIMA */}
-                {mainCat && (
-                  <div>
-                    {lbl('Descriere detaliată', true)}
-                    <textarea value={description} onChange={e => setDescription(e.target.value)}
-                      placeholder="Descrie în detaliu oferta ta..."
-                      rows={6} style={{ ...ss, width: '100%', resize: 'vertical' }}
-                      className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                  </div>
-                )}
-
                 {/* Imagini — doar în edit mode (step 2 le are în new mode) */}
                 {isEditMode && mainCat && (
                   <div>
                     {lbl('📷 Imagini (max 8)')}
-                    <ImageUploader onImagesChange={setImages} initialImages={images} />
+                    <ImageUploader onImagesChange={setImages} initialImages={images} category={mainCat} />
                   </div>
                 )}
 
@@ -1745,7 +1746,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>
                     {images.length > 0 ? `📸 Ai ${images.length} imagine (plan gratuit: 1 poză).` : 'Adaugă o imagine pentru a atrage mai mulți cumpărători.'}
                   </p>
-                  <ImageUploader onImagesChange={setImages} initialImages={images} />
+                  <ImageUploader onImagesChange={setImages} initialImages={images} category={mainCat} />
                 </div>
                 <div className="rounded-xl p-5" style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)' }}>
                   <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: '12px' }}>📋 Sumar anunț</h3>

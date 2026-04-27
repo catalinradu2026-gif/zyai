@@ -9,13 +9,15 @@ const MAX_IMAGES = 8
 interface ImageUploaderProps {
   onImagesChange: (urls: string[]) => void
   initialImages?: string[]
+  category?: string
 }
 
-export default function ImageUploader({ onImagesChange, initialImages = [] }: ImageUploaderProps) {
+export default function ImageUploader({ onImagesChange, initialImages = [], category }: ImageUploaderProps) {
   const [images, setImages] = useState<string[]>(initialImages)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [rotatingIdx, setRotatingIdx] = useState<number | null>(null)
+  const [proIdx, setProIdx] = useState<number | null>(null)
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,6 +162,28 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
     }
   }
 
+  async function professionalizeImage(url: string, idx: number) {
+    setProIdx(idx)
+    setUploadError('')
+    try {
+      const res = await fetch('/api/ai/remove-bg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: url, category: category || 'general' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Eroare procesare')
+      const updated = images.map((u, i) => i === idx ? data.url : u)
+      setImages(updated)
+      onImagesChange(updated)
+    } catch (err: any) {
+      console.error('Pro error:', err)
+      setUploadError('Nu s-a putut procesa imaginea. Verifică cheia REMOVE_BG_API_KEY.')
+    } finally {
+      setProIdx(null)
+    }
+  }
+
   async function removeImage(url: string) {
     try {
       if (url.includes('supabase.co')) {
@@ -256,26 +280,45 @@ export default function ImageUploader({ onImagesChange, initialImages = [] }: Im
                 className="w-full h-28 object-cover rounded-lg"
               />
               {/* Overlay cu butoane */}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition rounded-lg">
+              <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition rounded-lg p-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => rotateImage(url, i)}
+                    disabled={rotatingIdx === i}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
+                    title="Rotește 90°"
+                  >
+                    {rotatingIdx === i
+                      ? <span className="text-white text-xs animate-spin inline-block">↻</span>
+                      : <span className="text-white text-base">↻</span>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition"
+                    title="Șterge"
+                  >
+                    <span className="text-white text-sm">🗑️</span>
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={() => rotateImage(url, i)}
-                  disabled={rotatingIdx === i}
-                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
-                  title="Rotește 90°"
+                  onClick={() => professionalizeImage(url, i)}
+                  disabled={proIdx === i}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition"
+                  style={{
+                    background: proIdx === i ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.85)',
+                    color: '#fff',
+                    border: '1px solid rgba(168,139,250,0.6)',
+                  }}
+                  title="Elimină fundalul și aplică fundal profesional"
                 >
-                  {rotatingIdx === i
-                    ? <span className="text-white text-xs animate-spin inline-block">↻</span>
-                    : <span className="text-white text-lg">↻</span>
+                  {proIdx === i
+                    ? <><span className="animate-spin inline-block">⏳</span> Se procesează...</>
+                    : <>✨ Prezintă Pro</>
                   }
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeImage(url)}
-                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition"
-                  title="Șterge"
-                >
-                  <span className="text-white text-base">🗑️</span>
                 </button>
               </div>
             </div>
