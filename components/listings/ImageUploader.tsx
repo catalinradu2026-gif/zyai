@@ -249,8 +249,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       setProStatus('Se elimină fundalul... (prima oară ~20s)')
       const transparentBlob = await removeBackground(imgBlob, {
         output: { format: 'image/png', quality: 0.9 },
-        publicPath: 'https://staticimgly.com/@imgly/background-removal/1.7.0/dist/',
-        model: 'isnet_quint8',
       }).catch(e => { throw new Error('AI failed: ' + e.message) })
 
       setProStatus('Se aplică fundalul profesional...')

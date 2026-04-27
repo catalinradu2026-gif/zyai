@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
       'wss://speech.platform.bing.com',
       'https://unpkg.com',
       'https://staticimgly.com',
+      'https://*.staticimgly.com',
       r2Pattern,
     ].filter(Boolean).join(' ')
 
