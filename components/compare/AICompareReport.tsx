@@ -130,6 +130,7 @@ export default function AICompareReport({ listings }: { listings: Listing[] }) {
         <div>
           <p className="font-black text-sm" style={{ color: '#A78BFA' }}>RAPORT COMPARAȚIE AI</p>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Generat de zyAI • imparțial și obiectiv</p>
+          <p className="text-xs" style={{ color: 'rgba(167,139,250,0.45)', letterSpacing: '0.05em' }}>⚡ powered by Ai Craiova</p>
         </div>
         <button
           onClick={generate}

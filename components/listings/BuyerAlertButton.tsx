@@ -117,6 +117,7 @@ export default function BuyerAlertButton({ listingId, listingTitle, price, curre
           {error && <p className="text-xs" style={{ color: '#F87171' }}>⚠️ {error}</p>}
         </>
       )}
+      <p className="text-xs text-center pt-1" style={{ color: 'rgba(167,139,250,0.4)', letterSpacing: '0.05em' }}>⚡ powered by Ai Craiova</p>
     </div>
   )
 }

@@ -351,6 +351,7 @@ export default function AIVerdictPanel({ listing }: { listing: ListingContext })
 
           {/* Input */}
           <div className="px-4 py-4 shrink-0" style={{ borderTop: '1px solid rgba(139,92,246,0.15)', background: '#0a0f1e' }}>
+            <p className="text-xs text-center mb-2" style={{ color: 'rgba(167,139,250,0.35)', letterSpacing: '0.05em' }}>⚡ powered by Ai Craiova</p>
             <form onSubmit={handleSend} className="flex gap-2 max-w-2xl mx-auto">
               <input
                 ref={inputRef}

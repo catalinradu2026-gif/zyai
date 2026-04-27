@@ -156,11 +156,12 @@ export default function AIFeaturesSection() {
       </div>
 
       {/* Cards grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 mb-4">
         {features.map((f, i) => (
           <FeatureCard key={i} f={f} />
         ))}
       </div>
+      <p className="text-xs text-center mb-6" style={{ color: 'rgba(167,139,250,0.45)', letterSpacing: '0.05em' }}>⚡ powered by Ai Craiova</p>
 
       {/* Cum folosești zyAI — 2 carduri cu tooltip */}
       <div>
