@@ -189,8 +189,10 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: url.replace(/[\x00-\x1f\x7f]/g, '').trim(), category: category || 'general' }),
       })
-      const data = await res.json()
-      console.log('[Pro] response', res.status, data)
+      const rawText = await res.text()
+      console.log('[Pro] raw response', res.status, rawText.slice(0, 300))
+      let data: any
+      try { data = JSON.parse(rawText) } catch { throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 150)}`) }
       if (!res.ok || data.error) throw new Error(data.error || 'Server error')
 
       deleteStoredImage(url)
