@@ -179,20 +179,20 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
   }
 
   async function professionalizeImage(url: string, idx: number) {
-    console.log('[Pro] start', { url, idx, category })
     setProIdx(idx)
     setUploadError('')
     setProStatus('Se procesează...')
     try {
-      const res = await fetch('/api/ai/enhance-pro', {
+      const REMBG = process.env.NEXT_PUBLIC_REMBG_URL || 'https://rembg-service-fqko.onrender.com'
+      const cleanUrl = url.replace(/[\x00-\x1f\x7f]/g, '').trim()
+      const res = await fetch(`${REMBG}/process`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: url.replace(/[\x00-\x1f\x7f]/g, '').trim(), category: category || 'general' }),
+        body: JSON.stringify({ image_url: cleanUrl, category: category || 'general' }),
       })
       const rawText = await res.text()
-      console.log('[Pro] raw response', res.status, rawText.slice(0, 300))
       let data: any
-      try { data = JSON.parse(rawText) } catch { throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 150)}`) }
+      try { data = JSON.parse(rawText) } catch { throw new Error(`Eroare server: ${rawText.slice(0, 100)}`) }
       if (!res.ok || data.error) throw new Error(data.error || 'Server error')
 
       deleteStoredImage(url)
