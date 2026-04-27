@@ -269,8 +269,18 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       URL.revokeObjectURL(transparentUrl)
 
       setProStatus('Se uploadează...')
+      // Reducem la max 900px înainte de upload — serverul recomprimă oricum la WebP
+      const MAX_W = 900
+      let uploadCanvas = canvas
+      if (canvas.width > MAX_W) {
+        uploadCanvas = document.createElement('canvas')
+        const r = MAX_W / canvas.width
+        uploadCanvas.width = MAX_W
+        uploadCanvas.height = Math.round(canvas.height * r)
+        uploadCanvas.getContext('2d')!.drawImage(canvas, 0, 0, uploadCanvas.width, uploadCanvas.height)
+      }
       const resultBlob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.88)
+        uploadCanvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.7)
       )
 
       const fd = new FormData()
