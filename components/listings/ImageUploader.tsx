@@ -247,10 +247,11 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const imgRes = await fetch(proxyUrl)
       const imgBlob = await imgRes.blob()
 
-      // Elimină fundalul — publicPath spre CDN ca să găsească fișierele WASM
+      // Elimină fundalul — CDN oficial pentru fișierele WASM/model
       const transparentBlob = await removeBackground(imgBlob, {
         output: { format: 'image/png', quality: 0.9 },
-        publicPath: 'https://unpkg.com/@imgly/background-removal@1.7.0/dist/',
+        publicPath: 'https://staticimgly.com/@imgly/background-removal/1.7.0/dist/',
+        model: 'isnet_quint8',
       })
 
       setProStatus('Se aplică fundalul profesional...')
