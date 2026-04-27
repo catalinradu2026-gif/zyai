@@ -187,7 +187,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       const res = await fetch('/api/ai/enhance-pro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: url.trim(), category: category || 'general' }),
+        body: JSON.stringify({ imageUrl: url.replace(/[\x00-\x1f\x7f]/g, '').trim(), category: category || 'general' }),
       })
       const data = await res.json()
       console.log('[Pro] response', res.status, data)

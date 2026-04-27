@@ -10,7 +10,7 @@ const REMBG_URL = process.env.REMBG_SERVICE_URL || 'http://localhost:8002'
 export async function POST(req: Request) {
   try {
     const { imageUrl: rawUrl, category } = await req.json()
-    const imageUrl = (rawUrl || '').trim()
+    const imageUrl = (rawUrl || '').replace(/[\x00-\x1f\x7f]/g, '').trim()
     if (!imageUrl) return NextResponse.json({ error: 'imageUrl required' }, { status: 400 })
 
     // ── Elimină fundalul via serviciul local rembg ────────────────
