@@ -7,17 +7,41 @@ export const maxDuration = 60
 
 const REMBG_URL = process.env.REMBG_SERVICE_URL || 'http://localhost:8002'
 
+function makeGradientPixels(w: number, h: number, isAuto: boolean): Buffer {
+  const buf = Buffer.alloc(w * h * 3)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 3
+      if (isAuto) {
+        // Dark showroom: top dark navy → bottom near-black
+        const t = y / h
+        buf[idx]     = Math.round(13 + t * 5)   // R
+        buf[idx + 1] = Math.round(13 + t * 5)   // G
+        buf[idx + 2] = Math.round(26 + t * (-21)) // B
+      } else {
+        // White studio: center bright → edges slightly grey
+        const cx = (x - w / 2) / (w / 2)
+        const cy = (y - h * 0.3) / h
+        const d = Math.min(1, Math.sqrt(cx * cx + cy * cy) / 0.65)
+        const v = Math.round(255 - d * 30)
+        buf[idx] = v; buf[idx + 1] = v; buf[idx + 2] = Math.round(v - d * 10 + 10)
+      }
+    }
+  }
+  return buf
+}
+
 export async function POST(req: Request) {
   try {
     const { imageUrl: rawUrl, category } = await req.json()
     const imageUrl = (rawUrl || '').replace(/[\x00-\x1f\x7f]/g, '').trim()
     if (!imageUrl) return NextResponse.json({ error: 'imageUrl required' }, { status: 400 })
 
-    // ── Elimină fundalul via serviciul local rembg ────────────────
     const rbRes = await fetch(`${REMBG_URL}/remove-bg`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image_url: imageUrl }),
+      signal: AbortSignal.timeout(25000),
     })
 
     if (!rbRes.ok) {
@@ -38,7 +62,7 @@ export async function POST(req: Request) {
       throw new Error(`rembg returned empty buffer (${rawBuffer.length} bytes)`)
     }
 
-    // Normalize PNG from OpenCV (may have non-standard channel order) to RGBA
+    // Normalize PNG from OpenCV to standard RGBA
     const noBgBuffer = await sharp(rawBuffer).ensureAlpha().png().toBuffer()
 
     const subjectMeta = await sharp(noBgBuffer).metadata()
@@ -47,63 +71,45 @@ export async function POST(req: Request) {
 
     const isAuto = (category || '').toLowerCase() === 'auto'
 
-    // ── Fundal profesional SVG ─────────────────────────────────────
-    const floorY = Math.round(sh * 0.67)
-    const podiumY = Math.round(sh * 0.72)
-    const podiumW = Math.round(sw * 0.7)
-    const podiumH = Math.round(sh * 0.06)
-    const fontSize = Math.round(sh * 0.028)
+    // Generate background using raw pixels (no SVG/librsvg dependency)
+    const bgPixels = makeGradientPixels(sw, sh, isAuto)
+    const bgBuffer = await sharp(bgPixels, {
+      raw: { width: sw, height: sh, channels: 3 },
+    }).png().toBuffer()
 
-    const bgSvg = isAuto
-      ? `<svg width="${sw}" height="${sh}" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="wall" x1="0" y1="0" x2="0" y2="${floorY}" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#0d0d1a"/>
-              <stop offset="55%" stop-color="#141428"/>
-              <stop offset="100%" stop-color="#0a0a15"/>
-            </linearGradient>
-            <linearGradient id="floor" x1="0" y1="${floorY}" x2="0" y2="${sh}" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#1a1a38"/>
-              <stop offset="100%" stop-color="#05050f"/>
-            </linearGradient>
-            <radialGradient id="spot" cx="50%" cy="0%" r="70%">
-              <stop offset="0%" stop-color="#5050c0" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="#0d0d1a" stop-opacity="0"/>
-            </radialGradient>
-            <linearGradient id="podGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#2a2a6a"/>
-              <stop offset="100%" stop-color="#111130"/>
-            </linearGradient>
-            <radialGradient id="podGlow" cx="50%" cy="0%" r="60%">
-              <stop offset="0%" stop-color="#4444cc" stop-opacity="0.4"/>
-              <stop offset="100%" stop-color="#0d0d1a" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <rect width="${sw}" height="${floorY}" fill="url(#wall)"/>
-          <rect y="${floorY}" width="${sw}" height="${sh - floorY}" fill="url(#floor)"/>
-          <rect width="${sw}" height="${floorY}" fill="url(#spot)"/>
-          <line x1="0" y1="${floorY}" x2="${sw}" y2="${floorY}" stroke="#3535b0" stroke-width="1" stroke-opacity="0.25"/>
-          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="url(#podGrad)"/>
-          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="url(#podGlow)"/>
-          <ellipse cx="${sw / 2}" cy="${podiumY}" rx="${podiumW / 2}" ry="${podiumH / 2}" fill="none" stroke="#5555dd" stroke-width="1" stroke-opacity="0.5"/>
-          <text x="${sw / 2}" y="${sh - Math.round(sh * 0.025)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#ffffff" fill-opacity="0.18" letter-spacing="2">zy.ai</text>
-        </svg>`
-      : `<svg width="${sw}" height="${sh}" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="studio" cx="50%" cy="30%" r="65%">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="65%" stop-color="#f0f0f5"/>
-              <stop offset="100%" stop-color="#e0e0ea"/>
-            </radialGradient>
-          </defs>
-          <rect width="${sw}" height="${sh}" fill="url(#studio)"/>
-          <text x="${sw / 2}" y="${sh - Math.round(sh * 0.025)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#000000" fill-opacity="0.12" letter-spacing="2">zy.ai</text>
-        </svg>`
+    // Add podium for auto category
+    const layers: sharp.OverlayOptions[] = [{ input: noBgBuffer, blend: 'over', gravity: 'centre' }]
 
-    const bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer()
+    if (isAuto) {
+      const podiumY = Math.round(sh * 0.72)
+      const podiumW = Math.round(sw * 0.7)
+      const podiumH = Math.round(sh * 0.06)
+      const podiumBuf = Buffer.alloc(podiumW * podiumH * 4)
+      for (let py = 0; py < podiumH; py++) {
+        for (let px = 0; px < podiumW; px++) {
+          const i = (py * podiumW + px) * 4
+          const ex = (px - podiumW / 2) / (podiumW / 2)
+          const ey = (py - podiumH / 2) / (podiumH / 2)
+          const inEllipse = ex * ex + ey * ey <= 1
+          if (inEllipse) {
+            const t = py / podiumH
+            podiumBuf[i] = Math.round(42 + t * (17 - 42))
+            podiumBuf[i + 1] = Math.round(42 + t * (17 - 42))
+            podiumBuf[i + 2] = Math.round(106 + t * (48 - 106))
+            podiumBuf[i + 3] = 200
+          }
+        }
+      }
+      layers.unshift({
+        input: await sharp(podiumBuf, { raw: { width: podiumW, height: podiumH, channels: 4 } }).png().toBuffer(),
+        blend: 'over',
+        top: podiumY - Math.round(podiumH / 2),
+        left: Math.round((sw - podiumW) / 2),
+      })
+    }
 
     const result = await sharp(bgBuffer)
-      .composite([{ input: noBgBuffer, blend: 'over', gravity: 'centre' }])
+      .composite(layers)
       .webp({ quality: 82, effort: 4 })
       .toBuffer()
 
