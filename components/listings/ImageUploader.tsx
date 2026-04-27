@@ -237,31 +237,28 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
     setUploadError('')
     setProStatus('Se încarcă modelul AI...')
     try {
-      // Dynamic import — nu se încarcă dacă nu e folosit
-      const { removeBackground } = await import('@imgly/background-removal')
+      let { removeBackground } = await import('@imgly/background-removal')
+        .catch(e => { throw new Error('Import failed: ' + e.message) })
 
-      setProStatus('Se elimină fundalul...')
-
-      // Proxy imaginea prin server pentru a evita CORS din worker
+      setProStatus('Se descarcă imaginea...')
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
       const imgRes = await fetch(proxyUrl)
+      if (!imgRes.ok) throw new Error('Proxy failed: ' + imgRes.status)
       const imgBlob = await imgRes.blob()
 
-      // Elimină fundalul — CDN oficial pentru fișierele WASM/model
+      setProStatus('Se elimină fundalul... (prima oară ~20s)')
       const transparentBlob = await removeBackground(imgBlob, {
         output: { format: 'image/png', quality: 0.9 },
         publicPath: 'https://staticimgly.com/@imgly/background-removal/1.7.0/dist/',
         model: 'isnet_quint8',
-      })
+      }).catch(e => { throw new Error('AI failed: ' + e.message) })
 
       setProStatus('Se aplică fundalul profesional...')
-
-      // Desenează pe canvas cu fundal profesional
       const transparentUrl = URL.createObjectURL(transparentBlob)
       const subject = new window.Image()
       await new Promise<void>((resolve, reject) => {
         subject.onload = () => resolve()
-        subject.onerror = reject
+        subject.onerror = () => reject(new Error('Subject image load failed'))
         subject.src = transparentUrl
       })
 
@@ -269,7 +266,6 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       canvas.width = subject.naturalWidth
       canvas.height = subject.naturalHeight
       const ctx = canvas.getContext('2d')!
-
       drawProfessionalBackground(ctx, canvas.width, canvas.height, category || 'general')
       ctx.drawImage(subject, 0, 0)
       URL.revokeObjectURL(transparentUrl)
@@ -283,16 +279,15 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       fd.append('file', new File([resultBlob], 'pro.jpg', { type: 'image/jpeg' }))
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
+      if (!res.ok || data.error) throw new Error('Upload failed: ' + (data.error || res.status))
 
       deleteStoredImage(url)
-
       const updated = images.map((u, i) => i === idx ? data.url : u)
       setImages(updated)
       onImagesChange(updated)
     } catch (err: any) {
       console.error('Pro error:', err)
-      setUploadError('Nu s-a putut procesa imaginea. Încearcă din nou.')
+      setUploadError('Eroare: ' + (err.message || 'necunoscută'))
     } finally {
       setProIdx(null)
       setProStatus('')
