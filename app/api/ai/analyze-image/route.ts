@@ -195,9 +195,9 @@ const VISION_MODELS = [
 
 const TEXT_MODELS = [
   'llama-3.3-70b-versatile',
-  'llama-3.1-70b-versatile',
   'llama3-70b-8192',
   'mixtral-8x7b-32768',
+  'gemma2-9b-it',
   'llama3-8b-8192',
 ]
 
@@ -253,8 +253,7 @@ export async function POST(req: Request) {
       try { return JSON.parse(match[0]) } catch { return null }
     }
 
-    // Primary: Groq text — skip to Gemini immediately on rate_limit
-    let groqRateLimited = 0
+    // Primary: Groq text — skip to Gemini after 2 errors of any kind
     for (const model of TEXT_MODELS) {
       try {
         const raw = await callGroq(model, [{ role: 'user', content: PASS2_PROMPT(description) }], 800)
@@ -262,10 +261,8 @@ export async function POST(req: Request) {
         if (parsed) break
         pass2Errors.push(`${model}: no JSON`)
       } catch (e: any) {
-        const msg = e?.message || ''
-        if (msg === 'rate_limit') groqRateLimited++
-        pass2Errors.push(`${model}: ${msg.slice(0, 60)}`)
-        if (groqRateLimited >= 2) break  // skip remaining Groq, go to Gemini
+        pass2Errors.push(`${model}: ${e?.message?.slice(0, 60)}`)
+        if (pass2Errors.length >= 2) break  // skip remaining Groq, go to Gemini
       }
     }
 
@@ -280,8 +277,19 @@ export async function POST(req: Request) {
       }
     }
 
+    // Last resort: basic template so user can continue
     if (!parsed) {
-      return NextResponse.json({ error: 'all_models_failed', detail: pass2Errors.join(' || ') }, { status: 500 })
+      const isAuto = (description || '').toLowerCase().includes('maș') ||
+        (description || '').toLowerCase().includes('auto') ||
+        (description || '').toLowerCase().includes('car')
+      parsed = {
+        title: isAuto ? 'Autoturism de vânzare' : 'Produs de vânzare',
+        description: description?.slice(0, 300) || '',
+        category: isAuto ? 'auto' : 'general',
+        subcategory: null, condition: 'Bun', brand: null, tags: [],
+        confidence: 0.3,
+        details: { auto: { model: null, year: null, mileage: null, fuel: null, transmission: null, bodyType: null, damage: null, color: null }, imobiliare: { propertyType: null, rooms: null, area: null, floor: null, furnishing: null, transactionType: null }, electronice: { model: null, storage: null, color: null, accessories: null }, general: { size: null, material: null, quantity: null } }
+      }
     }
 
     return NextResponse.json({ ok: true, result: { ...parsed, _visualDescription: description } })
