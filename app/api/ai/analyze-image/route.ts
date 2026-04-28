@@ -175,9 +175,8 @@ async function callGroq(model: string, messages: any[], maxTokens: number, retri
     }),
   })
 
-  if (response.status === 429 && retries > 0) {
-    await new Promise(r => setTimeout(r, 3000))
-    return callGroq(model, messages, maxTokens, retries - 1)
+  if (response.status === 429) {
+    throw new Error(`rate_limit`)
   }
 
   if (!response.ok) {
@@ -254,7 +253,8 @@ export async function POST(req: Request) {
       try { return JSON.parse(match[0]) } catch { return null }
     }
 
-    // Primary: Groq text (rapid)
+    // Primary: Groq text — skip to Gemini immediately on rate_limit
+    let groqRateLimited = 0
     for (const model of TEXT_MODELS) {
       try {
         const raw = await callGroq(model, [{ role: 'user', content: PASS2_PROMPT(description) }], 800)
@@ -262,7 +262,10 @@ export async function POST(req: Request) {
         if (parsed) break
         pass2Errors.push(`${model}: no JSON`)
       } catch (e: any) {
-        pass2Errors.push(`${model}: ${e?.message?.slice(0, 60)}`)
+        const msg = e?.message || ''
+        if (msg === 'rate_limit') groqRateLimited++
+        pass2Errors.push(`${model}: ${msg.slice(0, 60)}`)
+        if (groqRateLimited >= 2) break  // skip remaining Groq, go to Gemini
       }
     }
 
