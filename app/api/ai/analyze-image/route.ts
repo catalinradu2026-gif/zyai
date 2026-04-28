@@ -253,27 +253,26 @@ export async function POST(req: Request) {
       try { return JSON.parse(match[0]) } catch { return null }
     }
 
-    // Primary: Groq text — skip to Gemini after 2 errors of any kind
-    for (const model of TEXT_MODELS) {
-      try {
-        const raw = await callGroq(model, [{ role: 'user', content: PASS2_PROMPT(description) }], 800)
-        parsed = tryParseJson(raw)
-        if (parsed) break
-        pass2Errors.push(`${model}: no JSON`)
-      } catch (e: any) {
-        pass2Errors.push(`${model}: ${e?.message?.slice(0, 60)}`)
-        if (pass2Errors.length >= 2) break  // skip remaining Groq, go to Gemini
-      }
+    // Primary: Gemini text (generous free tier, no rate limit issues)
+    try {
+      const raw = await callGeminiText(PASS2_PROMPT(description))
+      parsed = tryParseJson(raw)
+      if (!parsed) pass2Errors.push(`gemini_text: no JSON`)
+    } catch (e: any) {
+      pass2Errors.push(`gemini_text: ${e?.message?.slice(0, 80)}`)
     }
 
-    // Fallback: Gemini text
+    // Fallback: Groq text
     if (!parsed) {
-      try {
-        const raw = await callGeminiText(PASS2_PROMPT(description))
-        parsed = tryParseJson(raw)
-        if (!parsed) pass2Errors.push(`gemini_text: no JSON`)
-      } catch (e: any) {
-        pass2Errors.push(`gemini_text: ${e?.message?.slice(0, 80)}`)
+      for (const model of TEXT_MODELS) {
+        try {
+          const raw = await callGroq(model, [{ role: 'user', content: PASS2_PROMPT(description) }], 800)
+          parsed = tryParseJson(raw)
+          if (parsed) break
+          pass2Errors.push(`${model}: no JSON`)
+        } catch (e: any) {
+          pass2Errors.push(`${model}: ${e?.message?.slice(0, 60)}`)
+        }
       }
     }
 
