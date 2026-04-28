@@ -287,6 +287,14 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [aiAnalysis, setAiAnalysis] = useState<{
     title: string; description: string; category: string; subcategory: string;
     condition: string; brand: string | null; tags: string[]; confidence: number;
+    _visualDescription?: string;
+    details?: {
+      auto?: {
+        model: string | null; year: number | null; mileage: number | null;
+        fuel: string | null; transmission: string | null; bodyType: string | null;
+        damage: string | null; color: string | null;
+      }
+    }
   } | null>(null)
   const [aiAnalysisAccepted, setAiAnalysisAccepted] = useState(false)
 
@@ -496,11 +504,12 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
         body: JSON.stringify({ imageUrl: uploadedImages[0] }),
       })
       const data = await res.json()
-      if (data.ok && data.result) {
-        setAiAnalysis(data.result)
-      } else {
-        setAiError('AI nu a putut analiza imaginea. Completează manual.')
+      if (!data.ok || !data.result) {
+        setAiError(`AI eroare: ${data.error || 'necunoscut'}${data.detail ? ' — ' + data.detail.slice(0, 120) : ''}. Completează manual.`)
+        return
       }
+      const result = data.result
+      setAiAnalysis(result)
     } catch {
       setAiError('Eroare conexiune AI. Completează manual.')
     } finally {
@@ -532,6 +541,17 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
     }
     if (aiAnalysis.brand) setBrand(aiAnalysis.brand)
     if (aiAnalysis.condition) setCondition(aiAnalysis.condition)
+    // Populare câmpuri auto din details
+    const autoD = aiAnalysis.details?.auto
+    if (autoD) {
+      if (autoD.model) setModel(autoD.model)
+      if (autoD.year) setYear(String(autoD.year))
+      if (autoD.mileage) setKm(String(autoD.mileage))
+      if (autoD.fuel) setFuel(autoD.fuel)
+      if (autoD.transmission) setGearbox(autoD.transmission)
+      if (autoD.bodyType) setBodyType(autoD.bodyType)
+      if (autoD.color) setColor(autoD.color)
+    }
     setAiAnalysisAccepted(true)
     setStep(1)
   }
