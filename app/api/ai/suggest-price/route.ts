@@ -45,9 +45,6 @@ export async function POST(req: Request) {
     const { title, description, category, subcategory, condition, brand, city, details } = await req.json()
     if (!title || !category) return NextResponse.json({ error: 'title and category required' }, { status: 400 })
 
-    const GROQ_API_KEY = process.env.GROQ_API_KEY
-    if (!GROQ_API_KEY) return NextResponse.json({ error: 'no api key' }, { status: 500 })
-
     const detailsText = formatDetails(category, details)
 
     const prompt = `Ești un expert în prețuri pentru piața românească de second-hand și marketplace (similar OLX Romania).
@@ -76,34 +73,59 @@ Reguli:
 - Dacă e Nou/Ca nou, scade 10-25%
 - Bazează-te pe prețuri reale OLX/marketplace România`
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: 400,
-      }),
-    })
-
-    if (!response.ok) return NextResponse.json({ error: 'groq_error' }, { status: 500 })
-
-    const data = await response.json()
-    const raw = data.choices?.[0]?.message?.content || ''
-
-    let parsed: any = null
-    try {
+    function tryParseJson(raw: string) {
       const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-      if (jsonMatch) parsed = JSON.parse(jsonMatch[0])
-    } catch {
-      return NextResponse.json({ error: 'parse_error' }, { status: 500 })
+      const m = cleaned.match(/\{[\s\S]*\}/)
+      if (!m) return null
+      try { return JSON.parse(m[0]) } catch { return null }
     }
 
+    let parsed: any = null
+
+    // Primary: Gemini
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
+    if (GOOGLE_API_KEY) {
+      for (const model of ['gemini-2.0-flash', 'gemini-2.0-flash-lite']) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
+              }),
+            }
+          )
+          if (!res.ok) continue
+          const data = await res.json()
+          const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+          parsed = tryParseJson(raw)
+          if (parsed) break
+        } catch { continue }
+      }
+    }
+
+    // Fallback: Groq
+    if (!parsed) {
+      const GROQ_API_KEY = process.env.GROQ_API_KEY
+      if (GROQ_API_KEY) {
+        try {
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 400 }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            parsed = tryParseJson(data.choices?.[0]?.message?.content || '')
+          }
+        } catch { }
+      }
+    }
+
+    if (!parsed) return NextResponse.json({ error: 'all_models_failed' }, { status: 500 })
     return NextResponse.json({ ok: true, result: parsed })
   } catch (err) {
     console.error('[suggest-price] unexpected:', err)

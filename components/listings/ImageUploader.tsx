@@ -354,7 +354,7 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
               >
                 {proIdx === i
                   ? proStatus || '⏳ Se procesează...'
-                  : '✨ Prezintă Pro [R]'
+                  : '✨ Prezintă Pro'
                 }
               </button>
             </div>
