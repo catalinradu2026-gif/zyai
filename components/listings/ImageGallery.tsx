@@ -39,7 +39,8 @@ export default function ImageGallery({ images, title, overlay }: ImageGalleryPro
     <div className="space-y-4">
       {/* Main Image */}
       <div
-        className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden select-none"
+        className="relative w-full h-96 rounded-lg overflow-hidden select-none"
+        style={{ background: '#0a0e1a' }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -49,7 +50,7 @@ export default function ImageGallery({ images, title, overlay }: ImageGalleryPro
           fill
           priority
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
+          className="object-contain"
         />
 
         {/* Overlay slot (fav, compare, etc.) */}
