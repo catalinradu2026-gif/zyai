@@ -276,18 +276,24 @@ export async function POST(req: Request) {
       }
     }
 
-    // Last resort: basic template so user can continue
+    // Last resort: build from PASS1 description so user gets useful content
     if (!parsed) {
-      const isAuto = (description || '').toLowerCase().includes('maș') ||
-        (description || '').toLowerCase().includes('auto') ||
-        (description || '').toLowerCase().includes('car')
+      const desc = description || ''
+      const brandMatch = desc.match(/\b(Audi|BMW|Mercedes|Volkswagen|VW|Dacia|Renault|Toyota|Ford|Opel|Skoda|Hyundai|Kia|Peugeot|Citroen|Volvo|Porsche|Tesla|Honda|Mazda|Nissan|Jeep|Land Rover|Range Rover)\b/i)
+      const modelMatch = desc.match(/\b(Q7|Q5|Q3|X5|X3|A4|A6|A8|Passat|Golf|Logan|Duster|Sandero|C-Class|E-Class|S-Class|Seria [0-9]|[A-Z][0-9]{1,3})\b/)
+      const brand = brandMatch?.[1] || null
+      const model = modelMatch?.[1] || null
+      const title = brand && model ? `${brand} ${model} de vânzare` : brand ? `${brand} de vânzare` : 'Autoturism de vânzare'
       parsed = {
-        title: isAuto ? 'Autoturism de vânzare' : 'Produs de vânzare',
-        description: description?.slice(0, 300) || '',
-        category: isAuto ? 'auto' : 'general',
-        subcategory: null, condition: 'Bun', brand: null, tags: [],
-        confidence: 0.3,
-        details: { auto: { model: null, year: null, mileage: null, fuel: null, transmission: null, bodyType: null, damage: null, color: null }, imobiliare: { propertyType: null, rooms: null, area: null, floor: null, furnishing: null, transactionType: null }, electronice: { model: null, storage: null, color: null, accessories: null }, general: { size: null, material: null, quantity: null } }
+        title,
+        description: desc,
+        category: 'auto',
+        subcategory: 'autoturisme',
+        condition: 'Bun',
+        brand,
+        tags: [brand?.toLowerCase(), model?.toLowerCase()].filter(Boolean),
+        confidence: 0.7,
+        details: { auto: { model, year: null, mileage: null, fuel: null, transmission: null, bodyType: null, damage: null, color: null }, imobiliare: { propertyType: null, rooms: null, area: null, floor: null, furnishing: null, transactionType: null }, electronice: { model: null, storage: null, color: null, accessories: null }, general: { size: null, material: null, quantity: null } }
       }
     }
 
