@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createListing, updateListing } from '@/lib/actions/listings'
 import {
   AUTO_BRANDS, AUTO_MODELS, CAROSERIE_TYPES, YEARS,
@@ -281,6 +281,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   const [bidHours, setBidHours] = useState(3)
 
   // AI Image Analysis
+  const analyzingRef = useRef(false)
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
   const [aiLoadStep, setAiLoadStep] = useState(0)
   const [aiError, setAiError] = useState('')
@@ -493,7 +494,8 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
   }
 
   async function analyzeImages(uploadedImages: string[]) {
-    if (!uploadedImages.length) return
+    if (!uploadedImages.length || analyzingRef.current) return
+    analyzingRef.current = true
     setAiAnalyzing(true)
     setAiAnalysis(null)
     setAiError('')
@@ -514,6 +516,7 @@ export default function ListingForm({ initialData }: ListingFormProps = {}) {
       setAiError('Eroare conexiune AI. Completează manual.')
     } finally {
       setAiAnalyzing(false)
+      analyzingRef.current = false
     }
   }
 
