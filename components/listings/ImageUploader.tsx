@@ -302,7 +302,8 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
                 <img
                   src={url}
                   alt={`imagine ${i + 1}`}
-                  className="w-full h-28 object-cover rounded-lg"
+                  className="w-full h-28 object-contain rounded-lg"
+                  style={{ background: '#0a0e1a' }}
                 />
                 {/* Overlay Pro processing */}
                 {proIdx === i && (
