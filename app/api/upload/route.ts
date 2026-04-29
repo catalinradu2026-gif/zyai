@@ -6,7 +6,7 @@ import { isR2Configured, uploadToR2 } from '@/lib/r2'
 
 export const maxDuration = 60
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', '']
 const FULL_MAX_WIDTH = 900
 const FULL_QUALITY = 58
 const THUMB_WIDTH = 240
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json({ error: 'Format neacceptat. Folosește JPG sau PNG.' }, { status: 400 })
     }
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Fișier prea mare (max 5MB)' }, { status: 400 })
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Fișier prea mare (max 10MB)' }, { status: 400 })
     }
 
     const inputBuffer = Buffer.from(await file.arrayBuffer())
