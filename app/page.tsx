@@ -320,6 +320,7 @@ export default async function Home() {
                   { icon: '🎯', text: 'AI oferă verdict de preț la fiecare anunț' },
                   { icon: '🎤', text: 'Căutare vocală inteligentă în limba română' },
                   { icon: '⚡', text: 'Licitații automate între cumpărători' },
+                  { icon: '🎬', text: 'Prezintă Pro — showroom 3D virtual pentru mașina ta' },
                 ].map((item, i) => (
                   <div
                     key={i}
@@ -345,7 +346,7 @@ export default async function Home() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-5 md:gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
             {[
               {
                 quote: 'Am făcut o poză și AI mi-a creat anunțul în 10 secunde',
@@ -361,6 +362,11 @@ export default async function Home() {
                 quote: 'Am vândut mai scump datorită licitației automate',
                 icon: '🚀',
                 accent: '#8B5CF6',
+              },
+              {
+                quote: 'Cu Prezintă Pro mașina mea arată ca în showroom-ul unui dealer',
+                icon: '🎬',
+                accent: '#3B82F6',
               },
             ].map((ex, i) => (
               <div
