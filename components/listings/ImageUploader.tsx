@@ -39,10 +39,10 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         return
       }
 
-      const MAX_FILE_SIZE = 5 * 1024 * 1024
+      const MAX_FILE_SIZE = 20 * 1024 * 1024
       const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE)
       if (oversizedFiles.length > 0) {
-        setUploadError(`${oversizedFiles.length} fișier(e) prea mare(i). Max 5MB per imagine.`)
+        setUploadError(`${oversizedFiles.length} fișier(e) prea mare(i). Max 20MB per imagine.`)
         e.target.value = ''
         return
       }
@@ -57,18 +57,27 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
       for (let i = 0; i < filesToUpload.length; i++) {
         let file = filesToUpload[i]
 
-        // Convertim HEIC/HEIF (poze directe iOS) la JPEG via canvas
+        // Convertim HEIC/HEIF (poze directe iOS) sau comprimăm imagini mari (>8MB) via canvas
         const isHeic = file.type === 'image/heic' || file.type === 'image/heif' ||
           (file.type === '' && file.name.toLowerCase().match(/\.(heic|heif)$/))
-        if (isHeic || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+        const needsCompress = file.size > 8 * 1024 * 1024
+        if (isHeic || needsCompress || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
           try {
             const bmp = await createImageBitmap(file)
+            const MAX_DIM = 2400
+            let { width, height } = bmp
+            if (width > MAX_DIM || height > MAX_DIM) {
+              const scale = MAX_DIM / Math.max(width, height)
+              width = Math.round(width * scale)
+              height = Math.round(height * scale)
+            }
             const cvs = document.createElement('canvas')
-            cvs.width = bmp.width
-            cvs.height = bmp.height
-            cvs.getContext('2d')!.drawImage(bmp, 0, 0)
+            cvs.width = width
+            cvs.height = height
+            cvs.getContext('2d')!.drawImage(bmp, 0, 0, width, height)
+            const quality = needsCompress ? 0.85 : 0.92
             const blob = await new Promise<Blob>((res, rej) =>
-              cvs.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/jpeg', 0.92)
+              cvs.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/jpeg', quality)
             )
             file = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
           } catch {

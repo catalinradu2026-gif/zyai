@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json({ error: 'Format neacceptat. Folosește JPG sau PNG.' }, { status: 400 })
     }
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Fișier prea mare (max 10MB)' }, { status: 400 })
+    if (file.size > 20 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Fișier prea mare (max 20MB)' }, { status: 400 })
     }
 
     const inputBuffer = Buffer.from(await file.arrayBuffer())
