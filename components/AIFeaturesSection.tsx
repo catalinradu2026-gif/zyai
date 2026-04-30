@@ -10,6 +10,12 @@ const features = [
     tooltip: 'Faci o poză produsului și o încarci. AI-ul generează automat titlul, descrierea și prețul recomandat pe baza imaginii. Nu trebuie să scrii nimic — anunțul tău e gata în 10 secunde.',
   },
   {
+    icon: '🎬',
+    title: 'Prezintă Pro',
+    short: 'Mașina ta în showroom virtual 3D',
+    tooltip: 'Încarci o poză a mașinii și cu un singur click, AI elimină fundalul și plasează vehiculul într-un showroom virtual 3D cu spoturi de lumină, podea reflectivă și disc rotativ. Anunțul tău arată ca la dealer — atrage mai mulți cumpărători și inspiră mai multă încredere.',
+  },
+  {
     icon: '📊',
     title: 'AI Verdict',
     short: 'Bun, corect sau scump — instant',
@@ -56,12 +62,6 @@ const features = [
     title: 'AI Detectare fraudă',
     short: 'Scor de încredere pentru fiecare anunț',
     tooltip: 'AI analizează fiecare anunț după semnale de risc: preț prea mic față de piață, descriere suspectă, cont nou, poze generice sau lips ă detalii. Primești un scor de încredere și avertismente clare înainte să trimiți banii.',
-  },
-  {
-    icon: '🎬',
-    title: 'Prezintă Pro',
-    short: 'Mașina ta în showroom virtual 3D',
-    tooltip: 'Încarci o poză a mașinii și cu un singur click, AI elimină fundalul și plasează vehiculul într-un showroom virtual 3D cu spoturi de lumină, podea reflectivă și disc rotativ. Anunțul tău arată ca la dealer — atrage mai mulți cumpărători și inspiră mai multă încredere.',
   },
 ]
 
@@ -183,8 +183,8 @@ export default function AIFeaturesSection() {
             accentBorder="rgba(139,92,246,0.35)"
             tooltip={[
               { icon: '📸', title: 'Faci o poză', text: 'Încarci o singură poză din telefon sau calculator.' },
-              { icon: '🤖', title: 'AI face anunțul', text: 'AI-ul generează automat titlu profesional, descriere completă și preț recomandat bazat pe piață. Zero efort din partea ta.' },
               { icon: '🎬', title: 'Prezintă Pro', text: 'Un click și mașina ta apare într-un showroom 3D virtual cu spoturi de lumină și podea reflectivă. Arată ca la dealer, vinde mai repede.' },
+              { icon: '🤖', title: 'AI face anunțul', text: 'AI-ul generează automat titlu profesional, descriere completă și preț recomandat bazat pe piață. Zero efort din partea ta.' },
               { icon: '✨', title: 'Poze mai frumoase', text: 'AI îmbunătățește luminozitatea, contrastul și claritatea pozelor tale. Produsul arată mai atractiv în rezultate.' },
               { icon: '🔥', title: 'Licitație automată', text: 'Activezi licitația cu un click. Cumpărătorii concurează între ei, prețul crește automat — tu vinzi mai scump fără să negociezi.' },
               { icon: '📊', title: 'AI Verdict preț', text: 'AI compară prețul tău cu sute de anunțuri similare și îți spune dacă ești competitiv sau poți cere mai mult.' },
