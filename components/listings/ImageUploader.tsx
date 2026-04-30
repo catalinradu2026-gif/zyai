@@ -289,6 +289,11 @@ export default function ImageUploader({ onImagesChange, initialImages = [], cate
         )}
       </div>
 
+      {/* Sfat fotografiere Pro */}
+      <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.75, lineHeight: 1.5 }}>
+        * Pentru cel mai bun rezultat cu <strong>Prezintă Pro</strong>: fotografiază mașina <strong>din față-lateral</strong>, la înălțimea centrului mașinii, cu întreaga mașină vizibilă în cadru.
+      </p>
+
       {uploadError && (
         <p className="text-sm font-semibold" style={{ color: '#f87171' }}>{uploadError}</p>
       )}
