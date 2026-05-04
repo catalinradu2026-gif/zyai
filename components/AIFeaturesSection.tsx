@@ -167,7 +167,7 @@ export default function AIFeaturesSection() {
           <FeatureCard key={i} f={f} />
         ))}
       </div>
-      <p className="text-xs text-center mb-6" style={{ color: 'rgba(167,139,250,0.45)', letterSpacing: '0.05em' }}>⚡ powered by Ai Craiova</p>
+      <p className="text-xs text-center mb-6" style={{ color: 'rgba(167,139,250,0.45)', letterSpacing: '0.05em' }}>⚡ powered by Nexora Labs</p>
 
       {/* Cum folosești zyAI — 2 carduri cu tooltip */}
       <div>
