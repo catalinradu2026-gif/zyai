@@ -7,16 +7,23 @@ export async function PATCH(
 ) {
   const { id } = await params
   const body = await request.json()
-  const { studiouri } = body
+  const { studiouri, nr_camera } = body
 
-  if (typeof studiouri !== 'number' || studiouri < 1) {
-    return NextResponse.json({ error: 'Valoare invalidă' }, { status: 400 })
+  const update: Record<string, unknown> = {}
+  if (typeof studiouri === 'number') {
+    if (studiouri < 1) return NextResponse.json({ error: 'Valoare invalida' }, { status: 400 })
+    update.studiouri = studiouri
+  }
+  if (nr_camera !== undefined) update.nr_camera = nr_camera?.trim() || null
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: 'Nimic de actualizat' }, { status: 400 })
   }
 
   const supabase = createSupabaseAdmin()
   const { data, error } = await supabase
     .from('asociatie_blaxy')
-    .update({ studiouri })
+    .update(update)
     .eq('id', id)
     .select()
     .single()

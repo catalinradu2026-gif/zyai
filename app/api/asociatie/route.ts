@@ -14,7 +14,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { nume, prenume, studiouri } = body
+  const { nume, prenume, studiouri, nr_camera } = body
 
   if (!nume?.trim() || !prenume?.trim()) {
     return NextResponse.json({ error: 'Nume și prenume sunt obligatorii' }, { status: 400 })
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseAdmin()
   const { data, error } = await supabase
     .from('asociatie_blaxy')
-    .insert({ nume: nume.trim(), prenume: prenume.trim(), studiouri: Number(studiouri) || 1 })
+    .insert({ nume: nume.trim(), prenume: prenume.trim(), studiouri: Number(studiouri) || 1, nr_camera: nr_camera?.trim() || null })
     .select()
     .single()
 
