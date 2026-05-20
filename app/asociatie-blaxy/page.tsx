@@ -166,8 +166,13 @@ export default function AsociatieBlaxyPage() {
 
   async function stergePersoana(id: number) {
     if (!confirm('Stergi aceasta persoana?')) return
-    await fetch(`/api/asociatie/${id}`, { method: 'DELETE', headers: adminHeaders(adminKey) })
-    setLista(prev => prev.filter(p => p.id !== id))
+    const res = await fetch(`/api/asociatie/${id}`, { method: 'DELETE', headers: adminHeaders(adminKey) })
+    if (res.ok) {
+      setLista(prev => prev.filter(p => p.id !== id))
+    } else {
+      const body = await res.json().catch(() => ({}))
+      alert(body.error === 'Neautorizat' ? 'Parola admin incorectă. Ieși și intră din nou.' : 'Eroare la ștergere.')
+    }
   }
 
   const labelSectiune = sectiune === 'proprietar' ? 'Proprietari' : 'Proprietari Condo'
