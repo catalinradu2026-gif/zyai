@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import ChatbotVocal from './ChatbotVocal'
 
 export const metadata: Metadata = {
   title: 'Asociație Proprietari – Blaxy Resort',
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 export default function AsociatieLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-{children}
+      {children}
+      <ChatbotVocal />
     </div>
   )
 }
