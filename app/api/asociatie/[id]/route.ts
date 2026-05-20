@@ -12,9 +12,9 @@ export async function PATCH(
 ) {
   const { id } = await params
   const body = await request.json()
-  const { studiouri, nr_camera } = body
+  const { studiouri, nr_camera, saptamana } = body
 
-  // Studiouri necesita admin, nr_camera poate fi modificat de oricine
+  // Studiouri necesita admin, nr_camera si saptamana pot fi modificate de oricine
   if (studiouri !== undefined && !checkAdmin(request)) {
     return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
   }
@@ -25,6 +25,7 @@ export async function PATCH(
     update.studiouri = studiouri
   }
   if (nr_camera !== undefined) update.nr_camera = nr_camera?.trim() || null
+  if (saptamana !== undefined) update.saptamana = saptamana?.trim() || null
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nimic de actualizat' }, { status: 400 })
