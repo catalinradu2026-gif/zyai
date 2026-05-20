@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
+function checkAdmin(request: NextRequest) {
+  const key = request.headers.get('x-admin-key')
+  return key === process.env.ASOCIATIE_ADMIN_KEY
+}
+
 export async function GET() {
   const supabase = createSupabaseAdmin()
   const { data, error } = await supabase
@@ -13,6 +18,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!checkAdmin(request)) return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+
   const body = await request.json()
   const { nume, prenume, studiouri, nr_camera } = body
 

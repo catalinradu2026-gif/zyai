@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
+function checkAdmin(request: NextRequest) {
+  const key = request.headers.get('x-admin-key')
+  return key === process.env.ASOCIATIE_ADMIN_KEY
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!checkAdmin(request)) return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+
   const { id } = await params
   const body = await request.json()
   const { studiouri, nr_camera } = body
@@ -33,9 +40,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!checkAdmin(request)) return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+
   const { id } = await params
   const supabase = createSupabaseAdmin()
   const { error } = await supabase.from('asociatie_blaxy').delete().eq('id', id)
