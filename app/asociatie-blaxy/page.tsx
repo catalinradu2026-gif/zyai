@@ -392,7 +392,30 @@ export default function AsociatieBlaxyPage() {
         )}
       </div>
 
-      <p className="text-center text-xs mt-8" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>
+      {/* Card Ana */}
+      <div className="mt-8 rounded-2xl p-5 flex items-center gap-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'var(--gradient-main)' }}>
+          🎙️
+        </div>
+        <div className="flex-1">
+          <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Ana — Asistentă Vocală</div>
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Ai întrebări despre asociație? Ana îți răspunde vocal și te ajută să înțelegi beneficiile.
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            const btn = document.querySelector<HTMLButtonElement>('button[title="Asistentă vocală asociație"]')
+            btn?.click()
+          }}
+          className="px-4 py-2 rounded-xl font-semibold text-sm cursor-pointer flex-shrink-0 hover:opacity-90"
+          style={{ background: 'var(--gradient-main)', color: '#fff' }}
+        >
+          Vorbește cu Ana
+        </button>
+      </div>
+
+      <p className="text-center text-xs mt-6" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>
         Centralizator intern • Asociație de Proprietari și CONDO • Blaxy Resort
       </p>
     </div>
