@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 function checkAdmin(request: NextRequest) {
   const key = request.headers.get('x-admin-key')
-  return key === process.env.ASOCIATIE_ADMIN_KEY
+  return key?.trim() === process.env.ASOCIATIE_ADMIN_KEY?.trim()
 }
 
 export async function GET(request: NextRequest) {
