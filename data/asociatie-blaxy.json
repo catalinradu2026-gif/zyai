@@ -1,0 +1,5 @@
+{
+  "proprietari": [
+    { "id": 1, "nume": "Exemplu", "prenume": "Proprietar", "studiouri": 2 }
+  ]
+}

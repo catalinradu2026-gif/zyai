@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function proxy(request: NextRequest) {
+  // Subdomain: asociatie.zyai.ro → /asociatie-blaxy
+  const hostname = request.headers.get('host') || ''
+  if (hostname.startsWith('asociatie.')) {
+    const url = request.nextUrl.clone()
+    if (!url.pathname.startsWith('/asociatie-blaxy')) {
+      url.pathname = '/asociatie-blaxy'
+      return NextResponse.rewrite(url)
+    }
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
