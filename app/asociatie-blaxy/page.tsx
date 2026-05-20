@@ -10,15 +10,24 @@ type Proprietar = {
   nr_camera: string | null
 }
 
-function CameraInput({ id, initial, onSave }: { id: number; initial: string | null; onSave: (id: number, val: string) => Promise<void> }) {
+function CameraInput({ id, initial, onSave }: { id: number; initial: string | null; onSave: (id: number, val: string) => Promise<string | null> }) {
   const [val, setVal] = useState(initial ?? '')
-  const [saved, setSaved] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'err'>('idle')
 
   async function save() {
-    await onSave(id, val)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1200)
+    if (status === 'saving') return
+    setStatus('saving')
+    const err = await onSave(id, val)
+    if (err) {
+      setStatus('err')
+      setTimeout(() => setStatus('idle'), 3000)
+    } else {
+      setStatus('ok')
+      setTimeout(() => setStatus('idle'), 1500)
+    }
   }
+
+  const borderColor = status === 'ok' ? '#22c55e' : status === 'err' ? '#ef4444' : 'var(--border-subtle)'
 
   return (
     <div className="flex items-center justify-center gap-1">
@@ -26,19 +35,19 @@ function CameraInput({ id, initial, onSave }: { id: number; initial: string | nu
         type="text"
         value={val}
         onChange={e => setVal(e.target.value)}
-        onBlur={save}
-        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+        onKeyDown={e => { if (e.key === 'Enter') save() }}
         placeholder="—"
         className="w-20 px-2 py-1 rounded-lg text-sm text-center outline-none"
-        style={{
-          background: 'var(--bg-input)',
-          border: `1px solid ${saved ? '#22c55e' : 'var(--border-subtle)'}`,
-          color: 'var(--text-primary)',
-          transition: 'border-color 0.2s',
-        }}
-        onFocus={e => (e.target.style.borderColor = 'var(--purple)')}
+        style={{ background: 'var(--bg-input)', border: `1px solid ${borderColor}`, color: 'var(--text-primary)', transition: 'border-color 0.2s' }}
       />
-      {saved && <span style={{ color: '#22c55e', fontSize: 12 }}>✓</span>}
+      <button
+        onClick={save}
+        disabled={status === 'saving'}
+        className="px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+        style={{ background: 'var(--bg-input)', border: '1px solid var(--border-light)', color: status === 'ok' ? '#22c55e' : status === 'err' ? '#ef4444' : 'var(--text-secondary)' }}
+      >
+        {status === 'saving' ? '…' : status === 'ok' ? '✓' : status === 'err' ? '✗' : 'OK'}
+      </button>
     </div>
   )
 }
@@ -92,13 +101,18 @@ export default function AsociatieBlaxyPage() {
     setUpdatingId(null)
   }
 
-  async function updateCamera(id: number, nr_camera: string) {
-    setLista(prev => prev.map(p => p.id === id ? { ...p, nr_camera: nr_camera || null } : p))
-    await fetch(`/api/asociatie/${id}`, {
+  async function updateCamera(id: number, nr_camera: string): Promise<string | null> {
+    const res = await fetch(`/api/asociatie/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nr_camera }),
     })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return body.error ?? `Eroare ${res.status}`
+    }
+    setLista(prev => prev.map(p => p.id === id ? { ...p, nr_camera: nr_camera || null } : p))
+    return null
   }
 
   async function stergePersoana(id: number) {
