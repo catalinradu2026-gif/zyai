@@ -10,6 +10,39 @@ type Proprietar = {
   nr_camera: string | null
 }
 
+function CameraInput({ id, initial, onSave }: { id: number; initial: string | null; onSave: (id: number, val: string) => Promise<void> }) {
+  const [val, setVal] = useState(initial ?? '')
+  const [saved, setSaved] = useState(false)
+
+  async function save() {
+    await onSave(id, val)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1200)
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1">
+      <input
+        type="text"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onBlur={save}
+        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+        placeholder="—"
+        className="w-20 px-2 py-1 rounded-lg text-sm text-center outline-none"
+        style={{
+          background: 'var(--bg-input)',
+          border: `1px solid ${saved ? '#22c55e' : 'var(--border-subtle)'}`,
+          color: 'var(--text-primary)',
+          transition: 'border-color 0.2s',
+        }}
+        onFocus={e => (e.target.style.borderColor = 'var(--purple)')}
+      />
+      {saved && <span style={{ color: '#22c55e', fontSize: 12 }}>✓</span>}
+    </div>
+  )
+}
+
 export default function AsociatieBlaxyPage() {
   const [lista, setLista] = useState<Proprietar[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,8 +92,7 @@ export default function AsociatieBlaxyPage() {
     setUpdatingId(null)
   }
 
-  async function updateCamera(id: number, nr_camera: string, oldVal: string | null) {
-    if (nr_camera === (oldVal ?? '')) return
+  async function updateCamera(id: number, nr_camera: string) {
     setLista(prev => prev.map(p => p.id === id ? { ...p, nr_camera: nr_camera || null } : p))
     await fetch(`/api/asociatie/${id}`, {
       method: 'PATCH',
@@ -106,7 +138,6 @@ export default function AsociatieBlaxyPage() {
 
       {/* Toolbar */}
       <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-        {/* Toggle mod */}
         <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
           <button
             onClick={() => setViewMode('edit')}
@@ -130,7 +161,6 @@ export default function AsociatieBlaxyPage() {
           </button>
         </div>
 
-        {/* Buton adaugă — doar în mod editare */}
         {viewMode === 'edit' && (
           <button
             onClick={() => setShowForm(v => !v)}
@@ -224,7 +254,6 @@ export default function AsociatieBlaxyPage() {
             Niciun proprietar adaugat inca.
           </div>
         ) : viewMode === 'view' ? (
-          /* ── MOD TABEL (read-only, curat) ── */
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -271,7 +300,6 @@ export default function AsociatieBlaxyPage() {
             </table>
           </div>
         ) : (
-          /* ── MOD EDITARE ── */
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -289,17 +317,7 @@ export default function AsociatieBlaxyPage() {
                     <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{i + 1}</td>
                     <td className="px-4 py-4 font-medium" style={{ color: 'var(--text-primary)' }}>{p.nume} {p.prenume}</td>
                     <td className="px-4 py-4 text-center">
-                      <input
-                        type="text"
-                        defaultValue={p.nr_camera ?? ''}
-                        placeholder="—"
-                        onBlur={e => updateCamera(p.id, e.target.value, p.nr_camera)}
-                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-                        className="w-20 px-2 py-1 rounded-lg text-sm text-center outline-none"
-                        style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-                        onFocus={e => (e.target.style.borderColor = 'var(--purple)')}
-                        onBlurCapture={e => (e.target.style.borderColor = 'var(--border-subtle)')}
-                      />
+                      <CameraInput id={p.id} initial={p.nr_camera} onSave={updateCamera} />
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center gap-2">
