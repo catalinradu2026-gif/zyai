@@ -149,7 +149,7 @@ export default function ChatbotVocal() {
       <button
         onClick={toggleOpen}
         title="Asistentă vocală asociație"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-105"
+        className="fixed bottom-4 right-4 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-105"
         style={{
           background: 'var(--gradient-main)',
           boxShadow: open ? 'var(--glow-purple)' : '0 4px 20px rgba(139,92,246,0.5)',
@@ -160,7 +160,7 @@ export default function ChatbotVocal() {
 
       {open && (
         <div
-          className="fixed bottom-24 right-6 z-50 w-80 rounded-2xl overflow-hidden flex flex-col"
+          className="fixed bottom-20 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-80 rounded-2xl overflow-hidden flex flex-col"
           style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border-light)',

@@ -178,7 +178,7 @@ export default function AsociatieBlaxyPage() {
   const labelSectiune = sectiune === 'proprietar' ? 'Proprietari' : 'Proprietari Condo'
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
 
       {/* Modal login */}
       {showLogin && (
@@ -209,10 +209,10 @@ export default function AsociatieBlaxyPage() {
         <div className="inline-block px-4 py-1 rounded-full text-xs font-semibold mb-4 uppercase tracking-widest" style={{ background: 'var(--gradient-main)', color: '#fff' }}>
           Blaxy Resort • Sunset Beach
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
           ASOCIAȚIE DE PROPRIETARI
         </h1>
-        <p className="text-lg font-semibold" style={{ color: 'var(--purple-light)' }}>și CONDO • Blaxy Resort</p>
+        <p className="text-base sm:text-lg font-semibold" style={{ color: 'var(--purple-light)' }}>și CONDO • Blaxy Resort</p>
       </div>
 
       {/* Stats */}
@@ -231,14 +231,14 @@ export default function AsociatieBlaxyPage() {
       <div className="flex rounded-xl overflow-hidden mb-5" style={{ border: '1px solid var(--border-light)' }}>
         <button
           onClick={() => setSectiune('proprietar')}
-          className="flex-1 px-4 py-3 text-sm font-semibold cursor-pointer transition-colors"
+          className="flex-1 px-3 py-3 text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
           style={{ background: sectiune === 'proprietar' ? 'var(--gradient-main)' : 'var(--bg-card)', color: sectiune === 'proprietar' ? '#fff' : 'var(--text-secondary)' }}
         >
           🏠 Proprietari
         </button>
         <button
           onClick={() => setSectiune('condo')}
-          className="flex-1 px-4 py-3 text-sm font-semibold cursor-pointer transition-colors"
+          className="flex-1 px-3 py-3 text-xs sm:text-sm font-semibold cursor-pointer transition-colors"
           style={{ background: sectiune === 'condo' ? 'var(--gradient-main)' : 'var(--bg-card)', color: sectiune === 'condo' ? '#fff' : 'var(--text-secondary)' }}
         >
           🏢 Proprietari Condo

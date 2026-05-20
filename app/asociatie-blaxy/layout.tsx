@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AsociatieLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
       {children}
       <ChatbotVocal />
     </div>
