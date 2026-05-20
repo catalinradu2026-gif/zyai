@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
+function mascheazaNume(nume: string) {
+  if (!nume) return ''
+  return nume[0] + '*'.repeat(Math.max(nume.length - 1, 3))
+}
+
 type Proprietar = {
   id: number
   nume: string
@@ -338,7 +343,7 @@ export default function AsociatieBlaxyPage() {
                 {lista.map((p, i) => (
                   <tr key={p.id} style={{ borderBottom: i < lista.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
                     <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{i + 1}</td>
-                    <td className="px-4 py-4 font-medium" style={{ color: 'var(--text-primary)' }}>{p.nume} {p.prenume}</td>
+                    <td className="px-4 py-4 font-medium" style={{ color: 'var(--text-primary)' }}>{isAdmin ? p.nume : mascheazaNume(p.nume)} {p.prenume}</td>
                     <td className="px-4 py-4 text-center">
                       <CameraInput id={p.id} adminKey={adminKey} initial={p.nr_camera} onSave={updateCamera} />
                     </td>
