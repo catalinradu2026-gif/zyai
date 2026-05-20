@@ -31,7 +31,7 @@ export default function ChatbotVocal() {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.slice(0, 200) }),
+        body: JSON.stringify({ text: text.replace(/Blaxy/gi, 'Blexy').slice(0, 200) }),
       })
       if (!res.ok) { setSpeaking(false); return }
       const blob = await res.blob()
