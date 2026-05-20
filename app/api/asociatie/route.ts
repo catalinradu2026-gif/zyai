@@ -18,8 +18,6 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkAdmin(request)) return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
-
   const body = await request.json()
   const { nume, prenume, studiouri, nr_camera } = body
 

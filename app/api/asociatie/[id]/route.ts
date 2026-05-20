@@ -10,11 +10,14 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!checkAdmin(request)) return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
-
   const { id } = await params
   const body = await request.json()
   const { studiouri, nr_camera } = body
+
+  // Studiouri necesita admin, nr_camera poate fi modificat de oricine
+  if (studiouri !== undefined && !checkAdmin(request)) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
 
   const update: Record<string, unknown> = {}
   if (typeof studiouri === 'number') {

@@ -256,20 +256,18 @@ export default function AsociatieBlaxyPage() {
           )}
         </div>
 
-        {isAdmin && (
-          <button
-            onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl font-semibold text-sm cursor-pointer transition-opacity hover:opacity-90"
-            style={{ background: 'var(--gradient-main)', color: '#fff' }}
-          >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>{showForm ? '✕' : '+'}</span>
-            {showForm ? 'Anuleaza' : 'Adauga persoana'}
-          </button>
-        )}
+        <button
+          onClick={() => setShowForm(v => !v)}
+          className="flex items-center gap-2 px-5 py-2 rounded-xl font-semibold text-sm cursor-pointer transition-opacity hover:opacity-90"
+          style={{ background: 'var(--gradient-main)', color: '#fff' }}
+        >
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{showForm ? '✕' : '+'}</span>
+          {showForm ? 'Anuleaza' : 'Adauga persoana'}
+        </button>
       </div>
 
       {/* Formular adăugare — doar admin */}
-      {showForm && isAdmin && (
+      {showForm && (
         <div className="rounded-2xl p-5 mb-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--purple)', boxShadow: 'var(--glow-purple)' }}>
           <h3 className="font-semibold mb-4" style={{ color: 'var(--purple-light)' }}>Proprietar nou</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -330,7 +328,9 @@ export default function AsociatieBlaxyPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider w-10" style={{ color: 'var(--text-secondary)' }}>#</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Nume si Prenume</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Nr. Camera</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Studiouri</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                    Studiouri {!isAdmin && <span title="Doar admin poate modifica">🔒</span>}
+                  </th>
                   {isAdmin && <th className="px-4 py-3 w-8"></th>}
                 </tr>
               </thead>
@@ -340,11 +340,7 @@ export default function AsociatieBlaxyPage() {
                     <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{i + 1}</td>
                     <td className="px-4 py-4 font-medium" style={{ color: 'var(--text-primary)' }}>{p.nume} {p.prenume}</td>
                     <td className="px-4 py-4 text-center">
-                      {isAdmin ? (
-                        <CameraInput id={p.id} adminKey={adminKey} initial={p.nr_camera} onSave={updateCamera} />
-                      ) : (
-                        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.nr_camera || '—'}</span>
-                      )}
+                      <CameraInput id={p.id} adminKey={adminKey} initial={p.nr_camera} onSave={updateCamera} />
                     </td>
                     <td className="px-4 py-4">
                       {isAdmin ? (
