@@ -294,12 +294,14 @@ export default function AsociatieBlaxyPage() {
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                 style={{ background: 'var(--bg-input)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
             </div>
-            <div>
-              <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Săptămâna</label>
-              <input type="text" placeholder="ex: 32" value={formSaptamana} onChange={e => setFormSaptamana(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-            </div>
+            {sectiune === 'condo' && (
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Săptămâna</label>
+                <input type="text" placeholder="ex: 32" value={formSaptamana} onChange={e => setFormSaptamana(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{ background: 'var(--bg-input)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+              </div>
+            )}
           </div>
           <div className="mb-4">
             <label className="block text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Nr. studiouri</label>
@@ -333,7 +335,7 @@ export default function AsociatieBlaxyPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider w-10" style={{ color: 'var(--text-secondary)' }}>#</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Nume și Prenume</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Nr. Cameră</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Săptămâna</th>
+                  {sectiune === 'condo' && <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Săptămâna</th>}
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                     Studiouri {!isAdmin && <span title="Doar admin poate modifica">🔒</span>}
                   </th>
@@ -350,9 +352,11 @@ export default function AsociatieBlaxyPage() {
                     <td className="px-4 py-3">
                       <InlineInput id={p.id} field="nr_camera" initial={p.nr_camera} onSave={updateField} />
                     </td>
-                    <td className="px-4 py-3">
-                      <InlineInput id={p.id} field="saptamana" initial={p.saptamana} onSave={updateField} />
-                    </td>
+                    {sectiune === 'condo' && (
+                      <td className="px-4 py-3">
+                        <InlineInput id={p.id} field="saptamana" initial={p.saptamana} onSave={updateField} />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       {isAdmin ? (
                         <div className="flex items-center justify-center gap-2">
@@ -383,7 +387,7 @@ export default function AsociatieBlaxyPage() {
               </tbody>
               <tfoot>
                 <tr style={{ borderTop: '2px solid var(--border-light)' }}>
-                  <td colSpan={4} className="px-4 py-4 text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>Total</td>
+                  <td colSpan={sectiune === 'condo' ? 4 : 3} className="px-4 py-4 text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>Total</td>
                   <td className="px-4 py-4 text-center">
                     <span className="inline-block px-3 py-1 rounded-full text-sm font-bold" style={{ background: 'var(--gradient-main)', color: '#fff' }}>
                       {totalStudiouri} studiouri
