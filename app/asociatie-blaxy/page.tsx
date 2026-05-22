@@ -39,7 +39,7 @@ function InlineInput({ id, field, initial, onSave }: {
     return (
       <div className="flex items-center justify-center gap-1">
         <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{val || '—'}</span>
-        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>✓ Văzut</span>
+        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>✓</span>
       </div>
     )
   }
@@ -75,7 +75,7 @@ function InlineInput({ id, field, initial, onSave }: {
         className="px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
         style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: status === 'err' ? '#ef4444' : '#22c55e' }}
       >
-        {status === 'saving' ? '…' : status === 'err' ? '✗' : 'Văzut'}
+        {status === 'saving' ? '…' : status === 'err' ? '✗' : '✓'}
       </button>
     </div>
   )
