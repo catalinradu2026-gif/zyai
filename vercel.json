@@ -1,3 +1,4 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "buildCommand": "NEXT_ADAPTER_PATH= npm run build"
 }
