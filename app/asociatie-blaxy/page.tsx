@@ -32,17 +32,31 @@ function InlineInput({ id, field, initial, onSave }: {
   onSave: (id: number, field: string, val: string) => Promise<string | null>
 }) {
   const [val, setVal] = useState(initial ?? '')
-  const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'err'>('idle')
+  const [status, setStatus] = useState<'idle' | 'saving' | 'err'>('idle')
+  const [locked, setLocked] = useState(!!(initial?.trim()))
+
+  if (locked) {
+    return (
+      <div className="flex items-center justify-center gap-1">
+        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{val || '—'}</span>
+        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>✓ Văzut</span>
+      </div>
+    )
+  }
 
   async function save() {
     if (status === 'saving') return
     setStatus('saving')
     const err = await onSave(id, field, val)
-    setStatus(err ? 'err' : 'ok')
-    setTimeout(() => setStatus('idle'), 1500)
+    if (!err) {
+      setLocked(true)
+    } else {
+      setStatus('err')
+      setTimeout(() => setStatus('idle'), 1500)
+    }
   }
 
-  const borderColor = status === 'ok' ? '#22c55e' : status === 'err' ? '#ef4444' : 'var(--border-subtle)'
+  const borderColor = status === 'err' ? '#ef4444' : 'var(--border-subtle)'
 
   return (
     <div className="flex items-center justify-center gap-1">
@@ -59,9 +73,9 @@ function InlineInput({ id, field, initial, onSave }: {
         onClick={save}
         disabled={status === 'saving'}
         className="px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
-        style={{ background: 'var(--bg-input)', border: '1px solid var(--border-light)', color: status === 'ok' ? '#22c55e' : status === 'err' ? '#ef4444' : 'var(--text-secondary)' }}
+        style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: status === 'err' ? '#ef4444' : '#22c55e' }}
       >
-        {status === 'saving' ? '…' : status === 'ok' ? '✓' : status === 'err' ? '✗' : 'OK'}
+        {status === 'saving' ? '…' : status === 'err' ? '✗' : 'Văzut'}
       </button>
     </div>
   )
