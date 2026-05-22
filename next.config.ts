@@ -16,11 +16,13 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.r2.dev',
+        pathname: '/**',
       },
-      ...(r2Host ? [{ protocol: 'https' as const, hostname: r2Host }] : []),
+      ...(r2Host ? [{ protocol: 'https' as const, hostname: r2Host, pathname: '/**' }] : []),
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        pathname: '/**',
       },
     ],
     minimumCacheTTL: 2592000,
